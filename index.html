@@ -1066,7 +1066,7 @@
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
   const APP_VERSION = '3.3';
   const APP_UPDATED = '24-07-2026';
-  const APP_UPDATED_TIME = '13:46:13';
+  const APP_UPDATED_TIME = '13:59:28';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -3000,4 +3000,25 @@
   }
 
   document.querySelectorAll('.lang-btn').forEach((btn) => {
-    btn.addEventListener('cli
+    btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+  });
+
+  applyLanguage(currentLang);
+
+  // auto-start if we have a saved IP
+  if (ipInput.value) {
+    start();
+  } else {
+    setStatus(null, t().statusInitial);
+  }
+
+  // registreer de service worker zodat de app-schil offline werkt na installatie
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => { /* geen https/localhost, negeren */ });
+    });
+  }
+})();
+</script>
+</body>
+</html>
