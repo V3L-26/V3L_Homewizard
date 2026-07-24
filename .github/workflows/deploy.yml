@@ -1,4 +1,4 @@
-name: Deploy naar Mijndomein via SSH/SFTP
+name: Deploy naar Mijndomein via SFTP
 on:
   push:
     branches: [main]
@@ -8,11 +8,18 @@ jobs:
     steps:
       - name: Code ophalen
         uses: actions/checkout@v4
-      - name: Bestanden syncen via SSH/rsync
-        uses: SamKirkland/web-deploy@v1
+      - name: Bestanden uploaden via SFTP
+        uses: Dylan700/sftp-upload-action@latest
         with:
-          target-server: 213.249.67.33
-          remote-user: f_000c0d2f
-          private-ssh-key: ${{ secrets.SSH_KEY }}
-          destination-path: /v3lhomewizard.3lcomputers.nl/
-          rsync-options: --archive --verbose --compress --human-readable --progress --delete-after --exclude=.git* --exclude=.git/ --exclude=README.md --exclude=readme.md --exclude=.gitignore --exclude=poller/ --exclude=.github/
+          server: 213.249.67.33
+          username: f_000c0d2f
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          uploads: |
+            ./ => ./v3lhomewizard.3lcomputers.nl/
+          ignore: |
+            .git*
+            .git*/**
+            .github/**
+            poller/**
+            README.md
