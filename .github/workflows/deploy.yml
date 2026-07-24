@@ -1,4 +1,4 @@
-name: Deploy naar Mijndomein via FTP
+name: Deploy naar Mijndomein via SSH/SFTP
 on:
   push:
     branches: [main]
@@ -8,15 +8,11 @@ jobs:
     steps:
       - name: Code ophalen
         uses: actions/checkout@v4
-      - name: Bestanden syncen via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+      - name: Bestanden syncen via SSH/rsync
+        uses: SamKirkland/web-deploy@v1
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftps
-          server-dir: /v3lhomewizard.3lcomputers.nl/
-          exclude: |
-            **/.git*
-            **/.git*/**
-    
+          target-server: 213.249.67.33
+          remote-user: f_000c0d2f
+          private-ssh-key: ${{ secrets.SSH_KEY }}
+          destination-path: /v3lhomewizard.3lcomputers.nl/
+          rsync-options: --archive --verbose --compress --human-readable --progress --delete-after --exclu
