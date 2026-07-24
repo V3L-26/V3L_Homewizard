@@ -1,0 +1,3018 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3L HomeWizard</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#05070a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="V3L HomeWizard">
+<link rel="apple-touch-icon" href="v3l-icon-256.png">
+<style>
+  :root{
+    --bg:#05070a;
+    --panel:rgba(255,255,255,0.04);
+    --panel-border:rgba(255,255,255,0.08);
+    --panel2:rgba(255,255,255,0.06);
+    --text:#eef2f6;
+    --muted:#8b98a8;
+    --l1:#2dd4bf;
+    --l2:#fb923c;
+    --l3:#a78bfa;
+    --total:#34d399;
+    --danger:#f87171;
+    --warn:#fbbf24;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);
+    padding:24px;
+    background:
+      radial-gradient(1000px 500px at 15% -10%, rgba(52,211,153,0.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(167,139,250,0.08), transparent 55%),
+      var(--bg);
+    min-height:100vh;
+  }
+  .wrap{max-width:1100px;margin:0 auto;}
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:24px;
+  }
+  h1{font-size:22px;margin:0 0 4px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;}
+  .subtitle{margin:0;font-size:13px;color:var(--muted);}
+  .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .lang-switch{display:flex;gap:6px;}
+  .lang-btn{
+    background:var(--panel2);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:4px 8px;
+    font-size:16px;
+    line-height:1.2;
+    cursor:pointer;
+    box-shadow:none;
+  }
+  .lang-btn.active{border-color:var(--l1);background:rgba(45,212,191,0.18);}
+
+  .settings{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:24px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;flex:1 1 160px;}
+  .field.field-ip{flex:2 1 320px;}
+  .field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+  .field-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;}
+  .field input, .field select{
+    background:rgba(0,0,0,0.25);
+    border:1px solid var(--panel-border);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:10px;
+    font-size:14px;
+    width:100%;
+    min-width:0;
+    transition:border-color .15s, box-shadow .15s, opacity .15s;
+  }
+  .field input:focus, .field select:focus{outline:none;border-color:var(--l1);box-shadow:0 0 0 3px rgba(45,212,191,0.18);}
+  .field select{
+    appearance:none;-webkit-appearance:none;-moz-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238b98a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    background-size:11px;
+    padding-right:34px;
+    cursor:pointer;
+  }
+  .field select option{background:#0b0f14;color:var(--text);}
+  .field input:disabled, .field select:disabled{opacity:.4;cursor:not-allowed;}
+  .field input[type=number]::-webkit-outer-spin-button,
+  .field input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .field input[type=number]{-moz-appearance:textfield;appearance:textfield;}
+  .lock-btn{
+    flex:0 0 auto;
+    width:28px;
+    padding:0;
+    margin:0;
+    box-shadow:none;
+    background:none;
+    border:none;
+    display:flex;align-items:center;justify-content:center;
+    color:#facc15;
+    cursor:pointer;
+    transition:opacity .15s;
+  }
+  .lock-btn:hover{opacity:.7;transform:none;}
+  .lock-btn svg{width:19px;height:19px;pointer-events:none;display:block;}
+  .lock-btn .lock-closed{display:none;}
+  .lock-btn.locked .lock-open{display:none;}
+  .lock-btn.locked .lock-closed{display:block;}
+  button{
+    background:linear-gradient(135deg, var(--l1), #14b8a6);
+    color:#042320;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    box-shadow:0 6px 16px rgba(45,212,191,0.25);
+    transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  }
+  button:hover{transform:translateY(-1px);filter:brightness(1.05);}
+  button:active{transform:translateY(0);}
+  button.secondary{
+    background:var(--panel2);
+    color:var(--text);
+    border:1px solid var(--panel-border);
+    box-shadow:none;
+  }
+  button.connected{background:linear-gradient(135deg, var(--total), #10b981);color:#04241a;cursor:default;}
+
+  .error-banner{
+    display:none;
+    background:linear-gradient(160deg, rgba(248,113,113,0.15), rgba(127,29,29,0.15));
+    border:1px solid rgba(248,113,113,0.35);
+    color:#ffd9d9;
+    border-radius:14px;
+    margin-bottom:20px;
+    font-size:13px;
+    line-height:1.6;
+    overflow-wrap:break-word;
+  }
+  .error-banner a{color:#fff;}
+  .error-banner > summary{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    cursor:pointer;list-style:none;padding:14px 16px;
+  }
+  .error-banner > summary::-webkit-details-marker{display:none;}
+  .error-banner > summary::marker{content:'';}
+  .error-banner > summary strong{font-weight:700;}
+  .error-banner .chevron{transition:transform .15s ease;font-size:13px;color:#ffd9d9;flex-shrink:0;}
+  .error-banner[open] .chevron{transform:rotate(90deg);}
+  .error-banner .error-body{padding:0 16px 16px;}
+
+  .cards{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-bottom:28px;
+  }
+  .card-row{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:14px;
+  }
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    border-radius:18px;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    transition:transform .15s ease, box-shadow .15s ease, background .2s ease;
+    min-width:0;
+  }
+  .card::before{
+    content:'';
+    position:absolute;
+    left:0;right:0;top:0;
+    height:3px;
+    border-radius:18px 18px 0 0;
+  }
+  .card.total::before{background:linear-gradient(90deg, var(--total), transparent);}
+  .card.l1::before{background:linear-gradient(90deg, var(--l1), transparent);}
+  .card.l2::before{background:linear-gradient(90deg, var(--l2), transparent);}
+  .card.l3::before{background:linear-gradient(90deg, var(--l3), transparent);}
+  .card.total{position:relative;}
+  .card.total::after{
+    content:'';
+    position:absolute;
+    width:280px;height:280px;
+    background:radial-gradient(circle, var(--total) 0%, transparent 70%);
+    opacity:.14;
+    top:-100px;right:-100px;
+    filter:blur(6px);
+    pointer-events:none;
+  }
+  .card .label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:700;color:var(--muted);}
+  .card.total .label{color:var(--total);}
+  .card.l1 .label{color:var(--l1);}
+  .card.l2 .label{color:var(--l2);}
+  .card.l3 .label{color:var(--l3);}
+  .card .value{font-size:64px;font-weight:800;letter-spacing:-.02em;line-height:1.05;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;}
+  .card.total .value{font-size:92px;overflow-wrap:anywhere;}
+  .card .value span{font-size:18px;font-weight:600;color:var(--muted);margin-left:6px;}
+  /* "Totaal vermogen"-tegel: minder hoog dan de andere totaal-tegels, zelfde breedte */
+  #cardTotalPower{padding-top:14px;padding-bottom:14px;}
+  #cardTotalPower .value{font-size:clamp(40px, 8vw, 56px);text-align:center;}
+  #cardTotalPower .label{margin-bottom:2px;}
+  #cardTotalPower .sub{margin-top:2px;}
+  .card .stats{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:12px;}
+  .card .stats b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;}
+  .card .sub{font-size:12px;color:var(--muted);margin-top:8px;min-height:14px;font-weight:600;}
+  .card.dim{opacity:.32;}
+  .card.overload{border-width:3px;animation:overloadBorderBlink 1s ease-in-out infinite;}
+
+  /* Tik-hint: alleen op touch-apparaten (telefoon/tablet) tonen we dat de fase-tegels
+     aantikbaar zijn - op een computer met muis blijft de cursor normaal. */
+  @media (pointer: coarse){
+    #phaseCardsRow .card{cursor:pointer;}
+  }
+
+  .gauge-wrap{position:relative;display:flex;justify-content:center;margin:0 -4px;}
+  .gauge-svg{width:100%;max-width:none;height:auto;overflow:visible;}
+  .gauge-needle{transform-box:view-box;transform-origin:110px 112px;transition:transform .6s cubic-bezier(.4,0,.2,1);}
+  .gauge-readout{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);text-align:center;line-height:1;}
+  .gauge-num{font-size:32px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  .gauge-unit{font-size:12px;font-weight:600;color:var(--muted);margin-left:3px;}
+  .gauge-num.flash{animation:valueFlash .4s ease-out;}
+  .card.dim .gauge-wrap{opacity:.4;}
+  .fault-stats{display:flex;gap:20px;margin-top:8px;}
+  .fault-stat{flex:1;text-align:center;}
+  .fault-num{font-size:40px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.05;}
+  .fault-label{font-size:12px;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+  .card.dim .fault-stats{opacity:.4;}
+  .fault-phases-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;margin-top:24px;padding-top:20px;border-top:1px solid var(--panel-border);}
+
+  /* Popup met vergrote fase-meter - alleen actief op touch-apparaten (zie JS: pointer:coarse),
+     schaalt automatisch mee met de schermbreedte via width:min(...). */
+  .meter-modal-backdrop{
+    display:none;position:fixed;inset:0;z-index:1000;
+    background:rgba(4,7,10,0.72);backdrop-filter:blur(6px);
+    align-items:center;justify-content:center;padding:24px;
+  }
+  .meter-modal-backdrop.open{display:flex;}
+  .meter-modal-card{
+    position:relative;width:min(88vw, 420px);
+    padding:32px 26px;text-align:center;
+  }
+  .meter-modal-card .label{font-size:14px;margin-bottom:10px;}
+  .meter-modal-card .gauge-wrap{margin:0 auto;max-width:320px;}
+  .meter-modal-card .gauge-num{font-size:clamp(38px, 11vw, 56px);}
+  .meter-modal-card .gauge-unit{font-size:16px;}
+  .meter-modal-card .sub{margin-top:14px;font-size:13px;}
+  .meter-modal-card .stats{justify-content:center;gap:24px;font-size:15px;margin-top:16px;}
+  .fault-phase .label{text-align:center;}
+  .fault-phase.l1 .label{color:var(--l1);}
+  .fault-phase.l2 .label{color:var(--l2);}
+  .fault-phase.l3 .label{color:var(--l3);}
+  @keyframes overloadBorderBlink{
+    0%,100%{border-color:#ef4444;box-shadow:0 10px 30px rgba(0,0,0,0.35), 0 0 16px rgba(239,68,68,0.7);}
+    50%{border-color:rgba(239,68,68,0.1);box-shadow:0 10px 30px rgba(0,0,0,0.35), 0 0 0 rgba(239,68,68,0);}
+  }
+  @keyframes valueFlash{
+    0%{opacity:.55;}
+    100%{opacity:1;}
+  }
+  .value.flash{animation:valueFlash .4s ease-out;}
+
+  .section-title{
+    font-size:12px;color:var(--total);margin:0 0 6px;text-transform:uppercase;letter-spacing:.08em;
+    font-weight:700;
+  }
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--panel-border);}
+  th{color:var(--muted);font-weight:600;position:sticky;top:0;background:#0b0f14;font-size:12px;text-transform:uppercase;letter-spacing:.05em;z-index:1;}
+  tbody tr:hover td{background:rgba(255,255,255,0.03);}
+  td{font-variant-numeric:tabular-nums;}
+  .table-panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:20px;
+    overflow-x:auto;
+  }
+  .log-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+  .log-toolbar span{font-size:12px;color:var(--muted);}
+  .log-toolbar .btns{display:flex;gap:8px;flex-wrap:wrap;}
+  .log-toolbar button{padding:7px 14px;font-size:12px;box-shadow:none;}
+  .log-scroll{max-height:340px;overflow-y:auto;}
+  .changelog-scroll{max-height:320px;padding-right:4px;}
+  .changelog-entry{margin-bottom:14px;}
+  .changelog-entry:last-child{margin-bottom:0;}
+  .changelog-entry h4{margin:0 0 6px;font-size:12px;color:var(--l1);text-transform:uppercase;letter-spacing:.06em;}
+  .changelog-entry ul{margin:0;padding-left:18px;font-size:12px;color:var(--muted);line-height:1.6;}
+  .storage-warning{background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.4);color:#fdba74;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.5;}
+
+  .email-panel .helptext{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 14px;}
+  .email-panel .helptext a{color:var(--l1);}
+  .email-subsection{margin-bottom:22px;padding-bottom:20px;border-bottom:1px solid var(--panel-border);}
+  .email-subsection:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+  .email-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:14px;}
+  .toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .toggle-row label{font-size:13px;font-weight:600;}
+  .email-status{font-size:12px;color:var(--muted);margin-top:10px;min-height:16px;}
+  .email-status.ok{color:var(--total);}
+  .email-status.err{color:var(--danger);}
+  .email-status.warn{color:var(--warn);}
+
+  .email-panel{padding:0;}
+  .email-panel > summary{
+    display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;list-style:none;padding:18px;
+    font-size:12px;color:var(--total);text-transform:uppercase;letter-spacing:.08em;font-weight:700;
+  }
+  .email-panel > summary::-webkit-details-marker{display:none;}
+  .email-panel > summary::marker{content:'';}
+  .email-panel .title-row{display:flex;align-items:center;gap:8px;}
+  .email-panel .chevron{transition:transform .15s ease;font-size:13px;color:var(--muted);}
+  .email-panel[open] .chevron{transform:rotate(90deg);}
+  .email-panel .email-body{padding:0 18px 18px;}
+
+  /* Genest instellingenpaneel binnen een table-panel (bijv. "eigen database"
+     onder een logboek-tegel) - zonder eigen achtergrond/rand, die komt al van
+     de omringende .table-panel. */
+  .inline-panel{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--panel-border);}
+  .inline-panel > summary{
+    display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;list-style:none;padding:0;
+    font-size:12px;color:var(--total);text-transform:uppercase;letter-spacing:.08em;font-weight:700;
+  }
+  .inline-panel > summary::-webkit-details-marker{display:none;}
+  .inline-panel > summary::marker{content:'';}
+  .inline-panel .title-row{display:flex;align-items:center;gap:8px;}
+  .inline-panel .chevron{transition:transform .15s ease;font-size:13px;color:var(--muted);}
+  .inline-panel[open] .chevron{transform:rotate(90deg);}
+  .inline-panel .email-body{padding:14px 0 0;}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:32px;opacity:.7;line-height:1.6;}
+  footer a{color:var(--muted);}
+  .app-version{color:var(--muted);font-size:12px;text-align:center;opacity:.7;line-height:1.6;}
+
+  /* Inlogscherm */
+  #dashboardWrap{display:none;}
+  .auth-wrap{max-width:420px;margin:60px auto;}
+  .auth-wrap header{justify-content:center;text-align:center;}
+  .auth-wrap h1{justify-content:center;}
+  .auth-card{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    border-radius:16px;
+    padding:24px;
+  }
+  .pw-requirements{list-style:none;margin:0 0 4px;padding:0;font-size:12px;color:var(--muted);line-height:2;}
+  .pw-requirements li{position:relative;padding-left:22px;}
+  .pw-requirements li::before{
+    content:'\2716';
+    position:absolute;left:0;color:var(--danger);font-size:11px;top:2px;
+  }
+  .pw-requirements li[data-ok="1"]{color:var(--total);}
+  .pw-requirements li[data-ok="1"]::before{content:'\2714';color:var(--total);}
+  @media (max-width: 600px){
+    .auth-wrap{margin:24px auto;max-width:none;}
+    .auth-card{padding:18px;}
+  }
+
+  @media (max-width: 600px){
+    body{padding:14px;}
+    h1{font-size:18px;gap:6px;}
+    h1 img{height:28px !important;}
+    header{gap:10px;}
+    .header-right{align-items:flex-start;width:100%;}
+    .lang-switch{width:100%;justify-content:flex-start;}
+    .lang-btn{padding:7px 11px;}
+    .settings{flex-direction:column;align-items:stretch;padding:14px;gap:10px;}
+    .settings button{width:100%;}
+    .settings .field{flex:1 1 auto !important;}
+    .lock-btn{width:36px;}
+    .lock-btn svg{width:22px;height:22px;}
+    .cards{gap:10px;}
+    /* De drie fase-tegels blijven altijd naast elkaar in 1 rij, ook op smalle
+       telefoons - de inhoud krimpt (via clamp/vw) automatisch mee met de
+       schermbreedte in plaats van dat de tegels onder elkaar gaan staan. */
+    .card-row{grid-template-columns:repeat(3, 1fr);gap:6px;}
+    .fault-phases-grid{grid-template-columns:1fr;gap:16px;}
+    .card{padding:16px;}
+    .card .value{font-size:clamp(44px, 16vw, 64px);}
+    .card.total .value{font-size:clamp(52px, 18vw, 76px);}
+    .card .stats{gap:10px;font-size:12px;}
+    .gauge-num{font-size:38px;}
+    .fault-stats{gap:12px;}
+    .fault-num{font-size:clamp(26px, 9vw, 40px);}
+    .table-panel{padding:14px;}
+    table{font-size:12px;}
+    th,td{padding:8px 6px;}
+    .email-grid{grid-template-columns:1fr;}
+    .btns button, .log-toolbar button{flex:1 1 auto;}
+
+    /* Fase-tegels (L1/L2/L3): compacte variant zodat 3 kolommen op 1 scherm passen. */
+    #phaseCardsRow .card{padding:10px 6px;}
+    #phaseCardsRow .label{font-size:9px;letter-spacing:.03em;margin-bottom:4px;}
+    #phaseCardsRow .gauge-wrap{margin:0 -2px;}
+    #phaseCardsRow .gauge-readout{bottom:8%;}
+    #phaseCardsRow .gauge-num{font-size:clamp(15px, 6vw, 24px);}
+    #phaseCardsRow .gauge-unit{font-size:clamp(8px, 2.2vw, 11px);margin-left:2px;}
+    #phaseCardsRow .stats{gap:6px;font-size:clamp(8px, 2.2vw, 11px);margin-top:6px;flex-wrap:wrap;}
+    #phaseCardsRow .sub{font-size:9px;min-height:10px;margin-top:4px;}
+  }
+
+  @media (max-width: 380px){
+    .card .value{font-size:clamp(36px, 15vw, 52px);}
+    .card.total .value{font-size:clamp(42px, 17vw, 60px);}
+    .gauge-num{font-size:32px;}
+    .fault-num{font-size:clamp(22px, 8vw, 32px);}
+
+    #phaseCardsRow .card{padding:8px 4px;}
+    #phaseCardsRow .label{font-size:8px;}
+    #phaseCardsRow .gauge-num{font-size:clamp(13px, 5.5vw, 20px);}
+  }
+</style>
+</head>
+<body>
+<div class="wrap auth-wrap" id="authWrap">
+  <header style="margin-bottom:28px;">
+    <div>
+      <h1><img src="v3l-logo.png" alt="V3L logo" style="height:38px;width:auto;display:block;"> V3L HomeWizard</h1>
+      <p class="subtitle" id="authSubtitleText">Log in om je dashboard te bekijken</p>
+    </div>
+  </header>
+
+  <div class="auth-card">
+    <div id="loginForm">
+      <div class="section-title" id="loginTitleText">Inloggen</div>
+      <div class="field" style="margin-bottom:12px;">
+        <label for="loginEmail" id="loginEmailLabel">E-mailadres</label>
+        <input id="loginEmail" name="x-login-email" type="email" placeholder="jij@voorbeeld.nl" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')" />
+      </div>
+      <div class="field" style="margin-bottom:16px;">
+        <label for="loginPassword" id="loginPasswordLabel">Wachtwoord</label>
+        <input id="loginPassword" name="x-login-password" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')" />
+      </div>
+      <button type="button" id="loginBtn" style="width:100%;">Inloggen</button>
+      <div class="email-status" id="loginStatus">&nbsp;</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="dashboardWrap">
+  <header>
+    <div>
+      <h1><img src="v3l-logo.png" alt="V3L logo" style="height:38px;width:auto;display:block;"> V3L HomeWizard</h1>
+      <p class="subtitle" id="subtitleText">Live inzicht in je stroomverbruik</p>
+    </div>
+    <div class="header-right">
+      <div class="lang-switch" id="langSwitch">
+        <button type="button" class="lang-btn" data-lang="nl" title="Nederlands">
+          <svg viewBox="0 0 30 20" width="22" height="15"><rect width="30" height="20" fill="#21468B"/><rect width="30" height="13.34" fill="#fff"/><rect width="30" height="6.67" fill="#AE1C28"/></svg>
+        </button>
+        <button type="button" class="lang-btn" data-lang="en" title="English">
+          <svg viewBox="0 0 60 40" width="22" height="15">
+            <rect width="60" height="40" fill="#00247d"/>
+            <path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/>
+            <path d="M0,0 L60,40" stroke="#cf142b" stroke-width="3"/>
+            <path d="M60,0 L0,40" stroke="#cf142b" stroke-width="3"/>
+            <rect x="24" width="12" height="40" fill="#fff"/>
+            <rect y="14" width="60" height="12" fill="#fff"/>
+            <rect x="27" width="6" height="40" fill="#cf142b"/>
+            <rect y="17" width="60" height="6" fill="#cf142b"/>
+          </svg>
+        </button>
+        <button type="button" class="lang-btn" data-lang="de" title="Deutsch">
+          <svg viewBox="0 0 30 20" width="22" height="15"><rect width="30" height="20" fill="#FFCE00"/><rect width="30" height="13.34" fill="#DD0000"/><rect width="30" height="6.67" fill="#000"/></svg>
+        </button>
+      </div>
+      <button type="button" class="secondary" id="logoutBtn" style="padding:6px 14px;font-size:12px;">Uitloggen</button>
+    </div>
+  </header>
+
+  <div class="settings">
+    <div class="field field-ip">
+      <label for="ipInput" id="ipLabelText">IP-adres / hostnaam P1 meter</label>
+      <div class="field-row">
+        <input id="ipInput" name="x-ip" type="text" placeholder="bijv. 192.168.1.50" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+        <button type="button" class="lock-btn" data-target="ipInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+          <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+          <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="field" style="flex:0 1 150px">
+      <label for="intervalInput" id="intervalLabelText">Ververssnelheid (sec)</label>
+      <div class="field-row">
+        <select id="intervalInput">
+          <option value="1">1 sec</option>
+          <option value="2">2 sec</option>
+          <option value="3">3 sec</option>
+          <option value="5">5 sec</option>
+          <option value="10">10 sec</option>
+          <option value="15">15 sec</option>
+          <option value="30">30 sec</option>
+          <option value="60">60 sec</option>
+        </select>
+        <button type="button" class="lock-btn" data-target="intervalInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+          <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+          <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="field" style="flex:0 1 190px">
+      <label for="thresholdInput" id="thresholdFieldLabel">Overbelastingsgrens (W)</label>
+      <div class="field-row">
+        <select id="thresholdInput">
+          <option value="1000">1000 W</option>
+          <option value="1500">1500 W</option>
+          <option value="2000">2000 W</option>
+          <option value="2500">2500 W</option>
+          <option value="3000">3000 W</option>
+          <option value="3500">3500 W</option>
+          <option value="4000">4000 W</option>
+          <option value="4500">4500 W</option>
+          <option value="5000">5000 W</option>
+          <option value="5500">5500 W</option>
+          <option value="5750">5750 W</option>
+        </select>
+        <button type="button" class="lock-btn" data-target="thresholdInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+          <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+          <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <button id="connectBtn">Verbinden</button>
+    <button class="secondary" id="pauseBtn">Pauze</button>
+  </div>
+
+  <details class="error-banner" id="errorBanner">
+    <summary><strong id="errorSummaryText"></strong><span class="chevron">&#9656;</span></summary>
+    <div class="error-body" id="errorBodyText"></div>
+  </details>
+
+  <div class="cards" id="powerCards">
+    <div class="card-row" id="phaseCardsRow">
+      <div class="card l1" id="cardL1">
+        <div class="label" id="l1Label">Fase 1 (L1)</div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" id="gaugeL1" viewBox="0 0 220 170"></svg>
+          <div class="gauge-readout"><span class="gauge-num" id="l1Power">&mdash;</span><span class="gauge-unit">W</span></div>
+        </div>
+        <div class="sub" id="l1Sub">&nbsp;</div>
+        <div class="stats">
+          <span><b id="l1Voltage">&mdash;</b> V</span>
+          <span><b id="l1Current">&mdash;</b> A</span>
+        </div>
+      </div>
+      <div class="card l2" id="cardL2">
+        <div class="label" id="l2Label">Fase 2 (L2)</div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" id="gaugeL2" viewBox="0 0 220 170"></svg>
+          <div class="gauge-readout"><span class="gauge-num" id="l2Power">&mdash;</span><span class="gauge-unit">W</span></div>
+        </div>
+        <div class="sub" id="l2Sub">&nbsp;</div>
+        <div class="stats">
+          <span><b id="l2Voltage">&mdash;</b> V</span>
+          <span><b id="l2Current">&mdash;</b> A</span>
+        </div>
+      </div>
+      <div class="card l3" id="cardL3">
+        <div class="label" id="l3Label">Fase 3 (L3)</div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" id="gaugeL3" viewBox="0 0 220 170"></svg>
+          <div class="gauge-readout"><span class="gauge-num" id="l3Power">&mdash;</span><span class="gauge-unit">W</span></div>
+        </div>
+        <div class="sub" id="l3Sub">&nbsp;</div>
+        <div class="stats">
+          <span><b id="l3Voltage">&mdash;</b> V</span>
+          <span><b id="l3Current">&mdash;</b> A</span>
+        </div>
+      </div>
+    </div>
+    <div class="card total" id="cardTotalPower">
+      <div class="label" id="totalPowerLabel">Totaal vermogen</div>
+      <div class="value"><span id="totalPower">&mdash;</span><span>W</span></div>
+      <div class="sub" id="totalSub">&nbsp;</div>
+    </div>
+    <div class="cards" id="faultCards">
+      <div class="card total">
+        <div class="label" id="faultsTotalLabel">Stroomstoringen</div>
+        <div class="fault-stats">
+          <div class="fault-stat"><div class="fault-num" id="anyFail">&mdash;</div><div class="fault-label" id="faultsTotalUnit">totaal</div></div>
+          <div class="fault-stat"><div class="fault-num" id="longFail">&mdash;</div><div class="fault-label" id="longFailUnit">langdurig</div></div>
+        </div>
+        <div class="fault-phases-grid">
+          <div class="fault-phase l1">
+            <div class="label" id="fL1Label">Fase 1 (L1)</div>
+            <div class="fault-stats">
+              <div class="fault-stat"><div class="fault-num" id="sag1">&mdash;</div><div class="fault-label" id="sag1Unit">dips</div></div>
+              <div class="fault-stat"><div class="fault-num" id="swell1">&mdash;</div><div class="fault-label" id="swell1Unit">pieken</div></div>
+            </div>
+          </div>
+          <div class="fault-phase l2">
+            <div class="label" id="fL2Label">Fase 2 (L2)</div>
+            <div class="fault-stats">
+              <div class="fault-stat"><div class="fault-num" id="sag2">&mdash;</div><div class="fault-label" id="sag2Unit">dips</div></div>
+              <div class="fault-stat"><div class="fault-num" id="swell2">&mdash;</div><div class="fault-label" id="swell2Unit">pieken</div></div>
+            </div>
+          </div>
+          <div class="fault-phase l3">
+            <div class="label" id="fL3Label">Fase 3 (L3)</div>
+            <div class="fault-stats">
+              <div class="fault-stat"><div class="fault-num" id="sag3">&mdash;</div><div class="fault-label" id="sag3Unit">dips</div></div>
+              <div class="fault-stat"><div class="fault-num" id="swell3">&mdash;</div><div class="fault-label" id="swell3Unit">pieken</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="meter-modal-backdrop" id="meterModalBackdrop">
+    <div class="card meter-modal-card" id="meterModalCard">
+      <div class="label" id="meterModalLabel">Fase 1 (L1)</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" id="gaugeModal" viewBox="0 0 220 170"></svg>
+        <div class="gauge-readout"><span class="gauge-num" id="modalPower">&mdash;</span><span class="gauge-unit">W</span></div>
+      </div>
+      <div class="sub" id="modalSub">&nbsp;</div>
+      <div class="stats">
+        <span><b id="modalVoltage">&mdash;</b> V</span>
+        <span><b id="modalCurrent">&mdash;</b> A</span>
+      </div>
+    </div>
+  </div>
+
+  <details class="table-panel email-panel">
+    <summary>
+      <span class="title-row"><span id="emailTitleText">E-mailalerts</span></span>
+      <span class="chevron">&#9656;</span>
+    </summary>
+    <div class="email-body">
+
+      <div class="email-subsection">
+        <div class="section-title" id="emailjsQuotaTitleText">Verzendlimiet</div>
+        <p class="helptext" id="emailjsQuotaHelpText"></p>
+        <div class="email-grid">
+          <div class="field">
+            <label for="emailjsQuotaInput" id="emailjsQuotaLabel">Maandelijkse limiet (aantal e-mails)</label>
+            <div class="field-row">
+              <input id="emailjsQuotaInput" type="number" min="1" step="1" placeholder="200" />
+              <button type="button" class="lock-btn" data-target="emailjsQuotaInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="email-status" id="emailjsQuotaStatus">&nbsp;</div>
+      </div>
+
+      <div class="email-subsection">
+        <div class="section-title" id="overloadEmailTitleText">Overbelasting</div>
+        <p class="helptext" id="emailHelpText"></p>
+        <div class="toggle-row">
+          <input type="checkbox" id="emailEnabled" style="width:18px;height:18px;" />
+          <label for="emailEnabled" id="emailEnableLabel">E-mailalert inschakelen</label>
+        </div>
+        <div class="email-grid">
+          <div class="field">
+            <label for="emailTo" id="toEmailLabel">Naar e-mailadres</label>
+            <div class="field-row">
+              <input id="emailTo" name="x-email-to" type="email" placeholder="jij@voorbeeld.nl" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="emailTo" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="saveEmailBtn">Instellingen opslaan</button>
+          <button class="secondary" id="testEmailL1">Testmail L1</button>
+          <button class="secondary" id="testEmailL2">Testmail L2</button>
+          <button class="secondary" id="testEmailL3">Testmail L3</button>
+        </div>
+        <div class="email-status" id="emailStatus">&nbsp;</div>
+      </div>
+
+      <div class="email-subsection">
+        <div class="section-title" id="storageEmailTitleText">Opslaglimiet</div>
+        <p class="helptext" id="storageEmailHelpText"></p>
+        <div class="toggle-row">
+          <input type="checkbox" id="storageEmailEnabled" style="width:18px;height:18px;" />
+          <label for="storageEmailEnabled" id="storageEmailEnableLabel">E-mailalert inschakelen</label>
+        </div>
+        <div class="email-grid">
+          <div class="field">
+            <label for="storageEmailTo" id="storageToEmailLabel">Naar e-mailadres</label>
+            <div class="field-row">
+              <input id="storageEmailTo" name="x-storage-email-to" type="email" placeholder="jij@voorbeeld.nl" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="storageEmailTo" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="storageSaveEmailBtn">Instellingen opslaan</button>
+          <button class="secondary" id="storageTestEmailBtn">Testmail</button>
+        </div>
+        <div class="email-status" id="storageEmailStatus">&nbsp;</div>
+      </div>
+
+    </div>
+  </details>
+
+  <div class="table-panel">
+    <div class="section-title" id="meterReadingsTitle">Meterstanden</div>
+    <table>
+      <tbody>
+        <tr><td id="totalImportLabel">Totaal import</td><td id="totalImport">&mdash; kWh</td></tr>
+        <tr><td id="totalExportLabel">Totaal export</td><td id="totalExport">&mdash; kWh</td></tr>
+        <tr id="gasRow" style="display:none"><td id="gasLabel">Gas</td><td id="gasVal">&mdash; m&sup3;</td></tr>
+        <tr id="gasTimestampRow" style="display:none"><td id="gasTimestampLabel">Tijdstip gas</td><td id="gasTimestampVal">&mdash;</td></tr>
+        <tr id="waterRow" style="display:none"><td id="waterLabel">Water</td><td id="waterVal">&mdash; m&sup3;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-panel">
+    <div class="section-title" id="systemInfoTitleText">Systeeminformatie</div>
+    <table>
+      <tbody>
+        <tr><td id="meterModelLabel">Meter-model</td><td id="meterModelVal">&mdash;</td></tr>
+        <tr><td id="dsmrVersionLabel">DSMR-versie</td><td id="dsmrVersionVal">&mdash;</td></tr>
+        <tr><td id="uniqueIdElecLabel">Uniek ID (elektriciteit)</td><td id="uniqueIdElecVal">&mdash;</td></tr>
+        <tr id="uniqueIdGasRow" style="display:none"><td id="uniqueIdGasLabel">Uniek ID (gas)</td><td id="uniqueIdGasVal">&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="storage-warning" id="storageWarning" style="display:none">
+    <span id="storageWarningText"></span>
+  </div>
+
+  <div class="table-panel">
+    <details class="inline-panel">
+      <summary>
+        <span class="title-row"><span id="faultApiTitleText">Storingslog</span></span>
+        <span class="chevron">&#9656;</span>
+      </summary>
+      <div class="email-body">
+        <div class="email-grid">
+          <div class="field">
+            <label for="faultApiUrlInput" id="faultApiUrlLabel">API-endpoint URL</label>
+            <div class="field-row">
+              <input id="faultApiUrlInput" name="x-fault-url" type="text" placeholder="https://jouwproject.supabase.co/rest/v1/fault_log" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="faultApiUrlInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="faultApiKeyInput" id="faultApiKeyLabel">API-sleutel</label>
+            <div class="field-row">
+              <input id="faultApiKeyInput" name="x-fault-key" type="text" placeholder="sb_publishable_..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="faultApiKeyInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="saveFaultApiBtn">Instellingen opslaan</button>
+          <button class="secondary" id="testFaultApiBtn">Verbinding testen</button>
+        </div>
+        <div class="email-status" id="faultApiStatus">&nbsp;</div>
+      </div>
+    </details>
+    <div class="log-toolbar">
+      <span id="faultLogRetainedText">0 gebeurtenissen gelogd</span>
+      <div class="btns">
+        <button class="secondary" id="exportFaultCsvBtn">Exporteer CSV</button>
+        <button class="secondary" id="clearFaultLogBtn">Wis storingslog</button>
+      </div>
+    </div>
+    <div class="log-scroll">
+      <table id="faultLogTable">
+        <thead>
+          <tr><th id="colFaultTime">Tijdstip</th><th id="colFaultType">Type</th><th id="colFaultCount">Aantal</th></tr>
+        </thead>
+        <tbody id="faultLogBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="table-panel">
+    <details class="inline-panel">
+      <summary>
+        <span class="title-row"><span id="logApiTitleText">Verbruikslog</span></span>
+        <span class="chevron">&#9656;</span>
+      </summary>
+      <div class="email-body">
+        <div class="email-grid">
+          <div class="field">
+            <label for="logApiUrlInput" id="logApiUrlLabel">API-endpoint URL</label>
+            <div class="field-row">
+              <input id="logApiUrlInput" name="x-log-url" type="text" placeholder="https://jouwproject.supabase.co/rest/v1/minute_log" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="logApiUrlInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="logApiKeyInput" id="logApiKeyLabel">API-sleutel</label>
+            <div class="field-row">
+              <input id="logApiKeyInput" name="x-log-key" type="text" placeholder="sb_publishable_..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="logApiKeyInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="saveLogApiBtn">Instellingen opslaan</button>
+          <button class="secondary" id="testLogApiBtn">Verbinding testen</button>
+        </div>
+        <div class="email-status" id="logApiStatus">&nbsp;</div>
+      </div>
+    </details>
+    <div class="log-toolbar">
+      <span id="logRetainedText">0 minuten bewaard (max 24 uur)</span>
+      <div class="btns">
+        <button class="secondary" id="exportCsvBtn">Exporteer CSV</button>
+        <button class="secondary" id="clearLogBtn">Wis logboek</button>
+      </div>
+    </div>
+    <div class="log-scroll">
+      <table id="logTable">
+        <thead>
+          <tr><th id="colTime">Tijd</th><th id="colTotal">Totaal (W)</th><th>L1 (W)</th><th>L2 (W)</th><th>L3 (W)</th></tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <details class="table-panel email-panel">
+    <summary>
+      <span class="title-row"><span id="changelogTitleText">Versielogboek</span></span>
+      <span class="chevron">&#9656;</span>
+    </summary>
+    <div class="email-body">
+      <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.1</h4><ul>
+          <li>De versie-/update-regel in de footer heeft nu dezelfde opmaak (lettergrootte, kleur, doorzichtigheid) als de copyrightregel erboven.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.0</h4><ul>
+          <li>Nieuwe versienummering vanaf hier: x.y (bijv. 3.0, 3.1 ... 3.9, dan 4.0). De oudere v1-v75-nummers hierboven blijven staan als historisch overzicht.</li>
+          <li>Bij de versie-informatie in de footer staat nu ook het tijdstip (uu:mm:ss) van de laatste update, naast de datum.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v75</h4><ul>
+          <li>Onder de copyrightregel in de footer staat nu de huidige app-versie en de datum van de laatste update.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v74</h4><ul>
+          <li>Sluitkruisje op de fase-meter-popup verwijderd - naast de tegel klikken/tikken sluit de popup al.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v73</h4><ul>
+          <li>Tik op een fase-tegel (L1/L2/L3) op een mobiel/tablet om deze vergroot als popup te bekijken - schaalt automatisch mee met de schermgrootte. Op een computer (muis) blijft dit uit, daar is de tegel al goed leesbaar.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v72</h4><ul>
+          <li>Fase-tegels (L1/L2/L3) blijven op elk schermformaat naast elkaar staan in plaats van onder elkaar - de tekst/cijfers/gauges krimpen automatisch mee zodat alle drie op 1 scherm passen, ook op smallere telefoons.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v71</h4><ul>
+          <li>Het cijfer in de tegel "Totaal vermogen" staat nu gecentreerd in de tegel.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v70</h4><ul>
+          <li>Tegel "Totaal vermogen" verlaagd (minder padding, kleiner cijfer) - zelfde breedte, minder hoog.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v69</h4><ul>
+          <li>De tegel "Kosten" en het paneel "Tarieven" zijn verwijderd: de lokale P1-API levert geen prijs- of tariefgegevens, dus een betrouwbare kostenberekening was met de beschikbare data niet goed mogelijk. Meterstanden (import/export/gas/water) blijven gewoon zichtbaar.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v68</h4><ul>
+          <li>De tegels "Kosten elektriciteit" en "Kosten gas" zijn samengevoegd tot één uitklapbare tegel "Kosten" op dezelfde plek: ingeklapt zie je het totaal, opengeklapt zie je de uitsplitsing elektriciteit/gas.</li>
+          <li>De tegel "Tarieven" (voorheen "Tarieven &amp; kosten", nu alleen "Tarieven") is verplaatst naar direct onder de nieuwe Kosten-tegel, vóór E-mailalerts.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v67</h4><ul>
+          <li>Titels ingekort: "Verzendlimiet EmailJS-account" &rarr; "Verzendlimiet", "Supabase-opslaglimiet" &rarr; "Opslaglimiet".</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v66</h4><ul>
+          <li>Bug verholpen: het vinkje "E-mailalert inschakelen" (bij zowel Overbelasting als Supabase-opslaglimiet) werd alleen opgeslagen via de knop "Instellingen opslaan" - klikte je alleen het vinkje aan/uit, dan stond het na een pagina-ververing altijd weer uit. Het vinkje wordt nu direct opgeslagen zodra je het aan- of uitzet.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v65</h4><ul>
+          <li>Zelfde bugfix als v63, nu ook toegepast op de overige Supabase-oproepen: vergrendelstatus (hangslotjes), e-mailalert-instellingen, IP/interval/overbelastingsgrens/tarieven en de opslaglimiet-check ververten voortaan eerst het sessietoken vóór elke oproep. Hierdoor bleven eerder ingevulde e-mailadressen en vergrendelde velden er soms "leeg"/"open" uitzien terwijl ze gewoon nog in Supabase stonden.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v64</h4><ul>
+          <li>Automatisch uitloggen toegevoegd na 15 minuten zonder muis-/toetsenbord-/aanraakactiviteit, zodat een vergeten open tabblad niet onbeperkt ingelogd blijft.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v63</h4><ul>
+          <li>Bug verholpen: als het inlog-sessietoken verlopen was, mislukte het laden van de Storingslog/Verbruikslog vanuit Supabase stil op de achtergrond - de data leek dan "weg" terwijl deze gewoon nog in de database stond. Beide logs verversen nu eerst het sessietoken vóór het laden, proberen het opnieuw zodra een verlopen sessie ververst is, en tonen voortaan een duidelijke foutmelding i.p.v. stil te falen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v62</h4><ul>
+          <li>Bugfix: Chrome's ingebouwde wachtwoordmanager negeert autocomplete="off" bewust voor inlogvelden. De e-mail-/wachtwoordvelden staan nu bij het laden op readonly (waardoor Chrome ze niet meer vult) en worden pas bewerkbaar zodra je erin klikt.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v61</h4><ul>
+          <li>Het e-mailadres- en wachtwoordveld op het inlogscherm worden niet meer door de browser onthouden/ingevuld: autofill staat uit en de velden worden bij elke paginalading expliciet leeggemaakt.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v60</h4><ul>
+          <li>Zelf een account aanmaken is niet meer mogelijk vanaf het inlogscherm: het aanmaakformulier en de bijbehorende link zijn verwijderd. Registratie staat ook aan de Supabase-kant dicht.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v59</h4><ul>
+          <li>Echte inlog toegevoegd (Supabase Auth): het dashboard is nu niet meer zichtbaar zonder in te loggen. Nieuw account aanmaken vereist een wachtwoord van minimaal 12 tekens met ten minste 1 cijfer en 1 vreemd teken.</li>
+          <li>De databaseregels (RLS) zijn aangescherpt: alle Supabase-tabellen vereisen nu een ingelogde sessie, de publieke sleutel alleen is niet meer genoeg om data te lezen of te schrijven.</li>
+          <li>De e-mailalert-functie vereist nu ook een geldig ingelogd sessie-token (verify_jwt aangezet).</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v58</h4><ul>
+          <li>Bug verholpen: op sommige mobiele browsers werden dropdown-velden (ververssnelheid/overbelastingsgrens) niet volledig breed weergegeven, waardoor het bijbehorende hangslotje niet recht onder de andere hangslotjes stond. De veld-rij gebruikt nu CSS Grid in plaats van flexbox voor een betrouwbaardere uitlijning.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v57</h4><ul>
+          <li>Bug verholpen: de instellingentegel (IP-adres/ververssnelheid/overbelastingsgrens) toonde op mobiel grote lege witruimtes, doordat een vaste breedte (bedoeld voor de rijweergave op desktop) op mobiel als vaste hoogte werd toegepast.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v56</h4><ul>
+          <li>LastPass-icoon (en vergelijkbare wachtwoordmanager-iconen zoals 1Password) op de tekst-/e-mailvelden onderdrukt via data-lpignore/data-1p-ignore-attributen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v55</h4><ul>
+          <li>Autofill uitgezet op tekst-/e-mailvelden (IP-adres, database-URL's/sleutels, e-mailadres-velden), zodat de browser geen eigen invulknop/-vakje meer over het hangslotje toont op mobiel.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v54</h4><ul>
+          <li>Groene (kleur)blokjes rechtsonder in de fase-tegels L1/L2/L3 verwijderd.</li>
+          <li>Mobiele weergave geoptimaliseerd: grotere raakvlakken voor knoppen/hangslotjes, betere lettergroottes op smalle schermen, header en tegels schikken netter, extra breakpoint voor kleine telefoons.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v53</h4><ul>
+          <li>Mixed-content-fix voor publicatie op een https-domein: er is een .htaccess toegevoegd die de dashboardmap voorlopig via gewoon http laat werken (de HomeWizard-meter spreekt lokaal geen https). Het IP-adres-veld accepteert nu ook een volledig http(s)-adres, zodat later een beveiligde verbinding (reverse-proxy/tunnel) ingevuld kan worden zonder codewijziging.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v52</h4><ul>
+          <li>Voorbereid voor publicatie op een eigen domein: de service worker en het manifest verwijzen nu naar "index.html" i.p.v. "p1-dashboard.html", zodat de map direct op de domeinnaam/submap werkt zonder bestandsnaam in de link.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v51</h4><ul>
+          <li>Nieuw onderdeel "Verzendlimiet EmailJS-account" bovenaan de tegel E-mailalerts: toont hoeveel e-mailalerts er deze maand al zijn verzonden en hoeveel er nog over zijn t.o.v. een instelbare maandelijkse limiet (standaard 200, zoals bij het gratis EmailJS-plan). Wordt bijgewerkt bij het laden en na elke verzonden alert of testmail.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v50</h4><ul>
+          <li>Uitleg bij de e-mailalerts ingekort: de zin over de beveiligde server-functie is verwijderd.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v49</h4><ul>
+          <li>Bug verholpen: door een verkeerde volgorde in de code werkte na de vorige update geen enkele knop meer in het dashboard (o.a. testmail-knoppen deden niets). Instellingen worden nu in de juiste volgorde geladen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v48</h4><ul>
+          <li>EmailJS-gegevens (Service ID/Template ID/Public Key) verplaatst naar een Supabase Edge Function als server-side secrets; staan niet meer in de browser, localStorage of Supabase-tabellen.</li>
+          <li>Beide e-mailalert-onderdelen tonen nu alleen nog het e-mailadres-veld.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v47</h4><ul>
+          <li>IP-adres, ververssnelheid, overbelastingsgrens, tarieven en de eigen-database URL/sleutel-waarden worden nu ook naar Supabase geschreven, zodat het dashboard er op elke pc/browser hetzelfde uitziet.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v46</h4><ul>
+          <li>E-mailalert-instellingen (beide onderdelen) worden nu ook naar Supabase geschreven, niet meer alleen naar localStorage.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v45</h4><ul>
+          <li>"E-mailalert inschakelen" vereist nu eerst een succesvolle testmail (voor beide onderdelen). Na het wijzigen van een veld is een nieuwe geslaagde test nodig.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v44</h4><ul>
+          <li>Groene rand onder "Meterstanden" verwijderd (zelfde opmaak als de Storingslog-tegel).</li>
+          <li>"E-mailalert bij overbelasting" hernoemd naar "E-mailalerts", opgesplitst in "Overbelasting" en een nieuw onderdeel "Supabase-opslaglimiet" met eigen EmailJS-instellingen en testmail-knop.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v43</h4><ul>
+          <li>Hangslot-vergrendeling toegevoegd aan de 4 EmailJS-velden (Service ID, Template ID, Public Key, Naar e-mailadres).</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v42</h4><ul>
+          <li>Losse titel "Storingen" in de Stroomstoringen-tegel verwijderd (dubbelop met "Stroomstoringen").</li>
+          <li>Alle titels naar dezelfde opmaak als de "Totaal vermogen"-titel gebracht, behalve de fase-tegels (L1/L2/L3).</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v41</h4><ul>
+          <li>Streepje voor alle titels verwijderd, voor een consistente opmaak.</li>
+          <li>"Meterstanden", "Systeeminformatie" en "Storingen" staan nu als titel in de tegel zelf, niet meer erboven.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v40</h4><ul>
+          <li>Supabase-limietwaarschuwing stuurt nu ook een e-mail, via dezelfde EmailJS-instellingen als de overbelastingsalert (1 mail per keer dat de 80%-grens wordt bereikt).</li>
+          <li>"Storingen"-tegel verplaatst naar direct onder de "Totaal vermogen"-tegel.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v39</h4><ul>
+          <li>Storings- en verbruiksregels die niet direct verstuurd konden worden naar Supabase, worden nu lokaal in een wachtrij bewaard en automatisch opnieuw geprobeerd (bij opstarten, elke 2 minuten en zodra de browser weer online komt).</li>
+          <li>Waarschuwing toegevoegd zodra het Supabase-gebruik richting de gratis limiet van 500 MB gaat.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v38</h4><ul><li>"Stroomstoringen" en de dips/pieken per fase samengevoegd tot één tegel (was nog 2 losse tegels).</li></ul></div>
+        <div class="changelog-entry"><h4>v37</h4><ul><li>"Fase X (LX)"-labels boven de dips/pieken-tegel gecentreerd (stonden links uitgelijnd).</li></ul></div>
+        <div class="changelog-entry"><h4>v36</h4><ul>
+          <li>Bevestigd dat dips/pieken per fase al meegenomen werden in de Storingslog.</li>
+          <li>De drie losse fase-tegels (dips/pieken) samengevoegd tot één tegel, met behoud van dezelfde positie van tekst en cijfers.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v35</h4><ul><li>Versielogboek toegevoegd als uitklapbaar paneel onderaan het dashboard zelf.</li></ul></div>
+        <div class="changelog-entry"><h4>v34</h4><ul><li>CSV-exportknop toegevoegd aan de Storingslog (naast Verbruikslog, die deze al had).</li></ul></div>
+        <div class="changelog-entry"><h4>v33</h4><ul><li>Vergrendelstatus (hangslot) van alle velden wordt nu ook opgeslagen in Supabase (tabel field_locks), zodat dit niet meer alleen van de browser afhankelijk is.</li></ul></div>
+        <div class="changelog-entry"><h4>v32</h4><ul>
+          <li>Tekst "lokaal in deze browser" verwijderd uit de teller-teksten bij Storingslog en Verbruikslog.</li>
+          <li>Dezelfde gele hangslot-vergrendeling als bovenin (IP/interval/grens) toegevoegd aan de API-endpoint-URL en API-sleutel velden in beide database-instellingenpanelen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v31</h4><ul><li>Uitlegtekst onder "Eigen database"-instellingen verwijderd uit beide log-tegels (Storingslog en Verbruikslog).</li></ul></div>
+        <div class="changelog-entry"><h4>v30</h4><ul><li>Titel "Logboek (per minuut)" hernoemd naar "Verbruikslog" (NL/EN/DE).</li></ul></div>
+        <div class="changelog-entry"><h4>v29</h4><ul><li>De losse koptekst boven de tegel ("Storingslog" / "Logboek (per minuut)") verwijderd, omdat de tegel zelf (via het uitklapbare paneel) die titel al toont.</li></ul></div>
+        <div class="changelog-entry"><h4>v28</h4><ul><li>Titel van het uitklapbare "eigen database"-paneel binnen de Storingslog- en Logboek-tegel vervangen: toont nu de tegelnaam zelf in plaats van "Eigen database (optioneel)".</li></ul></div>
+        <div class="changelog-entry"><h4>v27</h4><ul>
+          <li>Database-koppeling omgezet naar Supabase: project en de tabellen fault_log en minute_log aangemaakt (met RLS-policies).</li>
+          <li>Dashboard praat nu rechtstreeks met de Supabase REST-API in plaats van het eigen PHP-endpoint.</li>
+          <li>API-endpoint-URL en API-sleutel staan vooraf ingevuld voor het gekoppelde Supabase-project.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v26</h4><ul><li>De twee losse "eigen database"-instellingentegels samengevoegd met de bijbehorende log-tegel.</li></ul></div>
+        <div class="changelog-entry"><h4>v25</h4><ul><li>Optionele koppeling met een eigen database toegevoegd voor het Logboek (per minuut) via een zelf gehost PHP + MySQL-endpoint.</li></ul></div>
+        <div class="changelog-entry"><h4>v24</h4><ul><li>Optionele koppeling met een eigen database toegevoegd voor de Storingslog via een zelf gehost PHP + MySQL-endpoint.</li></ul></div>
+        <div class="changelog-entry"><h4>v23</h4><ul><li>Nieuwe sectie "Storingslog" toegevoegd: logt tijdstip, type en aantal zodra een storingsteller omhoog gaat tijdens het pollen.</li></ul></div>
+        <div class="changelog-entry"><h4>v22</h4><ul><li>Kleurblokje bij de fase-tegels verkleind naar 2 x 1 cm.</li></ul></div>
+        <div class="changelog-entry"><h4>v21</h4><ul><li>Kleurblokje bij de fase-tegels start nu standaard groen in plaats van grijs.</li></ul></div>
+        <div class="changelog-entry"><h4>v20</h4><ul><li>Kleurblokje bij de fase-tegels verkleind naar 3 x 1 cm.</li></ul></div>
+        <div class="changelog-entry"><h4>v19</h4><ul><li>Nieuw kleurblokje rechtsonder in elke fase-tegel toegevoegd: toont live de actuele gauge-zone (groen/oranje/rood).</li></ul></div>
+        <div class="changelog-entry"><h4>v18</h4><ul><li>Subtitel aangepast naar "Live inzicht in je stroomverbruik".</li></ul></div>
+        <div class="changelog-entry"><h4>v17</h4><ul><li>Gauge-schaal uitgebreid met een vaste groene zone van 0 tot 4,5 kW.</li></ul></div>
+        <div class="changelog-entry"><h4>v16</h4><ul><li>Groene rand toegevoegd onder de titel "Meterstanden".</li></ul></div>
+        <div class="changelog-entry"><h4>v15</h4><ul><li>Fase-tegel krijgt bij overschrijding een dikkere knipperende rode rand in plaats van een volledig rode achtergrond.</li></ul></div>
+        <div class="changelog-entry"><h4>v14</h4><ul><li>De rode/pulserende achtergrondkleuring van de fase-tegels bij overschrijding verwijderd.</li></ul></div>
+        <div class="changelog-entry"><h4>v1 t/m v13</h4><ul><li>Eerste opzet en styling van het dashboard: gauges, meterstanden, logboek, e-mailalert, i18n, PWA, hangslot-vergrendeling, gasverbruik/systeeminformatie, tarieven &amp; kosten, V3L-huisstijl.</li></ul></div>
+      </div>
+    </div>
+  </details>
+
+  <footer id="footerText">
+    &copy; V3L 2026. Alle rechten voorbehouden.
+  </footer>
+  <div class="app-version" id="appVersionText"></div>
+</div>
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+  // Bij elke versie-bump (zie CACHE_NAME in sw.js) ook deze drie waarden bijwerken -
+  // ze worden onder de copyrightregel in de footer getoond.
+  // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
+  // (dus ...3.8, 3.9, 4.0, 4.1, ...).
+  const APP_VERSION = '3.1';
+  const APP_UPDATED = '24-07-2026';
+  const APP_UPDATED_TIME = '11:41:44';
+  const ipInput = $('ipInput');
+  const intervalInput = $('intervalInput');
+  const thresholdInput = $('thresholdInput');
+  const connectBtn = $('connectBtn');
+  const pauseBtn = $('pauseBtn');
+  const statusDot = $('statusDot');
+  const statusText = $('statusText');
+  const errorBanner = $('errorBanner');
+  const exportCsvBtn = $('exportCsvBtn');
+  const exportFaultCsvBtn = $('exportFaultCsvBtn');
+  const clearLogBtn = $('clearLogBtn');
+  const clearFaultLogBtn = $('clearFaultLogBtn');
+  const authWrap = $('authWrap');
+  const dashboardWrap = $('dashboardWrap');
+  const loginForm = $('loginForm');
+  const loginEmail = $('loginEmail');
+  const loginPassword = $('loginPassword');
+  const loginBtn = $('loginBtn');
+  const loginStatus = $('loginStatus');
+  const logoutBtn = $('logoutBtn');
+  const emailjsQuotaInput = $('emailjsQuotaInput');
+  const emailjsQuotaStatusEl = $('emailjsQuotaStatus');
+  const emailEnabled = $('emailEnabled');
+  const emailTo = $('emailTo');
+  const saveEmailBtn = $('saveEmailBtn');
+  const testEmailL1 = $('testEmailL1');
+  const testEmailL2 = $('testEmailL2');
+  const testEmailL3 = $('testEmailL3');
+  const emailStatus = $('emailStatus');
+  const storageEmailEnabled = $('storageEmailEnabled');
+  const storageEmailTo = $('storageEmailTo');
+  const storageSaveEmailBtn = $('storageSaveEmailBtn');
+  const storageTestEmailBtn = $('storageTestEmailBtn');
+  const storageEmailStatusEl = $('storageEmailStatus');
+  const faultApiUrlInput = $('faultApiUrlInput');
+  const faultApiKeyInput = $('faultApiKeyInput');
+  const saveFaultApiBtn = $('saveFaultApiBtn');
+  const testFaultApiBtn = $('testFaultApiBtn');
+  const faultApiStatus = $('faultApiStatus');
+  const logApiUrlInput = $('logApiUrlInput');
+  const logApiKeyInput = $('logApiKeyInput');
+  const saveLogApiBtn = $('saveLogApiBtn');
+  const testLogApiBtn = $('testLogApiBtn');
+  const logApiStatus = $('logApiStatus');
+
+  let OVERLOAD_W = parseInt(localStorage.getItem('p1_overload_w'), 10) || 5500; // vak wordt rood en triggert eventueel een mail vanaf dit wattage per fase
+  const LOG_KEY = 'p1_minute_log';
+  const MAX_LOG_ENTRIES = 1440; // 24 uur bij 1 regel per minuut
+  const FAULT_LOG_KEY = 'p1_fault_log';
+  const MAX_FAULT_LOG_ENTRIES = 500;
+
+  // ============ Analoge gauge (kilometerteller-stijl) ============
+  const GAUGE_MAX = 5750;
+  const GAUGE_START_ANGLE = 225; // kompasgraden (0 = boven, met de klok mee); positie van waarde 0
+  const GAUGE_SWEEP = 270;       // totale boog in graden tot GAUGE_MAX
+  const GAUGE_CX = 110, GAUGE_CY = 112, GAUGE_R = 82;
+  const GAUGE_WARN_START = 4500;   // vaste grens: vanaf hier oranje (schaalt niet mee met de instelbare overload-grens)
+  const GAUGE_DANGER_START = 5000; // vaste grens: vanaf hier dieper rood
+  const NS = 'http://www.w3.org/2000/svg';
+
+  function gaugePoint(r, angleDeg){
+    const rad = angleDeg * Math.PI / 180;
+    return { x: GAUGE_CX + r * Math.sin(rad), y: GAUGE_CY - r * Math.cos(rad) };
+  }
+  function gaugeAngleForValue(v){
+    const clamped = Math.max(0, Math.min(GAUGE_MAX, v || 0));
+    return GAUGE_START_ANGLE + (clamped / GAUGE_MAX) * GAUGE_SWEEP;
+  }
+  function describeGaugeArc(r, a0, a1){
+    const p0 = gaugePoint(r, a0);
+    const p1 = gaugePoint(r, a1);
+    let sweep = a1 - a0;
+    if (sweep < 0) sweep += 360;
+    const largeArc = sweep > 180 ? 1 : 0;
+    return 'M ' + p0.x + ' ' + p0.y + ' A ' + r + ' ' + r + ' 0 ' + largeArc + ' 1 ' + p1.x + ' ' + p1.y;
+  }
+
+  function buildGauge(svg, colorVar){
+    // achtergrondboog (volledige track, 0 tot max)
+    const bg = document.createElementNS(NS, 'path');
+    bg.setAttribute('d', describeGaugeArc(GAUGE_R, GAUGE_START_ANGLE, GAUGE_START_ANGLE + GAUGE_SWEEP));
+    bg.setAttribute('fill', 'none');
+    bg.setAttribute('stroke', 'rgba(255,255,255,0.10)');
+    bg.setAttribute('stroke-width', '10');
+    bg.setAttribute('stroke-linecap', 'butt');
+    svg.appendChild(bg);
+
+    // normale zone (vast: 0 tot 4,5k): groen, strak boven op de grijze achtergrondboog
+    const normal = document.createElementNS(NS, 'path');
+    normal.setAttribute('d', describeGaugeArc(GAUGE_R, GAUGE_START_ANGLE, gaugeAngleForValue(GAUGE_WARN_START)));
+    normal.setAttribute('fill', 'none');
+    normal.setAttribute('stroke', '#22c55e');
+    normal.setAttribute('stroke-width', '10');
+    normal.setAttribute('stroke-linecap', 'butt');
+    normal.setAttribute('opacity', '0.6');
+    svg.appendChild(normal);
+
+    // waarschuwingszone (vast: 4,5k tot 5k): oranje, schaalt niet mee met de instelbare grens
+    const warn = document.createElementNS(NS, 'path');
+    warn.setAttribute('d', describeGaugeArc(GAUGE_R, gaugeAngleForValue(GAUGE_WARN_START), gaugeAngleForValue(GAUGE_DANGER_START)));
+    warn.setAttribute('fill', 'none');
+    warn.setAttribute('stroke', '#f97316');
+    warn.setAttribute('stroke-width', '10');
+    warn.setAttribute('stroke-linecap', 'butt');
+    warn.setAttribute('opacity', '0.6');
+    svg.appendChild(warn);
+
+    // gevarenzone (vast: vanaf 5k): dieper rood, schaalt niet mee met de instelbare grens
+    const danger = document.createElementNS(NS, 'path');
+    danger.setAttribute('d', describeGaugeArc(GAUGE_R, gaugeAngleForValue(GAUGE_DANGER_START), GAUGE_START_ANGLE + GAUGE_SWEEP));
+    danger.setAttribute('fill', 'none');
+    danger.setAttribute('stroke', '#b91c1c');
+    danger.setAttribute('stroke-width', '10');
+    danger.setAttribute('stroke-linecap', 'butt');
+    danger.setAttribute('opacity', '0.7');
+    svg.appendChild(danger);
+
+    // schaalstreepjes + cijfers
+    for (let v = 0; v <= GAUGE_MAX; v += 250) {
+      const isMajor = v % 1000 === 0;
+      const a = gaugeAngleForValue(v);
+      const p1 = gaugePoint(GAUGE_R - (isMajor ? 14 : 8), a);
+      const p2 = gaugePoint(GAUGE_R - 1, a);
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+      line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+      line.setAttribute('stroke', isMajor ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)');
+      line.setAttribute('stroke-width', isMajor ? '2' : '1');
+      svg.appendChild(line);
+      if (isMajor) {
+        const lp = gaugePoint(GAUGE_R - 27, a);
+        const text = document.createElementNS(NS, 'text');
+        text.setAttribute('x', lp.x); text.setAttribute('y', lp.y);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'middle');
+        text.setAttribute('font-size', '11');
+        text.setAttribute('fill', 'rgba(255,255,255,0.55)');
+        text.textContent = v === 0 ? '0' : (v / 1000) + 'k';
+        svg.appendChild(text);
+      }
+    }
+
+    // wijzer + naaf, als aparte <g> zodat we die makkelijk kunnen roteren/animeren
+    const needleGroup = document.createElementNS(NS, 'g');
+    needleGroup.setAttribute('class', 'gauge-needle');
+    const needleLine = document.createElementNS(NS, 'line');
+    needleLine.setAttribute('x1', GAUGE_CX); needleLine.setAttribute('y1', GAUGE_CY);
+    needleLine.setAttribute('x2', GAUGE_CX); needleLine.setAttribute('y2', GAUGE_CY - (GAUGE_R - 22));
+    needleLine.setAttribute('stroke', 'currentColor');
+    needleLine.setAttribute('stroke-width', '3');
+    needleLine.setAttribute('stroke-linecap', 'round');
+    needleGroup.appendChild(needleLine);
+    const hub = document.createElementNS(NS, 'circle');
+    hub.setAttribute('cx', GAUGE_CX); hub.setAttribute('cy', GAUGE_CY); hub.setAttribute('r', '6');
+    hub.setAttribute('fill', 'currentColor');
+    needleGroup.appendChild(hub);
+    needleGroup.style.color = colorVar;
+    needleGroup.style.transform = 'rotate(' + GAUGE_START_ANGLE + 'deg)';
+    svg.appendChild(needleGroup);
+
+    return { needleGroup };
+  }
+
+  function setGaugeNeedle(needleGroup, value){
+    if (!needleGroup) return;
+    needleGroup.style.transform = 'rotate(' + gaugeAngleForValue(value) + 'deg)';
+  }
+
+  const gaugeL1 = buildGauge($('gaugeL1'), 'var(--l1)');
+  const gaugeL2 = buildGauge($('gaugeL2'), 'var(--l2)');
+  const gaugeL3 = buildGauge($('gaugeL3'), 'var(--l3)');
+  const needleL1 = gaugeL1.needleGroup, needleL2 = gaugeL2.needleGroup, needleL3 = gaugeL3.needleGroup;
+
+  // ============ Fase-meter popup (alleen mobiel/tablet) ============
+  // Op smalle schermen staan de drie fase-tegels compact naast elkaar; op een
+  // touch-apparaat kan de gebruiker op een tegel tikken om 'm vergroot te
+  // bekijken. Op een computer (muis als primair aanwijsapparaat) doen we dit
+  // niet - daar is de tegel al goed leesbaar en zou een popup alleen hinderen.
+  const gaugeModal = buildGauge($('gaugeModal'), 'var(--l1)');
+  let modalPhase = null; // 1, 2 of 3 zolang de popup open staat, anders null
+  function isTouchDevice(){
+    return window.matchMedia('(pointer: coarse)').matches;
+  }
+  function openMeterModal(phase){
+    if (!isTouchDevice()) return; // alleen mobiel/tablet, niet op een computer
+    modalPhase = phase;
+    const modalCard = $('meterModalCard');
+    modalCard.classList.remove('l1', 'l2', 'l3');
+    modalCard.classList.add('l' + phase);
+    gaugeModal.needleGroup.style.color = 'var(--l' + phase + ')';
+    $('meterModalLabel').textContent = $('l' + phase + 'Label').textContent;
+    $('meterModalBackdrop').classList.add('open');
+    if (lastData) updateMeterModal(lastData);
+  }
+  function closeMeterModal(){
+    modalPhase = null;
+    $('meterModalBackdrop').classList.remove('open');
+  }
+  function updateMeterModal(d){
+    if (!modalPhase) return;
+    const power = d['active_power_l' + modalPhase + '_w'];
+    updateCard(power, 'modalPower', 'modalSub', 'meterModalCard', true, gaugeModal.needleGroup);
+    const voltage = d['active_voltage_l' + modalPhase + '_v'];
+    $('modalVoltage').textContent = voltage !== undefined ? fmt(voltage, 1) : '—';
+    const current = d['active_current_l' + modalPhase + '_a'];
+    $('modalCurrent').textContent = current !== undefined ? fmt(current, 1) : '—';
+  }
+  $('phaseCardsRow').addEventListener('click', (e) => {
+    const card = e.target.closest('.card');
+    if (!card) return;
+    const m = card.id.match(/^cardL([123])$/);
+    if (m) openMeterModal(Number(m[1]));
+  });
+  $('meterModalBackdrop').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeMeterModal(); // klik op de achtergrond, niet de kaart zelf
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalPhase) closeMeterModal();
+  });
+
+  // ============ Vertalingen ============
+  const LOCALE_MAP = { nl: 'nl-NL', en: 'en-US', de: 'de-DE' };
+  const I18N = {
+    nl: {
+      subtitle: 'Live inzicht in je stroomverbruik',
+      statusInitial: 'Vul een IP-adres in en klik Verbinden',
+      statusPaused: 'Gepauzeerd',
+      statusFailed: 'Verbinding mislukt',
+      statusConnected: (time) => 'Verbonden · laatste update ' + time,
+      ipLabel: 'IP-adres / hostnaam P1 meter',
+      ipPlaceholder: 'bijv. 192.168.1.50',
+      intervalLabel: 'Ververssnelheid (sec)',
+      thresholdField: 'Overbelastingsgrens (W)',
+      connect: 'Verbinden', connected: 'Verbonden', pause: 'Pauze', resume: 'Hervat',
+      totalPower: 'Totaal vermogen',
+      phase: (n) => 'Fase ' + n + ' (L' + n + ')',
+      feedIn: 'teruglevering',
+      emailTitle: 'E-mailalerts',
+      overloadEmailSectionTitle: 'Overbelasting',
+      emailHelp: (t) => 'Stuurt automatisch een e-mail zodra een fase de ingestelde grens (<b>' + t + '</b> W) overschrijdt.',
+      storageEmailHelp: 'Stuurt automatisch een e-mail zodra het Supabase-databasegebruik boven de 80% van de gratis limiet (500 MB) komt.',
+      emailEnable: 'E-mailalert inschakelen',
+      serviceId: 'EmailJS Service ID', templateId: 'EmailJS Template ID', publicKey: 'EmailJS Public Key', toEmail: 'Naar e-mailadres',
+      saveSettings: 'Instellingen opslaan',
+      testL: (n) => 'Testmail L' + n,
+      testMail: 'Testmail',
+      settingsSaved: 'Instellingen opgeslagen.',
+      fillAllFields: 'Vul eerst een e-mailadres in.',
+      emailEnableRequiresTest: 'Vul eerst alle velden in en verstuur een succesvolle testmail voordat je de e-mailalert kunt inschakelen.',
+      mailSentFor: (phase, time) => 'Mail verstuurd voor ' + phase + ' (' + time + ').',
+      sendFailed: (msg) => 'Versturen mislukt: ' + msg,
+      emailjsQuotaTitle: 'Verzendlimiet',
+      emailjsQuotaHelp: 'Houdt bij hoeveel e-mailalerts er deze maand al via het EmailJS-account zijn verzonden, zodat je op tijd ziet of je tegen de maandelijkse verzendlimiet aanloopt.',
+      emailjsQuotaLabel: 'Maandelijkse limiet (aantal e-mails)',
+      emailjsQuotaStatus: (used, limit, remaining) => used + ' van ' + limit + ' verzonden deze maand · ' + remaining + ' over',
+      emailjsQuotaStatusWarn: (used, limit, remaining) => 'Let op: ' + used + ' van ' + limit + ' verzonden deze maand · nog maar ' + remaining + ' over',
+      emailjsQuotaStatusExceeded: (used, limit) => 'Limiet bereikt: ' + used + ' van ' + limit + ' verzonden deze maand. Nieuwe alerts kunnen mislukken tot volgende maand.',
+      emailjsQuotaUnknown: 'Verzendaantal deze maand kon niet worden opgehaald.',
+      meterReadings: 'Meterstanden', totalImport: 'Totaal import', totalExport: 'Totaal export', gas: 'Gas', water: 'Water',
+      gasTimestamp: 'Tijdstip gas',
+      systemInfoTitle: 'Systeeminformatie', meterModel: 'Meter-model', dsmrVersion: 'DSMR-versie', uniqueIdElec: 'Uniek ID (elektriciteit)', uniqueIdGas: 'Uniek ID (gas)',
+      faultsTitle: 'Storingen', faultsTotal: 'Stroomstoringen', faultsTotalUnit: 'totaal', longFaults: 'langdurig', sags: 'dips', swells: 'pieken',
+      faultLogTitle: 'Storingslog',
+      faultLogRetained: (n) => n + ' gebeurtenissen gelogd',
+      clearFaultLog: 'Wis storingslog',
+      clearFaultLogConfirm: 'Weet je zeker dat je de storingslog wilt wissen?',
+      colFaultTime: 'Tijdstip', colFaultType: 'Type', colFaultCount: 'Aantal',
+      faultApiTitle: 'Eigen database (optioneel)',
+      faultApiHelp: 'Stuurt elke gelogde storing daarnaast naar je Supabase-database, zodat de log niet alleen lokaal in deze browser staat. De URL is het REST-endpoint van de tabel (bijv. https://jouwproject.supabase.co/rest/v1/fault_log), de sleutel is je Supabase anon/publishable key. Beide staan al vooraf ingevuld voor je gekoppelde project. Laat leeg om alleen lokaal te blijven loggen.',
+      faultApiUrlLabel: 'API-endpoint URL', faultApiKeyLabel: 'API-sleutel',
+      testFaultApi: 'Verbinding testen',
+      faultApiFillUrl: 'Vul eerst een endpoint-URL in.',
+      faultApiTestOk: 'Verbinding gelukt.',
+      faultApiTestFail: (msg) => 'Verbinding mislukt: ' + msg,
+      logApiTitle: 'Eigen database (optioneel)',
+      logApiHelp: 'Stuurt elke logregel (per minuut) daarnaast naar je Supabase-database, zodat het logboek niet alleen lokaal in deze browser staat. De URL is het REST-endpoint van de tabel (bijv. https://jouwproject.supabase.co/rest/v1/minute_log), de sleutel is je Supabase anon/publishable key. Beide staan al vooraf ingevuld voor je gekoppelde project. Laat leeg om alleen lokaal te blijven loggen.',
+      logApiUrlLabel: 'API-endpoint URL', logApiKeyLabel: 'API-sleutel',
+      testLogApi: 'Verbinding testen',
+      logApiFillUrl: 'Vul eerst een endpoint-URL in.',
+      logApiTestOk: 'Verbinding gelukt.',
+      logApiTestFail: (msg) => 'Verbinding mislukt: ' + msg,
+      logTitle: 'Verbruikslog',
+      logRetained: (n) => n + ' minuten bewaard (max 24 uur)',
+      exportCsv: 'Exporteer CSV', clearLog: 'Wis logboek',
+      clearLogConfirm: 'Weet je zeker dat je het logboek wilt wissen?',
+      colTime: 'Tijd', colTotal: 'Totaal (W)',
+      footer: (year) => '&copy; V3L ' + year + '. Alle rechten voorbehouden.',
+      appVersion: (v, d, tm) => 'Versie ' + v + ' &middot; bijgewerkt op ' + d + ' ' + tm,
+      errorTitle: (ip) => 'Kan geen contact maken met ' + ip + '.',
+      errorCheck: 'Controleer het volgende:',
+      errorApi: 'Staat "Lokale API" aan? (HomeWizard app &rarr; Instellingen &rarr; Meters &rarr; jouw P1 meter)',
+      errorIp: 'Klopt het IP-adres/hostnaam? Zie het bij hetzelfde meterscherm in de app, of in je router.',
+      errorNetwork: 'Zit dit apparaat op hetzelfde (Wi-Fi) netwerk als de P1 meter?',
+      errorMixed: 'Blokkeert de browser het verzoek via HTTPS-op-HTTP (mixed content)? Open dit bestand dan niet vanaf een https-pagina.',
+      errorDetail: (msg) => 'Foutdetail: ' + msg,
+      csvHeader: 'Tijd;Totaal_W;L1_W;L2_W;L3_W' + String.fromCharCode(10),
+      faultCsvHeader: 'Tijdstip;Type;Aantal' + String.fromCharCode(10),
+      changelogTitle: 'Versielogboek',
+      storageWarning: (mb, pct) => 'Let op: de Supabase-database gebruikt al ' + mb + ' MB (' + pct + '% van de gratis limiet van 500 MB). Overweeg oude regels op te ruimen of te upgraden.',
+      storageAlertLabel: 'Opslaglimiet',
+      authSubtitle: 'Log in om je dashboard te bekijken',
+      loginTitle: 'Inloggen', signupTitle: 'Account aanmaken',
+      emailLabel: 'E-mailadres', passwordLabel: 'Wachtwoord',
+      loginBtnText: 'Inloggen', signupBtnText: 'Account aanmaken', logoutBtnText: 'Uitloggen',
+      noAccount: 'Nog geen account?', haveAccount: 'Al een account?',
+      pwReqLengthText: 'Minimaal 12 tekens', pwReqDigitText: 'Ten minste 1 cijfer', pwReqSpecialText: 'Ten minste 1 vreemd teken (bijv. ! @ # $ %)',
+      authFillFields: 'Vul e-mailadres en wachtwoord in.',
+      authPasswordRequirements: 'Het wachtwoord voldoet nog niet aan alle eisen hierboven.',
+      authLoginFailed: (msg) => 'Inloggen mislukt: ' + msg,
+      authSignupFailed: (msg) => 'Account aanmaken mislukt: ' + msg,
+      authCheckEmail: 'Account aangemaakt. Controleer je e-mail om te bevestigen, log daarna in.'
+    },
+    en: {
+      subtitle: 'Live view of your power usage per phase',
+      statusInitial: 'Enter an IP address and click Connect',
+      statusPaused: 'Paused',
+      statusFailed: 'Connection failed',
+      statusConnected: (time) => 'Connected · last update ' + time,
+      ipLabel: 'IP address / hostname P1 meter',
+      ipPlaceholder: 'e.g. 192.168.1.50',
+      intervalLabel: 'Refresh rate (sec)',
+      thresholdField: 'Overload threshold (W)',
+      connect: 'Connect', connected: 'Connected', pause: 'Pause', resume: 'Resume',
+      totalPower: 'Total power',
+      phase: (n) => 'Phase ' + n + ' (L' + n + ')',
+      feedIn: 'feed-in',
+      emailTitle: 'Email alerts',
+      overloadEmailSectionTitle: 'Overload',
+      emailHelp: (t) => 'Automatically sends an email once a phase exceeds the configured threshold (<b>' + t + '</b> W).',
+      storageEmailHelp: 'Automatically sends an email once Supabase database usage rises above 80% of the free limit (500 MB).',
+      emailEnable: 'Enable email alert',
+      serviceId: 'EmailJS Service ID', templateId: 'EmailJS Template ID', publicKey: 'EmailJS Public Key', toEmail: 'To email address',
+      saveSettings: 'Save settings',
+      testL: (n) => 'Test email L' + n,
+      testMail: 'Test email',
+      settingsSaved: 'Settings saved.',
+      fillAllFields: 'Please fill in an email address first.',
+      emailEnableRequiresTest: 'Fill in all fields and send a successful test email before you can enable the email alert.',
+      mailSentFor: (phase, time) => 'Email sent for ' + phase + ' (' + time + ').',
+      sendFailed: (msg) => 'Sending failed: ' + msg,
+      emailjsQuotaTitle: 'EmailJS account send limit',
+      emailjsQuotaHelp: 'Tracks how many email alerts have been sent through the EmailJS account this month, so you can see in time if you\'re approaching the monthly send limit.',
+      emailjsQuotaLabel: 'Monthly limit (number of emails)',
+      emailjsQuotaStatus: (used, limit, remaining) => used + ' of ' + limit + ' sent this month · ' + remaining + ' left',
+      emailjsQuotaStatusWarn: (used, limit, remaining) => 'Warning: ' + used + ' of ' + limit + ' sent this month · only ' + remaining + ' left',
+      emailjsQuotaStatusExceeded: (used, limit) => 'Limit reached: ' + used + ' of ' + limit + ' sent this month. New alerts may fail until next month.',
+      emailjsQuotaUnknown: 'Could not retrieve this month\'s send count.',
+      meterReadings: 'Meter readings', totalImport: 'Total import', totalExport: 'Total export', gas: 'Gas', water: 'Water',
+      gasTimestamp: 'Gas timestamp',
+      systemInfoTitle: 'System information', meterModel: 'Meter model', dsmrVersion: 'DSMR version', uniqueIdElec: 'Unique ID (electricity)', uniqueIdGas: 'Unique ID (gas)',
+      faultsTitle: 'Faults', faultsTotal: 'Power failures', faultsTotalUnit: 'total', longFaults: 'long', sags: 'sags', swells: 'swells',
+      faultLogTitle: 'Fault log',
+      faultLogRetained: (n) => n + ' events logged',
+      clearFaultLog: 'Clear fault log',
+      clearFaultLogConfirm: 'Are you sure you want to clear the fault log?',
+      colFaultTime: 'Time', colFaultType: 'Type', colFaultCount: 'Count',
+      faultApiTitle: 'Your own database (optional)',
+      faultApiHelp: 'Also sends every logged fault to your Supabase database, so the log isn\'t only stored locally in this browser. The URL is the table\'s REST endpoint (e.g. https://yourproject.supabase.co/rest/v1/fault_log), the key is your Supabase anon/publishable key. Both are already pre-filled for your connected project. Leave empty to keep logging locally only.',
+      faultApiUrlLabel: 'API endpoint URL', faultApiKeyLabel: 'API key',
+      testFaultApi: 'Test connection',
+      faultApiFillUrl: 'Please fill in an endpoint URL first.',
+      faultApiTestOk: 'Connection successful.',
+      faultApiTestFail: (msg) => 'Connection failed: ' + msg,
+      logApiTitle: 'Your own database (optional)',
+      logApiHelp: 'Also sends every logged (per-minute) row to your Supabase database, so the log isn\'t only stored locally in this browser. The URL is the table\'s REST endpoint (e.g. https://yourproject.supabase.co/rest/v1/minute_log), the key is your Supabase anon/publishable key. Both are already pre-filled for your connected project. Leave empty to keep logging locally only.',
+      logApiUrlLabel: 'API endpoint URL', logApiKeyLabel: 'API key',
+      testLogApi: 'Test connection',
+      logApiFillUrl: 'Please fill in an endpoint URL first.',
+      logApiTestOk: 'Connection successful.',
+      logApiTestFail: (msg) => 'Connection failed: ' + msg,
+      logTitle: 'Consumption log',
+      logRetained: (n) => n + ' minutes stored (max 24 hours)',
+      exportCsv: 'Export CSV', clearLog: 'Clear log',
+      clearLogConfirm: 'Are you sure you want to clear the log?',
+      colTime: 'Time', colTotal: 'Total (W)',
+      footer: (year) => '&copy; V3L ' + year + '. All rights reserved.',
+      appVersion: (v, d, tm) => 'Version ' + v + ' &middot; updated on ' + d + ' ' + tm,
+      errorTitle: (ip) => 'Could not reach ' + ip + '.',
+      errorCheck: 'Please check the following:',
+      errorApi: 'Is "Local API" enabled? (HomeWizard app &rarr; Settings &rarr; Meters &rarr; your P1 meter)',
+      errorIp: 'Is the IP address/hostname correct? Check it on the same meter screen in the app, or in your router.',
+      errorNetwork: 'Is this device on the same (Wi-Fi) network as the P1 meter?',
+      errorMixed: 'Is the browser blocking the request due to HTTPS-over-HTTP (mixed content)? Do not open this file from an https page in that case.',
+      errorDetail: (msg) => 'Error detail: ' + msg,
+      csvHeader: 'Time;Total_W;L1_W;L2_W;L3_W' + String.fromCharCode(10),
+      faultCsvHeader: 'Time;Type;Count' + String.fromCharCode(10),
+      changelogTitle: 'Version log',
+      storageWarning: (mb, pct) => 'Note: the Supabase database is already using ' + mb + ' MB (' + pct + '% of the 500 MB free limit). Consider cleaning up old rows or upgrading.',
+      storageAlertLabel: 'Supabase storage limit',
+      authSubtitle: 'Log in to view your dashboard',
+      loginTitle: 'Log in', signupTitle: 'Create account',
+      emailLabel: 'Email address', passwordLabel: 'Password',
+      loginBtnText: 'Log in', signupBtnText: 'Create account', logoutBtnText: 'Log out',
+      noAccount: "Don't have an account yet?", haveAccount: 'Already have an account?',
+      pwReqLengthText: 'At least 12 characters', pwReqDigitText: 'At least 1 digit', pwReqSpecialText: 'At least 1 special character (e.g. ! @ # $ %)',
+      authFillFields: 'Please fill in your email address and password.',
+      authPasswordRequirements: 'The password does not yet meet all requirements above.',
+      authLoginFailed: (msg) => 'Login failed: ' + msg,
+      authSignupFailed: (msg) => 'Account creation failed: ' + msg,
+      authCheckEmail: 'Account created. Check your email to confirm, then log in.'
+    },
+    de: {
+      subtitle: 'Live-Übersicht deines Stromverbrauchs pro Phase',
+      statusInitial: 'Gib eine IP-Adresse ein und klicke auf Verbinden',
+      statusPaused: 'Pausiert',
+      statusFailed: 'Verbindung fehlgeschlagen',
+      statusConnected: (time) => 'Verbunden · letztes Update ' + time,
+      ipLabel: 'IP-Adresse / Hostname P1-Zähler',
+      ipPlaceholder: 'z.B. 192.168.1.50',
+      intervalLabel: 'Aktualisierungsrate (Sek.)',
+      thresholdField: 'Überlastungsgrenze (W)',
+      connect: 'Verbinden', connected: 'Verbunden', pause: 'Pause', resume: 'Fortsetzen',
+      totalPower: 'Gesamtleistung',
+      phase: (n) => 'Phase ' + n + ' (L' + n + ')',
+      feedIn: 'Einspeisung',
+      emailTitle: 'E-Mail-Alarme',
+      overloadEmailSectionTitle: 'Überlastung',
+      emailHelp: (t) => 'Sendet automatisch eine E-Mail, sobald eine Phase den eingestellten Grenzwert (<b>' + t + '</b> W) überschreitet.',
+      storageEmailHelp: 'Sendet automatisch eine E-Mail, sobald die Supabase-Datenbanknutzung über 80% des kostenlosen Limits (500 MB) steigt.',
+      emailEnable: 'E-Mail-Alarm aktivieren',
+      serviceId: 'EmailJS Service-ID', templateId: 'EmailJS Vorlagen-ID', publicKey: 'EmailJS Public Key', toEmail: 'An E-Mail-Adresse',
+      saveSettings: 'Einstellungen speichern',
+      testL: (n) => 'Test-Mail L' + n,
+      testMail: 'Test-Mail',
+      settingsSaved: 'Einstellungen gespeichert.',
+      fillAllFields: 'Bitte zuerst eine E-Mail-Adresse eingeben.',
+      emailEnableRequiresTest: 'Fülle zuerst alle Felder aus und sende eine erfolgreiche Test-E-Mail, bevor du den E-Mail-Alarm aktivieren kannst.',
+      mailSentFor: (phase, time) => 'Mail gesendet für ' + phase + ' (' + time + ').',
+      sendFailed: (msg) => 'Senden fehlgeschlagen: ' + msg,
+      emailjsQuotaTitle: 'Sendelimit EmailJS-Konto',
+      emailjsQuotaHelp: 'Verfolgt, wie viele E-Mail-Alarme diesen Monat bereits über das EmailJS-Konto verschickt wurden, damit du rechtzeitig siehst, ob du an das monatliche Sendelimit stößt.',
+      emailjsQuotaLabel: 'Monatliches Limit (Anzahl E-Mails)',
+      emailjsQuotaStatus: (used, limit, remaining) => used + ' von ' + limit + ' diesen Monat gesendet · ' + remaining + ' übrig',
+      emailjsQuotaStatusWarn: (used, limit, remaining) => 'Achtung: ' + used + ' von ' + limit + ' diesen Monat gesendet · nur noch ' + remaining + ' übrig',
+      emailjsQuotaStatusExceeded: (used, limit) => 'Limit erreicht: ' + used + ' von ' + limit + ' diesen Monat gesendet. Neue Alarme können bis nächsten Monat fehlschlagen.',
+      emailjsQuotaUnknown: 'Sendeanzahl für diesen Monat konnte nicht abgerufen werden.',
+      meterReadings: 'Zählerstände', totalImport: 'Gesamtbezug', totalExport: 'Gesamteinspeisung', gas: 'Gas', water: 'Wasser',
+      gasTimestamp: 'Gas-Zeitstempel',
+      systemInfoTitle: 'Systeminformationen', meterModel: 'Zählermodell', dsmrVersion: 'DSMR-Version', uniqueIdElec: 'Eindeutige ID (Strom)', uniqueIdGas: 'Eindeutige ID (Gas)',
+      faultsTitle: 'Störungen', faultsTotal: 'Stromausfälle', faultsTotalUnit: 'gesamt', longFaults: 'langwierig', sags: 'Spannungseinbrüche', swells: 'Spannungsspitzen',
+      faultLogTitle: 'Störungsprotokoll',
+      faultLogRetained: (n) => n + ' Ereignisse protokolliert',
+      clearFaultLog: 'Störungsprotokoll löschen',
+      clearFaultLogConfirm: 'Möchtest du das Störungsprotokoll wirklich löschen?',
+      colFaultTime: 'Zeitpunkt', colFaultType: 'Typ', colFaultCount: 'Anzahl',
+      faultApiTitle: 'Eigene Datenbank (optional)',
+      faultApiHelp: 'Sendet jede protokollierte Störung zusätzlich an deine Supabase-Datenbank, damit das Protokoll nicht nur lokal in diesem Browser gespeichert wird. Die URL ist der REST-Endpunkt der Tabelle (z.B. https://deinprojekt.supabase.co/rest/v1/fault_log), der Schlüssel ist dein Supabase anon/publishable key. Beide sind für dein verbundenes Projekt bereits vorausgefüllt. Leer lassen, um nur lokal zu protokollieren.',
+      faultApiUrlLabel: 'API-Endpunkt-URL', faultApiKeyLabel: 'API-Schlüssel',
+      testFaultApi: 'Verbindung testen',
+      faultApiFillUrl: 'Bitte zuerst eine Endpunkt-URL eintragen.',
+      faultApiTestOk: 'Verbindung erfolgreich.',
+      faultApiTestFail: (msg) => 'Verbindung fehlgeschlagen: ' + msg,
+      logApiTitle: 'Eigene Datenbank (optional)',
+      logApiHelp: 'Sendet jede protokollierte Zeile (pro Minute) zusätzlich an deine Supabase-Datenbank, damit das Protokoll nicht nur lokal in diesem Browser gespeichert wird. Die URL ist der REST-Endpunkt der Tabelle (z.B. https://deinprojekt.supabase.co/rest/v1/minute_log), der Schlüssel ist dein Supabase anon/publishable key. Beide sind für dein verbundenes Projekt bereits vorausgefüllt. Leer lassen, um nur lokal zu protokollieren.',
+      logApiUrlLabel: 'API-Endpunkt-URL', logApiKeyLabel: 'API-Schlüssel',
+      testLogApi: 'Verbindung testen',
+      logApiFillUrl: 'Bitte zuerst eine Endpunkt-URL eintragen.',
+      logApiTestOk: 'Verbindung erfolgreich.',
+      logApiTestFail: (msg) => 'Verbindung fehlgeschlagen: ' + msg,
+      logTitle: 'Verbrauchsprotokoll',
+      logRetained: (n) => n + ' Minuten gespeichert (max. 24 Stunden)',
+      exportCsv: 'CSV exportieren', clearLog: 'Protokoll löschen',
+      clearLogConfirm: 'Möchtest du das Protokoll wirklich löschen?',
+      colTime: 'Zeit', colTotal: 'Gesamt (W)',
+      footer: (year) => '&copy; V3L ' + year + '. Alle Rechte vorbehalten.',
+      appVersion: (v, d, tm) => 'Version ' + v + ' &middot; aktualisiert am ' + d + ' ' + tm,
+      errorTitle: (ip) => 'Keine Verbindung zu ' + ip + ' möglich.',
+      errorCheck: 'Bitte Folgendes prüfen:',
+      errorApi: 'Ist "Lokale API" aktiviert? (HomeWizard-App &rarr; Einstellungen &rarr; Zähler &rarr; dein P1-Zähler)',
+      errorIp: 'Stimmt die IP-Adresse/der Hostname? Prüfe dies auf demselben Zählerbildschirm in der App oder in deinem Router.',
+      errorNetwork: 'Befindet sich dieses Gerät im selben (WLAN-)Netzwerk wie der P1-Zähler?',
+      errorMixed: 'Blockiert der Browser die Anfrage wegen HTTPS-über-HTTP (Mixed Content)? Öffne diese Datei in diesem Fall nicht von einer https-Seite aus.',
+      errorDetail: (msg) => 'Fehlerdetail: ' + msg,
+      csvHeader: 'Zeit;Gesamt_W;L1_W;L2_W;L3_W' + String.fromCharCode(10),
+      faultCsvHeader: 'Zeitpunkt;Typ;Anzahl' + String.fromCharCode(10),
+      changelogTitle: 'Versionsprotokoll',
+      storageWarning: (mb, pct) => 'Hinweis: Die Supabase-Datenbank nutzt bereits ' + mb + ' MB (' + pct + '% des kostenlosen Limits von 500 MB). Erwäge, alte Zeilen zu löschen oder ein Upgrade durchzuführen.',
+      storageAlertLabel: 'Supabase-Speicherlimit',
+      authSubtitle: 'Melde dich an, um dein Dashboard zu sehen',
+      loginTitle: 'Anmelden', signupTitle: 'Konto erstellen',
+      emailLabel: 'E-Mail-Adresse', passwordLabel: 'Passwort',
+      loginBtnText: 'Anmelden', signupBtnText: 'Konto erstellen', logoutBtnText: 'Abmelden',
+      noAccount: 'Noch kein Konto?', haveAccount: 'Schon ein Konto?',
+      pwReqLengthText: 'Mindestens 12 Zeichen', pwReqDigitText: 'Mindestens 1 Ziffer', pwReqSpecialText: 'Mindestens 1 Sonderzeichen (z. B. ! @ # $ %)',
+      authFillFields: 'Bitte E-Mail-Adresse und Passwort eingeben.',
+      authPasswordRequirements: 'Das Passwort erfüllt noch nicht alle obigen Anforderungen.',
+      authLoginFailed: (msg) => 'Anmeldung fehlgeschlagen: ' + msg,
+      authSignupFailed: (msg) => 'Konto erstellen fehlgeschlagen: ' + msg,
+      authCheckEmail: 'Konto erstellt. Bestätige per E-Mail, melde dich danach an.'
+    }
+  };
+
+  let currentLang = localStorage.getItem('p1_lang') || 'nl';
+  let lastData = null;
+  let connState = null; // 'ok' | 'err' | 'paused' | null
+  let lastErrorIp = '';
+  let lastErrorDetail = '';
+
+  function t(){ return I18N[currentLang]; }
+
+  let timer = null;
+  let paused = false;
+
+  // helper: kies de dichtstbijzijnde optie in een <select> voor een gegeven getal
+  function selectNearest(selectEl, value){
+    const options = Array.from(selectEl.options).map((o) => parseFloat(o.value));
+    if (!options.length) return value;
+    let nearest = options[0];
+    let bestDiff = Math.abs(value - nearest);
+    for (const opt of options) {
+      const diff = Math.abs(value - opt);
+      if (diff < bestDiff) { bestDiff = diff; nearest = opt; }
+    }
+    selectEl.value = String(nearest);
+    return nearest;
+  }
+
+  // Supabase-project dat voor dit dashboard is aangemaakt (storingslog, verbruikslog,
+  // e-mailalerts, de vergrendelstatus van velden, en de overige instellingen).
+  // Vast, niet gebonden aan de optionele per-tegel database-instellingen hieronder.
+  // Staat hier (vóór "restore saved settings") omdat die restore-code de functies
+  // hieronder al direct aanroept - anders ontstaat een "before initialization"-fout.
+  const DEFAULT_SUPABASE_URL = 'https://sdkzzjrtmtzfvjrgpqbm.supabase.co';
+  const DEFAULT_SUPABASE_KEY = 'sb_publishable_voz3n3LyggJR6maHgsER9Q_7oNJW39W';
+  const FIELD_LOCKS_URL = DEFAULT_SUPABASE_URL + '/rest/v1/field_locks';
+  const EMAIL_SETTINGS_URL = DEFAULT_SUPABASE_URL + '/rest/v1/email_settings';
+  const APP_SETTINGS_URL = DEFAULT_SUPABASE_URL + '/rest/v1/app_settings';
+  const EMAIL_SEND_LOG_URL = DEFAULT_SUPABASE_URL + '/rest/v1/email_send_log';
+
+  // --- Inloggen (Supabase Auth) ---------------------------------------------
+  // Sinds deze versie vereist elke tabel in Supabase een geldig ingelogd
+  // sessie-token (rol 'authenticated'); de publieke/anon-sleutel alleen is niet
+  // meer genoeg. Dit blok beheert de sessie (opslag, verversen, uitloggen) en
+  // wordt heel vroeg gedeclareerd zodat onderstaande functies 'm veilig kunnen
+  // gebruiken (zelfde reden als bij de Supabase-consts hierboven).
+  const AUTH_STORAGE_KEY = 'p1_auth_session';
+  let authAccessToken = null;
+  let authRefreshToken = null;
+  let authTokenExpiresAt = 0;
+
+  function persistAuthSession(session){
+    authAccessToken = session.access_token;
+    authRefreshToken = session.refresh_token;
+    authTokenExpiresAt = Date.now() + (session.expires_in * 1000);
+    try {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+        access_token: authAccessToken, refresh_token: authRefreshToken, expires_at: authTokenExpiresAt
+      }));
+    } catch(e){ /* privénavigatie o.i.d.: sessie blijft in het geheugen werken tot herladen */ }
+  }
+  function restoreAuthSessionFromStorage(){
+    try {
+      const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      authAccessToken = s.access_token;
+      authRefreshToken = s.refresh_token;
+      authTokenExpiresAt = s.expires_at;
+      return s;
+    } catch(e){ return null; }
+  }
+  function clearAuthSession(){
+    authAccessToken = null; authRefreshToken = null; authTokenExpiresAt = 0;
+    try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch(e){}
+  }
+
+  // Kiest voor oproepen naar ons EIGEN Supabase-project het ingelogde
+  // sessie-token; voor een eventueel ander (zelf ingevuld) Supabase-project
+  // blijft de daar ingevulde sleutel gewoon gebruikt worden.
+  function bearerFor(url, fallbackKey){
+    if (typeof url === 'string' && url.indexOf(DEFAULT_SUPABASE_URL) === 0 && authAccessToken) return authAccessToken;
+    return fallbackKey;
+  }
+
+  async function authRequest(path, body){
+    const res = await fetch(DEFAULT_SUPABASE_URL + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': DEFAULT_SUPABASE_KEY },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error_description || data.msg || data.error || ('HTTP ' + res.status));
+    return data;
+  }
+  function authSignIn(email, password){
+    return authRequest('/auth/v1/token?grant_type=password', { email: email, password: password });
+  }
+  async function authRefresh(){
+    if (!authRefreshToken) throw new Error('Geen refresh-token beschikbaar');
+    const data = await authRequest('/auth/v1/token?grant_type=refresh_token', { refresh_token: authRefreshToken });
+    persistAuthSession(data);
+    return data;
+  }
+  function authSignOut(){
+    if (authAccessToken) {
+      fetch(DEFAULT_SUPABASE_URL + '/auth/v1/logout', {
+        method: 'POST',
+        headers: { 'apikey': DEFAULT_SUPABASE_KEY, 'Authorization': 'Bearer ' + authAccessToken }
+      }).catch(() => {});
+    }
+    clearAuthSession();
+    location.reload();
+  }
+
+  // Zorgt dat er, vóór een API-oproep naar ons eigen project, een nog-geldig
+  // access-token in het geheugen staat (ververst 'm zo nodig via het
+  // refresh-token). Geeft true terug als er een bruikbaar token is.
+  async function ensureValidSession(){
+    if (authAccessToken && Date.now() < authTokenExpiresAt - 60000) return true;
+    if (authRefreshToken) {
+      try { await authRefresh(); return true; } catch(e){ clearAuthSession(); return false; }
+    }
+    return false;
+  }
+
+  // Automatisch uitloggen na 15 minuten inactiviteit (geen muis/toetsenbord/
+  // touch-gebruik), zodat een vergeten open tabblad niet eindeloos ingelogd
+  // blijft. Elke gebruikersactiviteit zet de klok weer op 0.
+  const INACTIVITY_LIMIT_MS = 15 * 60 * 1000;
+  const INACTIVITY_EVENTS = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+  let inactivityTimer = null;
+  function resetInactivityTimer(){
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => { authSignOut(); }, INACTIVITY_LIMIT_MS);
+  }
+  function startInactivityWatcher(){
+    INACTIVITY_EVENTS.forEach((evt) => document.addEventListener(evt, resetInactivityTimer, { passive: true }));
+    resetInactivityTimer();
+  }
+  function stopInactivityWatcher(){
+    if (inactivityTimer) clearTimeout(inactivityTimer);
+    inactivityTimer = null;
+    INACTIVITY_EVENTS.forEach((evt) => document.removeEventListener(evt, resetInactivityTimer));
+  }
+
+  function showDashboard(){ authWrap.style.display = 'none'; dashboardWrap.style.display = 'block'; startInactivityWatcher(); }
+  function showAuthScreen(){ authWrap.style.display = 'block'; dashboardWrap.style.display = 'none'; stopInactivityWatcher(); }
+
+  // E-mailadres/wachtwoord moeten bij elke paginalading leeg beginnen, ook als
+  // de browser ze zelf zou willen invullen (autofill) - nooit onthouden vanuit
+  // een vorig bezoek.
+  loginEmail.value = '';
+  loginPassword.value = '';
+  setTimeout(() => { loginEmail.value = ''; loginPassword.value = ''; }, 0);
+
+  // Bij opstarten: is er een (mogelijk nog geldige) sessie opgeslagen? Toon dan
+  // alvast het dashboard (voorkomt geflikker) en ververs zo nodig op de
+  // achtergrond; mislukt dat, dan alsnog terug naar het inlogscherm.
+  restoreAuthSessionFromStorage();
+  if (authAccessToken && Date.now() < authTokenExpiresAt) {
+    showDashboard();
+  } else if (authRefreshToken) {
+    showDashboard();
+    ensureValidSession().then((ok) => {
+      if (!ok) { showAuthScreen(); }
+      else { loadRemoteMinuteLog(); loadRemoteFaultLog(); }
+    });
+  } else {
+    showAuthScreen();
+  }
+
+  function setLoginStatus(ok, text){
+    loginStatus.textContent = text;
+    loginStatus.className = 'email-status ' + (ok === true ? 'ok' : ok === false ? 'err' : '');
+  }
+
+  loginBtn.addEventListener('click', async () => {
+    const email = loginEmail.value.trim();
+    const pw = loginPassword.value;
+    if (!email || !pw) { setLoginStatus(false, t().authFillFields); return; }
+    setLoginStatus(null, '…');
+    try {
+      const session = await authSignIn(email, pw);
+      persistAuthSession(session);
+      location.reload();
+    } catch (err) {
+      setLoginStatus(false, t().authLoginFailed(err.message || err));
+    }
+  });
+  loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') loginBtn.click(); });
+
+  logoutBtn.addEventListener('click', () => { authSignOut(); });
+
+  // restore saved settings
+  ipInput.value = localStorage.getItem('p1_ip') || '192.168.178.161';
+  const savedInterval = parseInt(localStorage.getItem('p1_interval'), 10) || 2;
+  selectNearest(intervalInput, savedInterval);
+  OVERLOAD_W = selectNearest(thresholdInput, OVERLOAD_W);
+  setAppSetting('p1_overload_w', String(OVERLOAD_W));
+
+  function applyThreshold(){
+    let v = parseInt(thresholdInput.value, 10);
+    if (isNaN(v)) v = 5500;
+    v = Math.max(100, Math.min(GAUGE_MAX, v));
+    OVERLOAD_W = v;
+    setAppSetting('p1_overload_w', String(v));
+    applyLanguage(currentLang); // ververst o.a. de grens-waarde in de e-mailhelptekst
+    if (lastData) renderData(lastData); // herbereken overload-kleuring met de nieuwe grens
+  }
+  thresholdInput.addEventListener('change', applyThreshold);
+
+  // --- Generieke wachtrij: garandeert dat ALLE logregels uiteindelijk in de ---
+  // database komen, ook als een verzending (bv. door een tijdelijke
+  // verbindingsonderbreking) mislukt. Mislukte regels worden lokaal bewaard en
+  // bij een volgende gelegenheid opnieuw geprobeerd, in plaats van verloren te gaan.
+  const FAULT_PENDING_KEY = 'p1_fault_pending';
+  const MINUTE_PENDING_KEY = 'p1_minute_pending';
+  function loadPendingQueue(key){
+    try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch(e){ return []; }
+  }
+  function savePendingQueue(key, arr){
+    try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e){ /* storage vol, negeren */ }
+  }
+  function postToSupabase(url, apiKeyValue, body){
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': apiKeyValue,
+        'Authorization': 'Bearer ' + bearerFor(url, apiKeyValue),
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(body)
+    }).then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); });
+  }
+  function pushWithQueue(url, apiKeyValue, body, queueKey){
+    return postToSupabase(url, apiKeyValue, body).catch((e) => {
+      const q = loadPendingQueue(queueKey);
+      q.push({ url: url, apiKey: apiKeyValue, body: body });
+      savePendingQueue(queueKey, q);
+      console.warn('Kon regel niet direct versturen, toegevoegd aan wachtrij (' + queueKey + '):', e);
+    });
+  }
+  function flushPendingQueue(queueKey){
+    const q = loadPendingQueue(queueKey);
+    if (!q.length) return;
+    const remaining = [];
+    let i = 0;
+    function tryNext(){
+      if (i >= q.length) { savePendingQueue(queueKey, remaining); return; }
+      const item = q[i++];
+      postToSupabase(item.url, item.apiKey, item.body).then(tryNext).catch(() => {
+        remaining.push(item);
+        tryNext();
+      });
+    }
+    tryNext();
+  }
+
+  // --- Waarschuwing als de (gratis) Supabase-limiet in zicht komt ---
+  // Gratis Supabase-projecten hebben een databaselimiet van 500 MB; dit haalt via
+  // een RPC-functie (get_storage_stats) het huidige gebruik op en toont een
+  // waarschuwing zodra dat richting de limiet gaat.
+  const SUPABASE_FREE_LIMIT_BYTES = 500 * 1024 * 1024;
+  async function checkSupabaseUsage(){
+    // Ververs eerst het sessietoken zo nodig - anders mislukt deze oproep
+    // stil (401) zodra het token verlopen is, en blijft de rest van de
+    // instellingen (locks, e-mailadressen, IP, enz.) hieronder ook hangen
+    // op een verouderde/lege waarde.
+    await ensureValidSession();
+    fetch(DEFAULT_SUPABASE_URL + '/rest/v1/rpc/get_storage_stats', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': DEFAULT_SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY)
+      },
+      body: '{}'
+    })
+      .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then((stats) => {
+        const bytes = stats.db_size_bytes || 0;
+        const pct = bytes / SUPABASE_FREE_LIMIT_BYTES;
+        const warningEl = $('storageWarning');
+        const textEl = $('storageWarningText');
+        if (!warningEl || !textEl) return;
+        if (pct >= 0.8) {
+          const usedMb = Math.round(bytes / (1024 * 1024));
+          warningEl.style.display = '';
+          textEl.textContent = t().storageWarning(usedMb, Math.round(pct * 100));
+          if (storageEmailEnabled.checked && !storageAlertSent) {
+            storageAlertSent = true;
+            sendStorageAlertEmail(usedMb, Math.round(SUPABASE_FREE_LIMIT_BYTES / (1024 * 1024)));
+          }
+        } else {
+          warningEl.style.display = 'none';
+          storageAlertSent = false;
+        }
+      })
+      .catch((e) => { console.warn('Kon Supabase-gebruik niet ophalen:', e); });
+  }
+  checkSupabaseUsage();
+  setInterval(checkSupabaseUsage, 6 * 60 * 60 * 1000); // elke 6 uur opnieuw checken
+
+  // Openstaande, eerder mislukte logregels alsnog proberen te versturen: bij opstarten,
+  // periodiek, en zodra de browser weer online komt.
+  function flushAllPendingQueues(){
+    flushPendingQueue(FAULT_PENDING_KEY);
+    flushPendingQueue(MINUTE_PENDING_KEY);
+  }
+  flushAllPendingQueues();
+  setInterval(flushAllPendingQueues, 2 * 60 * 1000); // elke 2 minuten opnieuw proberen
+  window.addEventListener('online', flushAllPendingQueues);
+
+  // Vergrendelstatus wegschrijven/ophalen bij Supabase, zodat deze niet afhankelijk
+  // is van de browser (localStorage blijft als snelle/offline fallback bestaan).
+  async function pushLockStateRemote(fieldId, locked){
+    await ensureValidSession();
+    fetch(FIELD_LOCKS_URL + '?on_conflict=field_id', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': DEFAULT_SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY),
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ field_id: fieldId, locked: locked, updated_at: new Date().toISOString() })
+    }).catch((e) => { console.warn('Kon vergrendelstatus niet naar Supabase sturen:', e); });
+  }
+
+  async function loadLockStatesRemote(){
+    await ensureValidSession();
+    return fetch(FIELD_LOCKS_URL + '?select=field_id,locked', {
+      headers: { 'apikey': DEFAULT_SUPABASE_KEY, 'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY) }
+    })
+      .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .catch((e) => { console.warn('Kon vergrendelstatus niet laden van Supabase:', e); return null; });
+  }
+
+  // E-mailalert-instellingen (beide onderdelen) wegschrijven/ophalen bij Supabase,
+  // om dezelfde reden als de vergrendelstatus: niet afhankelijk van de browser.
+  // localStorage blijft als snelle/offline fallback bestaan.
+  async function pushEmailSettingRemote(fieldId, value){
+    await ensureValidSession();
+    fetch(EMAIL_SETTINGS_URL + '?on_conflict=field_id', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': DEFAULT_SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY),
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ field_id: fieldId, value: String(value), updated_at: new Date().toISOString() })
+    }).catch((e) => { console.warn('Kon e-mailinstelling niet naar Supabase sturen:', e); });
+  }
+
+  async function loadEmailSettingsRemote(){
+    await ensureValidSession();
+    return fetch(EMAIL_SETTINGS_URL + '?select=field_id,value', {
+      headers: { 'apikey': DEFAULT_SUPABASE_KEY, 'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY) }
+    })
+      .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .catch((e) => { console.warn('Kon e-mailinstellingen niet laden van Supabase:', e); return null; });
+  }
+
+  // Schrijft een e-mailinstelling zowel naar localStorage (snelle fallback) als
+  // naar Supabase (leidend), zodat de instellingen niet verloren gaan bij het
+  // wisselen van browser/apparaat of het legen van de browseropslag.
+  function setEmailSetting(key, value){
+    localStorage.setItem(key, value);
+    pushEmailSettingRemote(key, value);
+  }
+
+  // Zelfde soort opslag als hierboven, maar dan voor de overige dashboard-
+  // instellingen (IP-adres, ververssnelheid, overbelastingsgrens, tarieven, en de
+  // eigen-database URL/sleutel-waarden voor Storingslog/Verbruikslog), zodat het
+  // dashboard er op elke pc/browser hetzelfde uitziet.
+  async function pushAppSettingRemote(fieldId, value){
+    await ensureValidSession();
+    fetch(APP_SETTINGS_URL + '?on_conflict=field_id', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': DEFAULT_SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY),
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ field_id: fieldId, value: String(value), updated_at: new Date().toISOString() })
+    }).catch((e) => { console.warn('Kon instelling niet naar Supabase sturen:', e); });
+  }
+
+  async function loadAppSettingsRemote(){
+    await ensureValidSession();
+    return fetch(APP_SETTINGS_URL + '?select=field_id,value', {
+      headers: { 'apikey': DEFAULT_SUPABASE_KEY, 'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY) }
+    })
+      .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .catch((e) => { console.warn('Kon instellingen niet laden van Supabase:', e); return null; });
+  }
+
+  function setAppSetting(key, value){
+    localStorage.setItem(key, value);
+    pushAppSettingRemote(key, value);
+  }
+
+  // veld-vergrendeling: voorkomt per ongeluk wijzigen van IP, interval, grens, enz.
+  document.querySelectorAll('.lock-btn').forEach((btn) => {
+    const targetEl = $(btn.dataset.target);
+    if (!targetEl) return;
+    const storeKey = 'p1_lock_' + btn.dataset.target;
+    const locked = localStorage.getItem(storeKey) === '1';
+    if (locked) {
+      btn.classList.add('locked');
+      targetEl.disabled = true;
+    }
+    btn.addEventListener('click', () => {
+      const nowLocked = !btn.classList.contains('locked');
+      btn.classList.toggle('locked', nowLocked);
+      targetEl.disabled = nowLocked;
+      localStorage.setItem(storeKey, nowLocked ? '1' : '0');
+      pushLockStateRemote(btn.dataset.target, nowLocked);
+    });
+  });
+
+  // Bij opstarten: haal de vergrendelstatus op uit Supabase (leidend) en werk de
+  // knoppen/velden en localStorage bij zodra dat antwoord binnen is.
+  loadLockStatesRemote().then((rows) => {
+    if (!rows) return;
+    rows.forEach((r) => {
+      const btn = document.querySelector('.lock-btn[data-target="' + r.field_id + '"]');
+      const targetEl = $(r.field_id);
+      if (!btn || !targetEl) return;
+      btn.classList.toggle('locked', !!r.locked);
+      targetEl.disabled = !!r.locked;
+      localStorage.setItem('p1_lock_' + r.field_id, r.locked ? '1' : '0');
+    });
+  });
+
+  // --- E-mailalert instellingen (opgeslagen in localStorage) ---
+  // De EmailJS Service ID/Template ID/Public Key staan niet meer hier, maar als
+  // server-side secrets bij de Supabase Edge Function "send-alert-email".
+  emailEnabled.checked = localStorage.getItem('p1_email_enabled') === '1';
+  emailTo.value = localStorage.getItem('p1_email_to') || '';
+
+  // --- E-mailalert instellingen voor de Supabase-opslaglimiet ---
+  storageEmailEnabled.checked = localStorage.getItem('p1_storage_email_enabled') === '1';
+  storageEmailTo.value = localStorage.getItem('p1_storage_email_to') || '';
+
+  // --- Verzendlimiet EmailJS-account: telt hoeveel alerts (beide onderdelen samen)
+  // er deze kalendermaand al via de Edge Function/EmailJS zijn verstuurd, en
+  // vergelijkt dat met de (instelbare) maandelijkse limiet van het EmailJS-account
+  // (gratis EmailJS-plannen staan doorgaans 200 e-mails/maand toe). ---
+  emailjsQuotaInput.value = localStorage.getItem('p1_emailjs_quota') || '200';
+  let emailjsQuotaUsed = null; // null = nog niet (succesvol) opgehaald
+
+  function renderEmailjsQuotaStatus(){
+    const limit = parseInt(emailjsQuotaInput.value, 10) || 200;
+    if (emailjsQuotaUsed === null) {
+      emailjsQuotaStatusEl.textContent = ' ';
+      emailjsQuotaStatusEl.className = 'email-status';
+      return;
+    }
+    const used = emailjsQuotaUsed;
+    const remaining = Math.max(0, limit - used);
+    if (used >= limit) {
+      emailjsQuotaStatusEl.textContent = t().emailjsQuotaStatusExceeded(used, limit);
+      emailjsQuotaStatusEl.className = 'email-status err';
+    } else if (remaining <= Math.max(1, Math.round(limit * 0.1))) {
+      emailjsQuotaStatusEl.textContent = t().emailjsQuotaStatusWarn(used, limit, remaining);
+      emailjsQuotaStatusEl.className = 'email-status warn';
+    } else {
+      emailjsQuotaStatusEl.textContent = t().emailjsQuotaStatus(used, limit, remaining);
+      emailjsQuotaStatusEl.className = 'email-status';
+    }
+  }
+
+  // Haalt het aantal verzonden e-mailalerts sinds het begin van de huidige
+  // kalendermaand op (beide onderdelen samen, want ze delen doorgaans hetzelfde
+  // EmailJS-account) en werkt de weergave bij.
+  async function refreshEmailjsQuotaCount(){
+    await ensureValidSession();
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    return fetch(EMAIL_SEND_LOG_URL + '?select=id&sent_at=gte.' + encodeURIComponent(startOfMonth), {
+      headers: {
+        'apikey': DEFAULT_SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY),
+        'Prefer': 'count=exact',
+        'Range': '0-0'
+      }
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const range = res.headers.get('content-range') || '';
+        const total = parseInt(range.split('/')[1], 10);
+        emailjsQuotaUsed = isNaN(total) ? null : total;
+        renderEmailjsQuotaStatus();
+      })
+      .catch((e) => {
+        console.warn('Kon verzendaantal niet ophalen:', e);
+        if (emailjsQuotaUsed === null) {
+          emailjsQuotaStatusEl.textContent = t().emailjsQuotaUnknown;
+          emailjsQuotaStatusEl.className = 'email-status err';
+        }
+      });
+  }
+
+  emailjsQuotaInput.addEventListener('change', () => {
+    setAppSetting('p1_emailjs_quota', emailjsQuotaInput.value);
+    renderEmailjsQuotaStatus();
+  });
+
+  refreshEmailjsQuotaCount();
+
+  // --- Storingslog & logboek naar eigen database (optioneel), via Supabase ---
+  // (project al aangemaakt en gekoppeld; vooraf ingevuld, maar gewoon aan te
+  // passen of leeg te maken als je een ander Supabase-project wilt gebruiken)
+  faultApiUrlInput.value = localStorage.getItem('p1_faultapi_url') || (DEFAULT_SUPABASE_URL + '/rest/v1/fault_log');
+  faultApiKeyInput.value = localStorage.getItem('p1_faultapi_key') || DEFAULT_SUPABASE_KEY;
+
+  logApiUrlInput.value = localStorage.getItem('p1_logapi_url') || (DEFAULT_SUPABASE_URL + '/rest/v1/minute_log');
+  logApiKeyInput.value = localStorage.getItem('p1_logapi_key') || DEFAULT_SUPABASE_KEY;
+
+  const alertSent = { l1: false, l2: false, l3: false }; // voorkomt spam: 1 mail per overschrijding, tot 'ie weer zakt
+
+  function setEmailStatus(ok, text){
+    emailStatus.textContent = text;
+    emailStatus.className = 'email-status ' + (ok === true ? 'ok' : ok === false ? 'err' : '');
+  }
+
+  function saveEmailSettings(){
+    setEmailSetting('p1_email_enabled', emailEnabled.checked ? '1' : '0');
+    setEmailSetting('p1_email_to', emailTo.value.trim());
+  }
+
+  // Verstuurt de e-mail niet meer rechtstreeks naar EmailJS vanuit de browser,
+  // maar via de Supabase Edge Function "send-alert-email". Die functie kent de
+  // EmailJS Service ID/Template ID/Public Key als server-side secrets - die
+  // gegevens komen zo nooit meer in de browser, localStorage of een Supabase-
+  // tabel terecht.
+  async function sendOverloadEmail(phase, watt){
+    const to = emailTo.value.trim();
+    if (!to) {
+      setEmailStatus(false, t().fillAllFields);
+      return false;
+    }
+    await ensureValidSession();
+    try {
+      const res = await fetch(DEFAULT_SUPABASE_URL + '/functions/v1/send-alert-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': DEFAULT_SUPABASE_KEY, 'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY) },
+        body: JSON.stringify({
+          kind: 'overload',
+          to_email: to,
+          phase: phase,
+          watt: Math.round(watt),
+          threshold: OVERLOAD_W,
+          time: new Date().toLocaleString(LOCALE_MAP[currentLang])
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        throw new Error(data.error || ('HTTP ' + res.status));
+      }
+      setEmailStatus(true, t().mailSentFor(phase, new Date().toLocaleTimeString(LOCALE_MAP[currentLang])));
+      refreshEmailjsQuotaCount();
+      return true;
+    } catch (err) {
+      setEmailStatus(false, t().sendFailed(err.message || err));
+      return false;
+    }
+  }
+
+  // Zelfde Edge Function als hierboven, maar met kind:'storage' zodat de functie
+  // de eigen EmailJS-secrets voor de opslaglimiet-waarschuwing gebruikt.
+  let storageAlertSent = false; // voorkomt spam: 1 mail per keer dat de 80%-grens wordt overschreden
+
+  function setStorageEmailStatus(ok, text){
+    storageEmailStatusEl.textContent = text;
+    storageEmailStatusEl.className = 'email-status ' + (ok === true ? 'ok' : ok === false ? 'err' : '');
+  }
+
+  function saveStorageEmailSettings(){
+    setEmailSetting('p1_storage_email_enabled', storageEmailEnabled.checked ? '1' : '0');
+    setEmailSetting('p1_storage_email_to', storageEmailTo.value.trim());
+  }
+
+  async function sendStorageAlertEmail(usedMb, limitMb){
+    const to = storageEmailTo.value.trim();
+    if (!to) {
+      setStorageEmailStatus(false, t().fillAllFields);
+      return false;
+    }
+    await ensureValidSession();
+    try {
+      const res = await fetch(DEFAULT_SUPABASE_URL + '/functions/v1/send-alert-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': DEFAULT_SUPABASE_KEY, 'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY) },
+        body: JSON.stringify({
+          kind: 'storage',
+          to_email: to,
+          phase: t().storageAlertLabel,
+          watt: usedMb,
+          threshold: limitMb,
+          time: new Date().toLocaleString(LOCALE_MAP[currentLang])
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        throw new Error(data.error || ('HTTP ' + res.status));
+      }
+      setStorageEmailStatus(true, t().mailSentFor(t().storageAlertLabel, new Date().toLocaleTimeString(LOCALE_MAP[currentLang])));
+      refreshEmailjsQuotaCount();
+      return true;
+    } catch (err) {
+      setStorageEmailStatus(false, t().sendFailed(err.message || err));
+      return false;
+    }
+  }
+
+  // --- Alleen inschakelen toestaan als alle velden gevuld zijn EN er een succesvolle
+  // testmail is verstuurd (voorkomt een "actieve" alert die nog nooit getest is).
+  // Bij een reeds werkende, eerder opgeslagen configuratie (bijv. van vóór deze
+  // controle) wordt de vergrendeling niet met terugwerkende kracht toegepast.
+  let emailVerified = localStorage.getItem('p1_email_verified') === '1';
+  let storageEmailVerified = localStorage.getItem('p1_storage_email_verified') === '1';
+  if (emailEnabled.checked && !localStorage.getItem('p1_email_verified')) {
+    emailVerified = true;
+    setEmailSetting('p1_email_verified', '1');
+  }
+  if (storageEmailEnabled.checked && !localStorage.getItem('p1_storage_email_verified')) {
+    storageEmailVerified = true;
+    setEmailSetting('p1_storage_email_verified', '1');
+  }
+
+  function emailFieldsFilled(){
+    return !!emailTo.value.trim();
+  }
+  function storageEmailFieldsFilled(){
+    return !!storageEmailTo.value.trim();
+  }
+
+  emailTo.addEventListener('input', () => {
+    if (emailVerified) {
+      emailVerified = false;
+      setEmailSetting('p1_email_verified', '0');
+    }
+  });
+  storageEmailTo.addEventListener('input', () => {
+    if (storageEmailVerified) {
+      storageEmailVerified = false;
+      setEmailSetting('p1_storage_email_verified', '0');
+    }
+  });
+
+  emailEnabled.addEventListener('change', () => {
+    if (emailEnabled.checked && (!emailFieldsFilled() || !emailVerified)) {
+      emailEnabled.checked = false;
+      setEmailStatus(false, t().emailEnableRequiresTest);
+      return;
+    }
+    // Het vinkje zelf werd voorheen alleen opgeslagen via de "Instellingen
+    // opslaan"-knop; hierdoor leek het na een pagina-ververing altijd weer
+    // uit te staan als je alleen het vinkje aan-/uitklikte. Sla de status nu
+    // meteen op bij elke wijziging.
+    saveEmailSettings();
+    setEmailStatus(true, t().settingsSaved);
+  });
+  storageEmailEnabled.addEventListener('change', () => {
+    if (storageEmailEnabled.checked && (!storageEmailFieldsFilled() || !storageEmailVerified)) {
+      storageEmailEnabled.checked = false;
+      setStorageEmailStatus(false, t().emailEnableRequiresTest);
+      return;
+    }
+    saveStorageEmailSettings();
+    setStorageEmailStatus(true, t().settingsSaved);
+  });
+
+  saveEmailBtn.addEventListener('click', () => {
+    saveEmailSettings();
+    setEmailStatus(true, t().settingsSaved);
+  });
+
+  function sendTestForPhase(phaseLabel, valueId){
+    saveEmailSettings();
+    const raw = ($(valueId).textContent || '').replace(/[^\d,.-]/g, '').replace(',', '.');
+    const current = parseFloat(raw);
+    const sampleWatt = isNaN(current) ? OVERLOAD_W : current;
+    sendOverloadEmail(phaseLabel + ' (test)', sampleWatt).then((ok) => {
+      if (ok) {
+        emailVerified = true;
+        setEmailSetting('p1_email_verified', '1');
+      }
+    });
+  }
+  testEmailL1.addEventListener('click', () => sendTestForPhase('L1', 'l1Power'));
+  testEmailL2.addEventListener('click', () => sendTestForPhase('L2', 'l2Power'));
+  testEmailL3.addEventListener('click', () => sendTestForPhase('L3', 'l3Power'));
+
+  storageSaveEmailBtn.addEventListener('click', () => {
+    saveStorageEmailSettings();
+    setStorageEmailStatus(true, t().settingsSaved);
+  });
+
+  storageTestEmailBtn.addEventListener('click', async () => {
+    saveStorageEmailSettings();
+    await ensureValidSession();
+    fetch(DEFAULT_SUPABASE_URL + '/rest/v1/rpc/get_storage_stats', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': DEFAULT_SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY)
+      },
+      body: '{}'
+    })
+      .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then((stats) => {
+        const usedMb = Math.round((stats.db_size_bytes || 0) / (1024 * 1024));
+        const limitMb = Math.round(SUPABASE_FREE_LIMIT_BYTES / (1024 * 1024));
+        return sendStorageAlertEmail(usedMb, limitMb);
+      })
+      .then((ok) => {
+        if (ok) {
+          storageEmailVerified = true;
+          setEmailSetting('p1_storage_email_verified', '1');
+        }
+      })
+      .catch((err) => setStorageEmailStatus(false, t().sendFailed(err.message || err)));
+  });
+
+  // Bij opstarten: haal de e-mailalert-instellingen (beide onderdelen) op uit
+  // Supabase (leidend) en werk de velden/vinkjes en localStorage bij zodra dat
+  // antwoord binnen is - zelfde patroon als bij de vergrendelstatus hierboven.
+  const EMAIL_SETTINGS_FIELD_MAP = {
+    p1_email_enabled: { checkbox: emailEnabled },
+    p1_email_to: { input: emailTo },
+    p1_email_verified: { apply: (v) => { emailVerified = v === '1'; } },
+    p1_storage_email_enabled: { checkbox: storageEmailEnabled },
+    p1_storage_email_to: { input: storageEmailTo },
+    p1_storage_email_verified: { apply: (v) => { storageEmailVerified = v === '1'; } }
+  };
+  loadEmailSettingsRemote().then((rows) => {
+    if (!rows) return;
+    rows.forEach((r) => {
+      const mapping = EMAIL_SETTINGS_FIELD_MAP[r.field_id];
+      if (!mapping) return;
+      if (mapping.checkbox) mapping.checkbox.checked = r.value === '1';
+      if (mapping.input) mapping.input.value = r.value || '';
+      if (mapping.apply) mapping.apply(r.value);
+      localStorage.setItem(r.field_id, r.value);
+    });
+  });
+
+  // Bij opstarten: haal ook de resterende dashboard-instellingen (IP-adres,
+  // ververssnelheid, overbelastingsgrens, tarieven, en de eigen-database
+  // URL/sleutel-waarden) op uit Supabase (leidend), zodat het dashboard er op
+  // elke pc/browser hetzelfde uitziet.
+  loadAppSettingsRemote().then((rows) => {
+    if (!rows) return;
+    const values = {};
+    rows.forEach((r) => {
+      values[r.field_id] = r.value;
+      localStorage.setItem(r.field_id, r.value);
+    });
+
+    if (values.p1_ip !== undefined) ipInput.value = values.p1_ip;
+    if (values.p1_interval !== undefined) selectNearest(intervalInput, parseInt(values.p1_interval, 10) || 2);
+    if (values.p1_overload_w !== undefined) {
+      OVERLOAD_W = selectNearest(thresholdInput, parseInt(values.p1_overload_w, 10) || OVERLOAD_W);
+    }
+    if (values.p1_faultapi_url !== undefined) faultApiUrlInput.value = values.p1_faultapi_url;
+    if (values.p1_faultapi_key !== undefined) faultApiKeyInput.value = values.p1_faultapi_key;
+    if (values.p1_logapi_url !== undefined) logApiUrlInput.value = values.p1_logapi_url;
+    if (values.p1_logapi_key !== undefined) logApiKeyInput.value = values.p1_logapi_key;
+    if (values.p1_emailjs_quota !== undefined) emailjsQuotaInput.value = values.p1_emailjs_quota;
+
+    applyLanguage(currentLang);
+    if (lastData) renderData(lastData);
+    if (values.p1_faultapi_url !== undefined || values.p1_faultapi_key !== undefined) loadRemoteFaultLog();
+    if (values.p1_logapi_url !== undefined || values.p1_logapi_key !== undefined) loadRemoteMinuteLog();
+  });
+
+  function checkOverloadEmail(phaseKey, phaseLabel, power){
+    if (!emailEnabled.checked) return;
+    if (power === undefined || power === null) return;
+    if (power >= OVERLOAD_W) {
+      if (!alertSent[phaseKey]) {
+        alertSent[phaseKey] = true;
+        sendOverloadEmail(phaseLabel, power);
+      }
+    } else {
+      alertSent[phaseKey] = false;
+    }
+  }
+
+  // --- Logboek per minuut (opgeslagen in localStorage, overleeft herladen) ---
+  let minuteLog = [];
+  try { minuteLog = JSON.parse(localStorage.getItem(LOG_KEY) || '[]'); } catch(e){ minuteLog = []; }
+  let currentMinuteKey = null;
+  let currentMinuteStart = null;
+  let minuteAccum = { total: [], l1: [], l2: [], l3: [] };
+
+  function pad(n){ return String(n).padStart(2, '0'); }
+  function minuteKeyOf(date){
+    return date.getFullYear() + '-' + pad(date.getMonth()+1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+  }
+  function fmtMinuteDisplay(date){
+    return pad(date.getDate()) + '-' + pad(date.getMonth()+1) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes());
+  }
+  function avg(arr){
+    const vals = arr.filter(v => v !== null && v !== undefined);
+    if (!vals.length) return null;
+    return vals.reduce((a,b) => a+b, 0) / vals.length;
+  }
+
+  function saveLog(){
+    if (minuteLog.length > MAX_LOG_ENTRIES) minuteLog = minuteLog.slice(-MAX_LOG_ENTRIES);
+    try { localStorage.setItem(LOG_KEY, JSON.stringify(minuteLog)); } catch(e){ /* storage vol, negeren */ }
+  }
+
+  function renderLogTable(){
+    const tbody = $('logBody');
+    const rows = minuteLog.slice(-500).slice().reverse();
+    tbody.innerHTML = rows.map(r =>
+      '<tr><td>' + r.t + '</td><td>' + (r.total !== null ? Math.round(r.total) : '—') +
+      '</td><td>' + (r.l1 !== null ? Math.round(r.l1) : '—') +
+      '</td><td>' + (r.l2 !== null ? Math.round(r.l2) : '—') +
+      '</td><td>' + (r.l3 !== null ? Math.round(r.l3) : '—') + '</td></tr>'
+    ).join('');
+    $('logRetainedText').textContent = t().logRetained(minuteLog.length);
+  }
+
+  function logSample(d, now){
+    const key = minuteKeyOf(now);
+    if (currentMinuteKey === null) {
+      currentMinuteKey = key;
+      currentMinuteStart = now;
+    }
+    if (key !== currentMinuteKey) {
+      const entry = {
+        t: fmtMinuteDisplay(currentMinuteStart),
+        iso: currentMinuteStart.toISOString(),
+        total: avg(minuteAccum.total),
+        l1: avg(minuteAccum.l1),
+        l2: avg(minuteAccum.l2),
+        l3: avg(minuteAccum.l3)
+      };
+      minuteLog.push(entry);
+      saveLog();
+      renderLogTable();
+      pushMinuteLogRemote(entry);
+      minuteAccum = { total: [], l1: [], l2: [], l3: [] };
+      currentMinuteKey = key;
+      currentMinuteStart = now;
+    }
+    minuteAccum.total.push(d.active_power_w ?? null);
+    minuteAccum.l1.push(d.active_power_l1_w ?? null);
+    minuteAccum.l2.push(d.active_power_l2_w ?? null);
+    minuteAccum.l3.push(d.active_power_l3_w ?? null);
+  }
+
+  exportCsvBtn.addEventListener('click', () => {
+    const header = t().csvHeader;
+    const body = minuteLog.map(r => r.t + ';' + (r.total ?? '') + ';' + (r.l1 ?? '') + ';' + (r.l2 ?? '') + ';' + (r.l3 ?? '')).join('\n');
+    const blob = new Blob([header + body], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'p1-logboek.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  exportFaultCsvBtn.addEventListener('click', () => {
+    const header = t().faultCsvHeader;
+    const body = faultLog.map(r => r.t + ';' + faultTypeLabel(r.type) + ';' + r.count).join('\n');
+    const blob = new Blob([header + body], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'p1-storingslog.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  clearLogBtn.addEventListener('click', () => {
+    if (!confirm(t().clearLogConfirm)) return;
+    minuteLog = [];
+    saveLog();
+    renderLogTable();
+  });
+
+  // --- Optionele koppeling van het minuutlogboek met een eigen database via ---
+  // een REST-endpoint op je eigen domein (bijv. een PHP-script + MySQL).
+  // Volledig optioneel: zonder ingevulde URL blijft alles lokaal (localStorage).
+  // Supabase (PostgREST) verwacht de sleutel in de headers 'apikey' en
+  // 'Authorization: Bearer ...', niet als querystring-parameter.
+  function pushMinuteLogRemote(entry){
+    const url = logApiUrlInput.value.trim();
+    const key = logApiKeyInput.value.trim();
+    if (!url || !key) return;
+    const body = { log_time: entry.iso, total: entry.total, l1: entry.l1, l2: entry.l2, l3: entry.l3 };
+    pushWithQueue(url, key, body, MINUTE_PENDING_KEY);
+  }
+
+  async function loadRemoteMinuteLog(){
+    const url = logApiUrlInput.value.trim();
+    const key = logApiKeyInput.value.trim();
+    if (!url || !key) return;
+    // Ons eigen Supabase-project vereist sinds v59 een geldig ingelogd sessie-token
+    // om te mogen lezen. Ververs dat token hier zo nodig eerst, anders mislukt
+    // deze oproep stil (401) en lijkt het logboek "leeg" terwijl de data er
+    // gewoon nog staat.
+    if (url.indexOf(DEFAULT_SUPABASE_URL) === 0) await ensureValidSession();
+    const sep = url.indexOf('?') !== -1 ? '&' : '?';
+    return fetch(url + sep + 'select=log_time,total,l1,l2,l3&order=id.desc&limit=500', {
+      headers: { 'apikey': key, 'Authorization': 'Bearer ' + bearerFor(url, key) }
+    })
+      .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then((rows) => {
+        minuteLog = rows.slice().reverse().map((r) => {
+          const rawTime = r.log_time;
+          const dt = new Date(rawTime);
+          return {
+            t: isNaN(dt.getTime()) ? String(rawTime) : fmtMinuteDisplay(dt),
+            iso: rawTime,
+            total: r.total, l1: r.l1, l2: r.l2, l3: r.l3
+          };
+        });
+        renderLogTable();
+      })
+      .catch((e) => {
+        console.warn('Kon logboek niet laden van Supabase:', e);
+        logApiStatus.textContent = t().logApiTestFail(e.message || e);
+        logApiStatus.className = 'email-status err';
+      });
+  }
+
+  saveLogApiBtn.addEventListener('click', () => {
+    setAppSetting('p1_logapi_url', logApiUrlInput.value.trim());
+    setAppSetting('p1_logapi_key', logApiKeyInput.value.trim());
+    logApiStatus.textContent = t().settingsSaved;
+    logApiStatus.className = 'email-status ok';
+    loadRemoteMinuteLog();
+  });
+
+  testLogApiBtn.addEventListener('click', async () => {
+    const url = logApiUrlInput.value.trim();
+    const key = logApiKeyInput.value.trim();
+    if (!url || !key) { logApiStatus.textContent = t().logApiFillUrl; logApiStatus.className = 'email-status err'; return; }
+    logApiStatus.textContent = '…';
+    logApiStatus.className = 'email-status';
+    try {
+      const sep = url.indexOf('?') !== -1 ? '&' : '?';
+      const res = await fetch(url + sep + 'select=id&limit=1', { headers: { 'apikey': key, 'Authorization': 'Bearer ' + bearerFor(url, key) } });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await res.json();
+      logApiStatus.textContent = t().logApiTestOk;
+      logApiStatus.className = 'email-status ok';
+    } catch (e) {
+      logApiStatus.textContent = t().logApiTestFail(e.message);
+      logApiStatus.className = 'email-status err';
+    }
+  });
+
+  renderLogTable();
+  loadRemoteMinuteLog();
+
+  // --- Storingslog: logt het tijdstip zodra een storingsteller omhoog gaat ---
+  // (De HomeWizard-API levert alleen cumulatieve tellers, geen tijdstip/duur per
+  // gebeurtenis. We benaderen dit door bij elke poll te kijken of een teller is
+  // toegenomen, en loggen dan het waargenomen tijdstip - de duur van de storing
+  // zelf is niet af te leiden uit de API.)
+  let faultLog = [];
+  try { faultLog = JSON.parse(localStorage.getItem(FAULT_LOG_KEY) || '[]'); } catch(e){ faultLog = []; }
+  let prevFaultCounts = null;
+
+  function fmtEventDisplay(date){
+    return pad(date.getDate()) + '-' + pad(date.getMonth()+1) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+  }
+
+  function faultTypeLabel(key){
+    const d = t();
+    if (key === 'any') return d.faultsTotal;
+    if (key === 'long') return d.faultsTotal + ' (' + d.longFaults + ')';
+    let m = key.match(/^sag(\d)$/);
+    if (m) return d.phase(m[1]) + ' – ' + d.sags;
+    m = key.match(/^swell(\d)$/);
+    if (m) return d.phase(m[1]) + ' – ' + d.swells;
+    return key;
+  }
+
+  function saveFaultLog(){
+    if (faultLog.length > MAX_FAULT_LOG_ENTRIES) faultLog = faultLog.slice(-MAX_FAULT_LOG_ENTRIES);
+    try { localStorage.setItem(FAULT_LOG_KEY, JSON.stringify(faultLog)); } catch(e){ /* storage vol, negeren */ }
+  }
+
+  function renderFaultLogTable(){
+    const tbody = $('faultLogBody');
+    const rows = faultLog.slice(-500).slice().reverse();
+    tbody.innerHTML = rows.map(r =>
+      '<tr><td>' + r.t + '</td><td>' + faultTypeLabel(r.type) + '</td><td>' + r.count + '</td></tr>'
+    ).join('');
+    $('faultLogRetainedText').textContent = t().faultLogRetained(faultLog.length);
+  }
+
+  function recordFaultEvent(type, count, timeStr, isoStr){
+    const entry = { t: timeStr, iso: isoStr, type: type, count: count };
+    faultLog.push(entry);
+    saveFaultLog();
+    renderFaultLogTable();
+    pushFaultEventRemote(entry);
+  }
+
+  function checkFaultCounters(d){
+    const counts = {
+      any: d.any_power_fail_count,
+      long: d.long_power_fail_count,
+      sag1: d.voltage_sag_l1_count, sag2: d.voltage_sag_l2_count, sag3: d.voltage_sag_l3_count,
+      swell1: d.voltage_swell_l1_count, swell2: d.voltage_swell_l2_count, swell3: d.voltage_swell_l3_count
+    };
+    if (prevFaultCounts) {
+      const nowDate = new Date();
+      const now = fmtEventDisplay(nowDate);
+      const nowIso = nowDate.toISOString();
+      for (const key in counts) {
+        const cur = counts[key];
+        const prev = prevFaultCounts[key];
+        if (cur !== undefined && prev !== undefined && cur > prev) {
+          recordFaultEvent(key, cur - prev, now, nowIso);
+        }
+      }
+    }
+    prevFaultCounts = counts;
+  }
+
+  clearFaultLogBtn.addEventListener('click', () => {
+    if (!confirm(t().clearFaultLogConfirm)) return;
+    faultLog = [];
+    saveFaultLog();
+    renderFaultLogTable();
+  });
+
+  // --- Koppeling met Supabase (PostgREST): sleutel gaat in de headers 'apikey' ---
+  // en 'Authorization: Bearer ...', niet als querystring-parameter. Volledig
+  // optioneel: zonder ingevulde URL/sleutel blijft alles lokaal (localStorage).
+  function pushFaultEventRemote(entry){
+    const url = faultApiUrlInput.value.trim();
+    const key = faultApiKeyInput.value.trim();
+    if (!url || !key) return;
+    const body = { event_time: entry.iso, type: entry.type, count: entry.count };
+    pushWithQueue(url, key, body, FAULT_PENDING_KEY);
+  }
+
+  async function loadRemoteFaultLog(){
+    const url = faultApiUrlInput.value.trim();
+    const key = faultApiKeyInput.value.trim();
+    if (!url || !key) return;
+    // Zelfde reden als bij loadRemoteMinuteLog: zonder een vers sessie-token
+    // mislukt deze oproep stil (401) en lijkt de storingslog leeg terwijl de
+    // data gewoon nog in Supabase staat.
+    if (url.indexOf(DEFAULT_SUPABASE_URL) === 0) await ensureValidSession();
+    const sep = url.indexOf('?') !== -1 ? '&' : '?';
+    return fetch(url + sep + 'select=event_time,type,count&order=id.desc&limit=500', {
+      headers: { 'apikey': key, 'Authorization': 'Bearer ' + bearerFor(url, key) }
+    })
+      .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then((rows) => {
+        faultLog = rows.map((r) => {
+          const rawTime = r.event_time;
+          const dt = new Date(rawTime);
+          return {
+            t: isNaN(dt.getTime()) ? String(rawTime) : fmtEventDisplay(dt),
+            iso: rawTime,
+            type: r.type,
+            count: r.count
+          };
+        }).reverse(); // Supabase geeft nieuwste eerst; keer om naar chronologisch
+        renderFaultLogTable();
+      })
+      .catch((e) => {
+        console.warn('Kon storingslog niet laden van Supabase:', e);
+        faultApiStatus.textContent = t().faultApiTestFail(e.message || e);
+        faultApiStatus.className = 'email-status err';
+      });
+  }
+
+  saveFaultApiBtn.addEventListener('click', () => {
+    setAppSetting('p1_faultapi_url', faultApiUrlInput.value.trim());
+    setAppSetting('p1_faultapi_key', faultApiKeyInput.value.trim());
+    faultApiStatus.textContent = t().settingsSaved;
+    faultApiStatus.className = 'email-status ok';
+    loadRemoteFaultLog();
+  });
+
+  testFaultApiBtn.addEventListener('click', async () => {
+    const url = faultApiUrlInput.value.trim();
+    const key = faultApiKeyInput.value.trim();
+    if (!url || !key) { faultApiStatus.textContent = t().faultApiFillUrl; faultApiStatus.className = 'email-status err'; return; }
+    faultApiStatus.textContent = '…';
+    faultApiStatus.className = 'email-status';
+    try {
+      const sep = url.indexOf('?') !== -1 ? '&' : '?';
+      const res = await fetch(url + sep + 'select=id&limit=1', { headers: { 'apikey': key, 'Authorization': 'Bearer ' + bearerFor(url, key) } });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await res.json();
+      faultApiStatus.textContent = t().faultApiTestOk;
+      faultApiStatus.className = 'email-status ok';
+    } catch (e) {
+      faultApiStatus.textContent = t().faultApiTestFail(e.message);
+      faultApiStatus.className = 'email-status err';
+    }
+  });
+
+  renderFaultLogTable();
+  loadRemoteFaultLog();
+
+  function setStatus(ok, text){
+    if (statusDot && statusText) {
+      statusDot.className = 'dot ' + (ok === null ? '' : (ok ? 'ok' : 'err'));
+      statusText.textContent = text;
+    }
+    if (ok === true) {
+      connectBtn.textContent = t().connected;
+      connectBtn.classList.add('connected');
+    } else {
+      connectBtn.textContent = t().connect;
+      connectBtn.classList.remove('connected');
+    }
+  }
+
+  function buildErrorBody(detail){
+    const d = t();
+    return d.errorCheck + '<br>' +
+      '&bull; ' + d.errorApi + '<br>' +
+      '&bull; ' + d.errorIp + '<br>' +
+      '&bull; ' + d.errorNetwork + '<br>' +
+      '&bull; ' + d.errorMixed + '<br>' +
+      '<br><em>' + d.errorDetail(detail) + '</em>';
+  }
+
+  function showError(ip, detail){
+    errorBanner.style.display = 'block';
+    $('errorSummaryText').textContent = t().errorTitle(ip);
+    $('errorBodyText').innerHTML = buildErrorBody(detail);
+  }
+  function hideError(){
+    errorBanner.style.display = 'none';
+    errorBanner.open = false; // volgende keer weer ingeklapt starten
+  }
+
+  function fmt(n, decimals){
+    if (n === undefined || n === null) return '&mdash;';
+    return Number(n).toLocaleString(LOCALE_MAP[currentLang], { minimumFractionDigits: decimals ?? 0, maximumFractionDigits: decimals ?? 0 });
+  }
+
+  // HomeWizard-tijdstempels komen als 'YYMMDDHHMMSS' (lokale tijd); zet om naar leesbaar formaat
+  function formatHwTimestamp(ts){
+    const s = (ts === undefined || ts === null) ? '' : String(ts);
+    if (s.length < 12) return '—';
+    const yy = s.slice(0,2), mm = s.slice(2,4), dd = s.slice(4,6), hh = s.slice(6,8), mi = s.slice(8,10);
+    return dd + '-' + mm + '-20' + yy + ' ' + hh + ':' + mi;
+  }
+
+  function flash(el){
+    el.classList.remove('flash');
+    void el.offsetWidth; // forceer reflow zodat animatie opnieuw start
+    el.classList.add('flash');
+  }
+
+  function updateCard(power, valueId, subId, cardId, checkOverload, needleGroup){
+    const el = $(valueId);
+    const card = cardId ? $(cardId) : null;
+    if (power === undefined || power === null) {
+      el.textContent = '—';
+      if (card) { card.classList.add('dim'); card.classList.remove('overload'); }
+      if (needleGroup) setGaugeNeedle(needleGroup, 0);
+      return;
+    }
+    if (card) card.classList.remove('dim');
+    el.textContent = fmt(power, 0);
+    flash(el);
+    if (needleGroup) setGaugeNeedle(needleGroup, power);
+    const sub = $(subId);
+    if (sub) sub.textContent = power < 0 ? t().feedIn : ' ';
+    if (card) {
+      if (checkOverload && power >= OVERLOAD_W) card.classList.add('overload');
+      else card.classList.remove('overload');
+    }
+  }
+
+  // Pure weergavefunctie: zet ruwe API-data om naar de UI, zonder side-effects
+  // (geen mail/log), zodat we 'm ook veilig opnieuw kunnen draaien bij een taalwissel.
+  function renderData(d){
+    updateCard(d.active_power_w, 'totalPower', 'totalSub', null, false);
+    updateCard(d.active_power_l1_w, 'l1Power', 'l1Sub', 'cardL1', true, needleL1);
+    updateCard(d.active_power_l2_w, 'l2Power', 'l2Sub', 'cardL2', true, needleL2);
+    updateCard(d.active_power_l3_w, 'l3Power', 'l3Sub', 'cardL3', true, needleL3);
+    updateMeterModal(d); // houd de vergrote popup (indien open) live in sync
+
+    $('l1Voltage').textContent = d.active_voltage_l1_v !== undefined ? fmt(d.active_voltage_l1_v, 1) : (d.active_voltage_v !== undefined ? fmt(d.active_voltage_v, 1) : '—');
+    $('l2Voltage').textContent = d.active_voltage_l2_v !== undefined ? fmt(d.active_voltage_l2_v, 1) : '—';
+    $('l3Voltage').textContent = d.active_voltage_l3_v !== undefined ? fmt(d.active_voltage_l3_v, 1) : '—';
+
+    $('l1Current').textContent = d.active_current_l1_a !== undefined ? fmt(d.active_current_l1_a, 1) : (d.active_current_a !== undefined ? fmt(d.active_current_a, 1) : '—');
+    $('l2Current').textContent = d.active_current_l2_a !== undefined ? fmt(d.active_current_l2_a, 1) : '—';
+    $('l3Current').textContent = d.active_current_l3_a !== undefined ? fmt(d.active_current_l3_a, 1) : '—';
+
+    const totalImport = d.total_power_import_kwh !== undefined ? d.total_power_import_kwh :
+      ((d.total_power_import_t1_kwh || 0) + (d.total_power_import_t2_kwh || 0) + (d.total_power_import_t3_kwh || 0) + (d.total_power_import_t4_kwh || 0));
+    const totalExport = d.total_power_export_kwh !== undefined ? d.total_power_export_kwh :
+      ((d.total_power_export_t1_kwh || 0) + (d.total_power_export_t2_kwh || 0) + (d.total_power_export_t3_kwh || 0) + (d.total_power_export_t4_kwh || 0));
+    $('totalImport').textContent = fmt(totalImport, 3) + ' kWh';
+    $('totalExport').textContent = fmt(totalExport, 3) + ' kWh';
+
+    let gasTotalM3;
+    if (d.total_gas_m3 !== undefined) {
+      gasTotalM3 = d.total_gas_m3;
+      $('gasRow').style.display = '';
+      $('gasVal').textContent = fmt(d.total_gas_m3, 3) + ' m³';
+    }
+    if (d.gas_timestamp !== undefined) {
+      $('gasTimestampRow').style.display = '';
+      $('gasTimestampVal').textContent = formatHwTimestamp(d.gas_timestamp);
+    }
+    if (Array.isArray(d.external)) {
+      const water = d.external.find(e => e.type === 'water_meter');
+      if (water) {
+        $('waterRow').style.display = '';
+        $('waterVal').textContent = fmt(water.value, 3) + ' m³';
+      }
+      const gas = d.external.find(e => e.type === 'gas_meter');
+      if (gas) {
+        gasTotalM3 = gas.value;
+        $('gasRow').style.display = '';
+        $('gasVal').textContent = fmt(gas.value, 3) + ' m³';
+        if (gas.timestamp !== undefined) {
+          $('gasTimestampRow').style.display = '';
+          $('gasTimestampVal').textContent = formatHwTimestamp(gas.timestamp);
+        }
+        if (gas.unique_id !== undefined) {
+          $('uniqueIdGasRow').style.display = '';
+          $('uniqueIdGasVal').textContent = gas.unique_id;
+        }
+      }
+    }
+
+    $('meterModelVal').textContent = d.meter_model !== undefined ? d.meter_model : '—';
+    $('dsmrVersionVal').textContent = d.smr_version !== undefined ? (d.smr_version / 10).toFixed(1) : '—';
+    $('uniqueIdElecVal').textContent = d.unique_id !== undefined ? d.unique_id : '—';
+
+    $('sag1').textContent = d.voltage_sag_l1_count !== undefined ? fmt(d.voltage_sag_l1_count, 0) : '—';
+    $('sag2').textContent = d.voltage_sag_l2_count !== undefined ? fmt(d.voltage_sag_l2_count, 0) : '—';
+    $('sag3').textContent = d.voltage_sag_l3_count !== undefined ? fmt(d.voltage_sag_l3_count, 0) : '—';
+    $('swell1').textContent = d.voltage_swell_l1_count !== undefined ? fmt(d.voltage_swell_l1_count, 0) : '—';
+    $('swell2').textContent = d.voltage_swell_l2_count !== undefined ? fmt(d.voltage_swell_l2_count, 0) : '—';
+    $('swell3').textContent = d.voltage_swell_l3_count !== undefined ? fmt(d.voltage_swell_l3_count, 0) : '—';
+    $('anyFail').textContent = d.any_power_fail_count !== undefined ? fmt(d.any_power_fail_count, 0) : '—';
+    $('longFail').textContent = d.long_power_fail_count !== undefined ? fmt(d.long_power_fail_count, 0) : '—';
+  }
+
+  function handleData(d){
+    hideError();
+    lastData = d;
+    connState = 'ok';
+    setStatus(true, t().statusConnected(new Date().toLocaleTimeString(LOCALE_MAP[currentLang])));
+
+    renderData(d);
+
+    checkOverloadEmail('l1', 'L1', d.active_power_l1_w);
+    checkOverloadEmail('l2', 'L2', d.active_power_l2_w);
+    checkOverloadEmail('l3', 'L3', d.active_power_l3_w);
+
+    checkFaultCounters(d);
+    logSample(d, new Date());
+  }
+
+  async function poll(){
+    const ip = ipInput.value.trim();
+    if (!ip) return;
+    // Standaard http:// (de HomeWizard P1-meter spreekt lokaal alleen http, geen
+    // https). Vul je hier later een eigen https-adres in (bijv. een reverse-proxy
+    // of tunnel naar de meter toe), dan wordt dat als volledige URL gebruikt i.p.v.
+    // er zelf http:// voor te plakken.
+    const hasScheme = /^https?:\/\//i.test(ip);
+    const url = (hasScheme ? ip.replace(/\/$/, '') : 'http://' + ip) + '/api/v1/data';
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      handleData(data);
+    } catch (err) {
+      connState = 'err';
+      lastErrorIp = ip;
+      lastErrorDetail = err.message || String(err);
+      setStatus(false, t().statusFailed);
+      showError(lastErrorIp, lastErrorDetail);
+    }
+  }
+
+  function start(){
+    stop();
+    const secs = Math.max(1, parseInt(intervalInput.value, 10) || 2);
+    poll();
+    timer = setInterval(poll, secs * 1000);
+  }
+  function stop(){
+    if (timer) clearInterval(timer);
+    timer = null;
+  }
+
+  connectBtn.addEventListener('click', () => {
+    setAppSetting('p1_ip', ipInput.value.trim());
+    setAppSetting('p1_interval', intervalInput.value);
+    paused = false;
+    pauseBtn.textContent = t().pause;
+    start();
+  });
+
+  pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    if (paused) { stop(); pauseBtn.textContent = t().resume; connState = 'paused'; setStatus(null, t().statusPaused); }
+    else { start(); pauseBtn.textContent = t().pause; }
+  });
+
+  // ============ Taalwissel ============
+  function applyLanguage(lang){
+    currentLang = lang;
+    const d = t();
+    document.documentElement.lang = lang;
+
+    $('subtitleText').textContent = d.subtitle;
+    $('ipLabelText').textContent = d.ipLabel;
+    ipInput.placeholder = d.ipPlaceholder;
+    $('intervalLabelText').textContent = d.intervalLabel;
+    $('thresholdFieldLabel').textContent = d.thresholdField;
+    pauseBtn.textContent = paused ? d.resume : d.pause;
+    connectBtn.textContent = connectBtn.classList.contains('connected') ? d.connected : d.connect;
+
+    $('totalPowerLabel').textContent = d.totalPower;
+    $('l1Label').textContent = d.phase(1);
+    $('l2Label').textContent = d.phase(2);
+    $('l3Label').textContent = d.phase(3);
+    $('fL1Label').textContent = d.phase(1);
+    $('fL2Label').textContent = d.phase(2);
+    $('fL3Label').textContent = d.phase(3);
+
+    $('authSubtitleText').textContent = d.authSubtitle;
+    $('loginTitleText').textContent = d.loginTitle;
+    $('loginEmailLabel').textContent = d.emailLabel;
+    $('loginPasswordLabel').textContent = d.passwordLabel;
+    loginBtn.textContent = d.loginBtnText;
+    logoutBtn.textContent = d.logoutBtnText;
+
+    $('emailTitleText').textContent = d.emailTitle;
+    $('emailjsQuotaTitleText').textContent = d.emailjsQuotaTitle;
+    $('emailjsQuotaHelpText').textContent = d.emailjsQuotaHelp;
+    $('emailjsQuotaLabel').textContent = d.emailjsQuotaLabel;
+    renderEmailjsQuotaStatus();
+    $('overloadEmailTitleText').textContent = d.overloadEmailSectionTitle;
+    $('emailHelpText').innerHTML = d.emailHelp(OVERLOAD_W);
+    $('emailEnableLabel').textContent = d.emailEnable;
+    $('toEmailLabel').textContent = d.toEmail;
+    saveEmailBtn.textContent = d.saveSettings;
+    testEmailL1.textContent = d.testL(1);
+    testEmailL2.textContent = d.testL(2);
+    testEmailL3.textContent = d.testL(3);
+
+    $('storageEmailTitleText').textContent = d.storageAlertLabel;
+    $('storageEmailHelpText').innerHTML = d.storageEmailHelp;
+    $('storageEmailEnableLabel').textContent = d.emailEnable;
+    $('storageToEmailLabel').textContent = d.toEmail;
+    storageSaveEmailBtn.textContent = d.saveSettings;
+    storageTestEmailBtn.textContent = d.testMail;
+
+    $('meterReadingsTitle').textContent = d.meterReadings;
+    $('totalImportLabel').textContent = d.totalImport;
+    $('totalExportLabel').textContent = d.totalExport;
+    $('gasLabel').textContent = d.gas;
+    $('gasTimestampLabel').textContent = d.gasTimestamp;
+    $('waterLabel').textContent = d.water;
+
+    $('systemInfoTitleText').textContent = d.systemInfoTitle;
+    $('meterModelLabel').textContent = d.meterModel;
+    $('dsmrVersionLabel').textContent = d.dsmrVersion;
+    $('uniqueIdElecLabel').textContent = d.uniqueIdElec;
+    $('uniqueIdGasLabel').textContent = d.uniqueIdGas;
+
+    $('faultsTotalLabel').textContent = d.faultsTotal;
+    $('faultsTotalUnit').textContent = d.faultsTotalUnit;
+    $('longFailUnit').textContent = d.longFaults;
+    $('sag1Unit').textContent = d.sags; $('sag2Unit').textContent = d.sags; $('sag3Unit').textContent = d.sags;
+    $('swell1Unit').textContent = d.swells; $('swell2Unit').textContent = d.swells; $('swell3Unit').textContent = d.swells;
+
+    $('faultApiTitleText').textContent = d.faultLogTitle;
+    $('faultApiUrlLabel').textContent = d.faultApiUrlLabel;
+    $('faultApiKeyLabel').textContent = d.faultApiKeyLabel;
+    saveFaultApiBtn.textContent = d.saveSettings;
+    testFaultApiBtn.textContent = d.testFaultApi;
+
+    exportFaultCsvBtn.textContent = d.exportCsv;
+    clearFaultLogBtn.textContent = d.clearFaultLog;
+    $('colFaultTime').textContent = d.colFaultTime;
+    $('colFaultType').textContent = d.colFaultType;
+    $('colFaultCount').textContent = d.colFaultCount;
+
+    $('logApiTitleText').textContent = d.logTitle;
+    $('logApiUrlLabel').textContent = d.logApiUrlLabel;
+    $('logApiKeyLabel').textContent = d.logApiKeyLabel;
+    saveLogApiBtn.textContent = d.saveSettings;
+    testLogApiBtn.textContent = d.testLogApi;
+
+    exportCsvBtn.textContent = d.exportCsv;
+    clearLogBtn.textContent = d.clearLog;
+    $('colTime').textContent = d.colTime;
+    $('colTotal').textContent = d.colTotal;
+
+    $('changelogTitleText').textContent = d.changelogTitle;
+
+    $('footerText').innerHTML = d.footer(new Date().getFullYear());
+    $('appVersionText').innerHTML = d.appVersion(APP_VERSION, APP_UPDATED, APP_UPDATED_TIME);
+
+    renderFaultLogTable();
+    renderLogTable();
+    if (lastData) renderData(lastData);
+
+    if (connState === 'ok') setStatus(true, d.statusConnected(new Date().toLocaleTimeString(LOCALE_MAP[lang])));
+    else if (connState === 'err') setStatus(false, d.statusFailed);
+    else if (connState === 'paused') setStatus(null, d.statusPaused);
+    else setStatus(null, d.statusInitial);
+
+    if (errorBanner.style.display === 'block' && lastErrorIp) {
+      const wasOpen = errorBanner.open;
+      showError(lastErrorIp, lastErrorDetail);
+      errorBanner.open = wasOpen; // vouwstatus behouden bij taalwissel
+    }
+
+    document.querySelectorAll('.lang-btn').forEach((b) => b.classList.toggle('active', b.dataset.lang === lang));
+    localStorage.setItem('p1_lang', lang);
+  }
+
+  document.querySelectorAll('.lang-btn').forEach((btn) => {
+    btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+  });
+
+  applyLanguage(currentLang);
+
+  // auto-start if we have a saved IP
+  if (ipInput.value) {
+    start();
+  } else {
+    setStatus(null, t().statusInitial);
+  }
+
+  // registreer de service worker zodat de app-schil offline werkt na installatie
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => { /* geen https/localhost, negeren */ });
+    });
+  }
+})();
+</script>
+</body>
+</html>
