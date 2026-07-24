@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.3
+- Wachtwoordveld op het inlogscherm hersteld naar bolletjes-weergave (was tijdelijk platte tekst, waardoor de browser het wachtwoord niet meer automatisch invulde). Het e-mailveld blijft wel zonder voorbeeldtekst.
+
 ## 3.2
 - Inlogscherm: geen voorbeeldtekst meer in het e-mailveld ("jij@voorbeeld.nl") en het wachtwoordveld toont nu gewoon leesbare tekst in plaats van bolletjes.
 
@@ -74,7 +77,4 @@ Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`,
 - Bugfix mobiele weergave: de instellingentegel toonde grote lege witruimtes na de veld "Ververssnelheid" en "Overbelastingsgrens" - de vaste `flex-basis` (150px/190px, bedoeld als breedte in de desktop-rijweergave) werd op mobiel als hoogte geïnterpreteerd doordat de container daar `flex-direction:column` gebruikt. Nu overschreven met `flex:1 1 auto` op mobiel.
 
 ## v56
-- LastPass- en 1Password-icoon op de tekst-/e-mailvelden onderdrukt via `data-lpignore="true"` / `data-1p-ignore="true"` (het witte vakje met stipjes bleek het LastPass-icoon, dat alleen online verschijnt omdat de extensie dan de kluis kan raadplegen).
-
-## v55
-- Autofill uitgezet (`autocomplete="off"` + autocorrect/autocapitalize/spellcheck uit) op de tekst- en e-mail
+- LastPass- en 1Password-icoon op de tekst-/e-mailvelden onderdrukt via `data-lpignore="true"` / `data-1p-ignore="true"` (het witte vakje met stipje
