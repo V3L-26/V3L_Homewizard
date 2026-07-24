@@ -456,11 +456,11 @@
       <div class="section-title" id="loginTitleText">Inloggen</div>
       <div class="field" style="margin-bottom:12px;">
         <label for="loginEmail" id="loginEmailLabel">E-mailadres</label>
-        <input id="loginEmail" name="x-login-email" type="email" placeholder="jij@voorbeeld.nl" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')" />
+        <input id="loginEmail" name="x-login-email" type="email" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')" />
       </div>
       <div class="field" style="margin-bottom:16px;">
         <label for="loginPassword" id="loginPasswordLabel">Wachtwoord</label>
-        <input id="loginPassword" name="x-login-password" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')" />
+        <input id="loginPassword" name="x-login-password" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" readonly onfocus="this.removeAttribute('readonly')" />
       </div>
       <button type="button" id="loginBtn" style="width:100%;">Inloggen</button>
       <div class="email-status" id="loginStatus">&nbsp;</div>
@@ -877,6 +877,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.2</h4><ul>
+          <li>Inlogscherm: geen voorbeeldtekst meer in het e-mailveld ("jij@voorbeeld.nl") en het wachtwoordveld toont nu gewoon leesbare tekst in plaats van bolletjes.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.1</h4><ul>
           <li>De versie-/update-regel in de footer heeft nu dezelfde opmaak (lettergrootte, kleur, doorzichtigheid) als de copyrightregel erboven.</li>
         </ul></div>
@@ -1058,9 +1061,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.1';
+  const APP_VERSION = '3.2';
   const APP_UPDATED = '24-07-2026';
-  const APP_UPDATED_TIME = '11:41:44';
+  const APP_UPDATED_TIME = '13:24:13';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -3008,11 +3011,4 @@
 
   // registreer de service worker zodat de app-schil offline werkt na installatie
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => { /* geen https/localhost, negeren */ });
-    });
-  }
-})();
-</script>
-</body>
-</html>
+    window.addEventListener('load', () 

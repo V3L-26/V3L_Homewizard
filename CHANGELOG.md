@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.2
+- Inlogscherm: geen voorbeeldtekst meer in het e-mailveld ("jij@voorbeeld.nl") en het wachtwoordveld toont nu gewoon leesbare tekst in plaats van bolletjes.
+
 ## 3.1
 - De versie-/update-regel in de footer heeft nu dezelfde opmaak (lettergrootte, kleur, doorzichtigheid) als de copyrightregel erboven.
 
@@ -74,4 +77,4 @@ Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`,
 - LastPass- en 1Password-icoon op de tekst-/e-mailvelden onderdrukt via `data-lpignore="true"` / `data-1p-ignore="true"` (het witte vakje met stipjes bleek het LastPass-icoon, dat alleen online verschijnt omdat de extensie dan de kluis kan raadplegen).
 
 ## v55
-- Autofill uitgezet (`autocomplete="off"` + autocorrect/autocapitalize/spellcheck uit) op de tekst- en e-mailvelden (IP-adres, database-URL's/sleutels voor Storingslog/Verbruikslog, e-mailadres-velden), zodat mobiele browsers geen eigen invul-/autofill-knop meer tonen naast
+- Autofill uitgezet (`autocomplete="off"` + autocorrect/autocapitalize/spellcheck uit) op de tekst- en e-mail
