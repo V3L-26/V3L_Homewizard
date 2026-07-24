@@ -2,24 +2,19 @@ name: Deploy naar Mijndomein via SFTP
 on:
   push:
     branches: [main]
+
+# Voorkomt een race condition: als er kort na elkaar meerdere keren gepusht
+# wordt, mag er maar 1 deploy tegelijk lopen. Een nog lopende (oudere) deploy
+# wordt geannuleerd zodra er een nieuwere binnenkomt, zodat de laatst
+# GESTARTE run nooit per ongeluk wordt overschreven door een oudere run die
+# toevallig langzamer was.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
 jobs:
   web-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Code ophalen
-        uses: actions/checkout@v4
-      - name: Bestanden uploaden via SFTP
-        uses: Dylan700/sftp-upload-action@latest
-        with:
-          server: 213.249.67.33
-          username: f_000c0d2f
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          uploads: |
-            ./ => ./v3lhomewizard.3lcomputers.nl/
-          ignore: |
-            .git*
-            .git*/**
-            .github/**
-            poller/**
-            README.md
+        uses: actions/checkou
