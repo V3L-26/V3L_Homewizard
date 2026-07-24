@@ -15,4 +15,4 @@ jobs:
           remote-user: f_000c0d2f
           private-ssh-key: ${{ secrets.SSH_KEY }}
           destination-path: /v3lhomewizard.3lcomputers.nl/
-          rsync-options: --archive --verbose --compress --human-readable --progress --delete-after --exclu
+          rsync-options: --archive --verbose --compress --human-readable --progress --delete-after --exclude=.git* --exclude=.git/ --exclude=README.md --exclude=readme.md --exclude=.gitignore --exclude=poller/ --exclude=.github/
