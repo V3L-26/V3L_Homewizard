@@ -2,6 +2,10 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.4
+- Pauzeknop verwijderd (had geen functie meer).
+- Dashboard opgesplitst in aparte pagina's: Home (fase-meters + totaal vermogen), Instellingen (IP/ververssnelheid/overbelastingsgrens, meterstanden, systeeminformatie), Storingen (stroomstoringen-tegel), Meldingen (e-mailalerts, opslaglimiet-waarschuwing) en Log (storingslog, verbruikslog, versielogboek) - met een navigatiebalk met iconen bovenaan, werkt op zowel computer als mobiel. Home laadt altijd als eerste.
+
 ## 3.3
 - Wachtwoordveld op het inlogscherm hersteld naar bolletjes-weergave (was tijdelijk platte tekst, waardoor de browser het wachtwoord niet meer automatisch invulde). Het e-mailveld blijft wel zonder voorbeeldtekst.
 
@@ -74,7 +78,4 @@ Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`,
 - Bugfix: `.field-row` gebruikte flexbox met `flex:1` (= `flex-basis:0%`) voor de input/select, wat op sommige mobiele browsers (met name bij `<select>`) niet betrouwbaar de volledige breedte innam - met als gevolg een te smal veld en een hangslotje dat niet recht onder de andere stond. Vervangen door CSS Grid (`grid-template-columns:1fr auto`), wat hier stabieler in is.
 
 ## v57
-- Bugfix mobiele weergave: de instellingentegel toonde grote lege witruimtes na de veld "Ververssnelheid" en "Overbelastingsgrens" - de vaste `flex-basis` (150px/190px, bedoeld als breedte in de desktop-rijweergave) werd op mobiel als hoogte geïnterpreteerd doordat de container daar `flex-direction:column` gebruikt. Nu overschreven met `flex:1 1 auto` op mobiel.
-
-## v56
-- LastPass- en 1Password-icoon op de tekst-/e-mailvelden onderdrukt via `data-lpignore="true"` / `data-1p-ignore="true"` (het witte vakje met stipje
+- Bugfix mobiele weergave: de instellingentegel 
