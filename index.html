@@ -51,7 +51,7 @@
   }
   h1{font-size:22px;margin:0 0 4px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;}
   .subtitle{margin:0;font-size:13px;color:var(--muted);}
-  .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .header-right{display:flex;flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap;}
   .lang-switch{display:flex;gap:6px;}
   .lang-btn{
     background:var(--panel2);
@@ -435,8 +435,7 @@
     .page-nav{top:6px;padding:4px;gap:2px;}
     .page-nav-btn{font-size:9px;padding:8px 2px;}
     .page-nav-btn svg{width:18px;height:18px;}
-    .header-right{align-items:flex-start;width:100%;}
-    .lang-switch{width:100%;justify-content:flex-start;}
+    .header-right{align-items:center;gap:8px;}
     .lang-btn{padding:7px 11px;}
     .settings{flex-direction:column;align-items:stretch;padding:14px;gap:10px;}
     .settings button{width:100%;}
@@ -961,6 +960,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.7</h4><ul>
+          <li>Uitlogknop staat nu naast de taalvlaggetjes in de header, ook op mobiel (stond eerst eronder).</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.6</h4><ul>
           <li>Volgorde en indeling van de tabbladen aangepast: Home, Verbruik (nieuw, met de verbruikslog), Meterstanden, Storingen, Instellingen, Log.</li>
           <li>Meldingen-tabblad opgeheven: e-mailalerts en de opslaglimiet-waarschuwing staan nu bij Instellingen.</li>
@@ -1163,9 +1165,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.6';
+  const APP_VERSION = '3.7';
   const APP_UPDATED = '25-07-2026';
-  const APP_UPDATED_TIME = '17:17:20';
+  const APP_UPDATED_TIME = '17:24:31';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
