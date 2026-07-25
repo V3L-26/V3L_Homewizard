@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.8
+- Fase-meter-popup op mobiel opent nu met een zoom-animatie (van klein naar groot) en zoomt weer terug bij het sluiten.
+
 ## 3.7
 - Uitlogknop staat nu naast de taalvlaggetjes in de header, ook op mobiel (stond eerst eronder).
 
@@ -83,4 +86,4 @@ Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`,
 
 ## v59
 - Echte inlog toegevoegd via Supabase Auth. Het dashboard toont nu een inlog-/aanmaakscherm en blijft verborgen tot er succesvol is ingelogd. Een nieuw account vereist een wachtwoord van minimaal 12 tekens met ten minste 1 cijfer en 1 vreemd teken (client-side gevalideerd via een live checklist).
-- RLS aangescherpt op alle tabellen (`app_settings`, `email_settings`, `fault_log`, `minute_log`, `field_locks`, `email_send_log`): de publieke/anon-sleutel (zichtbaar in de paginabroncode) is niet meer genoeg om te lezen of te schrijven, dat vereist nu een geldig ingelogd sessie-token (rol `authenticated`). Ook `get_storage_stats()` is niet meer
+- RLS aangescherpt op alle tabellen (`app_settings`, `email_settings`, `fault_log`, `minute_log`, `field_locks`, `email_send_log`): de publieke/anon-sleutel (zichtbaar in de paginabroncode) is niet meer genoeg om te leze

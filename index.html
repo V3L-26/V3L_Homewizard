@@ -298,15 +298,20 @@
   /* Popup met vergrote fase-meter - alleen actief op touch-apparaten (zie JS: pointer:coarse),
      schaalt automatisch mee met de schermbreedte via width:min(...). */
   .meter-modal-backdrop{
-    display:none;position:fixed;inset:0;z-index:1000;
+    display:flex;position:fixed;inset:0;z-index:1000;
     background:rgba(4,7,10,0.72);backdrop-filter:blur(6px);
     align-items:center;justify-content:center;padding:24px;
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .22s cubic-bezier(.2,0,0,1);
   }
-  .meter-modal-backdrop.open{display:flex;}
+  .meter-modal-backdrop.open{opacity:1;visibility:visible;pointer-events:auto;}
   .meter-modal-card{
     position:relative;width:min(88vw, 420px);
     padding:32px 26px;text-align:center;
+    transform:scale(.4);
+    transition:transform .26s cubic-bezier(.2,0,0,1);
   }
+  .meter-modal-backdrop.open .meter-modal-card{transform:scale(1);}
   .meter-modal-card .label{font-size:14px;margin-bottom:10px;}
   .meter-modal-card .gauge-wrap{margin:0 auto;max-width:320px;}
   .meter-modal-card .gauge-num{font-size:clamp(38px, 11vw, 56px);}
@@ -960,6 +965,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.8</h4><ul>
+          <li>Fase-meter-popup op mobiel opent nu met een zoom-animatie (van klein naar groot) en zoomt weer terug bij het sluiten.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.7</h4><ul>
           <li>Uitlogknop staat nu naast de taalvlaggetjes in de header, ook op mobiel (stond eerst eronder).</li>
         </ul></div>
@@ -1165,9 +1173,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.7';
+  const APP_VERSION = '3.8';
   const APP_UPDATED = '25-07-2026';
-  const APP_UPDATED_TIME = '17:24:31';
+  const APP_UPDATED_TIME = '17:35:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
