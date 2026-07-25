@@ -2,6 +2,11 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.5
+- Meterstanden en Systeeminformatie zijn nu allebei een eigen pagina in de navigatiebalk, los van Instellingen.
+- Meldingen-pagina: de e-mailalerts-tegel is niet meer uitklapbaar, alle onderdelen staan meteen zichtbaar.
+- Instellingen-pagina: IP-adres, ververssnelheid en overbelastingsgrens staan nu onder elkaar in plaats van naast elkaar.
+
 ## 3.4
 - Pauzeknop verwijderd (had geen functie meer).
 - Dashboard opgesplitst in aparte pagina's: Home (fase-meters + totaal vermogen), Instellingen (IP/ververssnelheid/overbelastingsgrens, meterstanden, systeeminformatie), Storingen (stroomstoringen-tegel), Meldingen (e-mailalerts, opslaglimiet-waarschuwing) en Log (storingslog, verbruikslog, versielogboek) - met een navigatiebalk met iconen bovenaan, werkt op zowel computer als mobiel. Home laadt altijd als eerste.
@@ -75,7 +80,4 @@ Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`,
 - Let op: bij het aanmaken van een account is e-mailbevestiging vereist (standaard Supabase-instelling) - na het aanmaken moet de bevestigingsmail worden geopend voordat inloggen lukt.
 
 ## v58
-- Bugfix: `.field-row` gebruikte flexbox met `flex:1` (= `flex-basis:0%`) voor de input/select, wat op sommige mobiele browsers (met name bij `<select>`) niet betrouwbaar de volledige breedte innam - met als gevolg een te smal veld en een hangslotje dat niet recht onder de andere stond. Vervangen door CSS Grid (`grid-template-columns:1fr auto`), wat hier stabieler in is.
-
-## v57
-- Bugfix mobiele weergave: de instellingentegel 
+- Bugfix: `.field-row` gebruikte flexbox met `flex:1` (= `flex-basis:0%`) voor d

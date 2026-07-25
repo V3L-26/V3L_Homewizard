@@ -112,10 +112,11 @@
     padding:16px;
     margin-bottom:24px;
     display:flex;
+    flex-direction:column;
     gap:12px;
-    flex-wrap:wrap;
-    align-items:flex-end;
+    align-items:stretch;
   }
+  .settings .field{flex:1 1 auto !important;}
   .field{display:flex;flex-direction:column;gap:6px;flex:1 1 160px;}
   .field.field-ip{flex:2 1 320px;}
   .field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
@@ -550,6 +551,14 @@
       <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <span id="navSettingsText">Instellingen</span>
     </button>
+    <button type="button" class="page-nav-btn" data-page="readings" id="navReadingsBtn">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M13.2 7.2l-4.4 5.6h3.2l-1.2 4 4.4-5.6h-3.2l1.2-4z" fill="currentColor"/></svg>
+      <span id="navReadingsText">Meterstanden</span>
+    </button>
+    <button type="button" class="page-nav-btn" data-page="sysinfo" id="navSysinfoBtn">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5.2M12 7.4v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="navSysinfoText">Systeeminformatie</span>
+    </button>
     <button type="button" class="page-nav-btn" data-page="faults" id="navFaultsBtn">
       <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l10 18H2L12 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
       <span id="navFaultsText">Storingen</span>
@@ -725,12 +734,8 @@
   </div>
 
   <div class="page" data-page="alerts">
-  <details class="table-panel email-panel">
-    <summary>
-      <span class="title-row"><span id="emailTitleText">E-mailalerts</span></span>
-      <span class="chevron">&#9656;</span>
-    </summary>
-    <div class="email-body">
+  <div class="table-panel">
+    <div class="section-title" id="emailTitleText">E-mailalerts</div>
 
       <div class="email-subsection">
         <div class="section-title" id="emailjsQuotaTitleText">Verzendlimiet</div>
@@ -804,11 +809,10 @@
         <div class="email-status" id="storageEmailStatus">&nbsp;</div>
       </div>
 
-    </div>
-  </details>
+  </div>
   </div>
 
-  <div class="page" data-page="settings">
+  <div class="page" data-page="readings">
   <div class="table-panel">
     <div class="section-title" id="meterReadingsTitle">Meterstanden</div>
     <table>
@@ -821,7 +825,9 @@
       </tbody>
     </table>
   </div>
+  </div>
 
+  <div class="page" data-page="sysinfo">
   <div class="table-panel">
     <div class="section-title" id="systemInfoTitleText">Systeeminformatie</div>
     <table>
@@ -955,6 +961,11 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.5</h4><ul>
+          <li>Meterstanden en Systeeminformatie zijn nu allebei een eigen pagina in de navigatiebalk, los van Instellingen.</li>
+          <li>Meldingen-pagina: de e-mailalerts-tegel is niet meer uitklapbaar, alle onderdelen staan meteen zichtbaar.</li>
+          <li>Instellingen-pagina: IP-adres, ververssnelheid en overbelastingsgrens staan nu onder elkaar in plaats van naast elkaar.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.4</h4><ul>
           <li>Pauzeknop verwijderd (had geen functie meer).</li>
           <li>Dashboard opgesplitst in aparte pagina's: Home (fase-meters + totaal vermogen), Instellingen (IP/ververssnelheid/overbelastingsgrens, meterstanden, systeeminformatie), Storingen (stroomstoringen-tegel), Meldingen (e-mailalerts, opslaglimiet-waarschuwing) en Log (storingslog, verbruikslog, versielogboek) - met een navigatiebalk met iconen bovenaan, werkt op zowel computer als mobiel. Home laadt altijd als eerste.</li>
@@ -1147,9 +1158,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.4';
+  const APP_VERSION = '3.5';
   const APP_UPDATED = '25-07-2026';
-  const APP_UPDATED_TIME = '14:24:24';
+  const APP_UPDATED_TIME = '16:55:53';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -1385,7 +1396,7 @@
   const I18N = {
     nl: {
       subtitle: 'Live inzicht in je stroomverbruik',
-      navHome: 'Home', navSettings: 'Instellingen', navFaults: 'Storingen', navAlerts: 'Meldingen', navLog: 'Log',
+      navHome: 'Home', navSettings: 'Instellingen', navReadings: 'Meterstanden', navSysinfo: 'Systeeminfo', navFaults: 'Storingen', navAlerts: 'Meldingen', navLog: 'Log',
       statusInitial: 'Vul een IP-adres in en klik Verbinden',
       statusFailed: 'Verbinding mislukt',
       statusConnected: (time) => 'Verbonden · laatste update ' + time,
@@ -1474,7 +1485,7 @@
     },
     en: {
       subtitle: 'Live view of your power usage per phase',
-      navHome: 'Home', navSettings: 'Settings', navFaults: 'Faults', navAlerts: 'Alerts', navLog: 'Log',
+      navHome: 'Home', navSettings: 'Settings', navReadings: 'Meter readings', navSysinfo: 'System info', navFaults: 'Faults', navAlerts: 'Alerts', navLog: 'Log',
       statusInitial: 'Enter an IP address and click Connect',
       statusFailed: 'Connection failed',
       statusConnected: (time) => 'Connected · last update ' + time,
@@ -1563,7 +1574,7 @@
     },
     de: {
       subtitle: 'Live-Übersicht deines Stromverbrauchs pro Phase',
-      navHome: 'Home', navSettings: 'Einstellungen', navFaults: 'Störungen', navAlerts: 'Meldungen', navLog: 'Protokoll',
+      navHome: 'Home', navSettings: 'Einstellungen', navReadings: 'Zählerstände', navSysinfo: 'Systeminfo', navFaults: 'Störungen', navAlerts: 'Meldungen', navLog: 'Protokoll',
       statusInitial: 'Gib eine IP-Adresse ein und klicke auf Verbinden',
       statusFailed: 'Verbindung fehlgeschlagen',
       statusConnected: (time) => 'Verbunden · letztes Update ' + time,
@@ -2982,6 +2993,8 @@
 
     $('navHomeText').textContent = d.navHome;
     $('navSettingsText').textContent = d.navSettings;
+    $('navReadingsText').textContent = d.navReadings;
+    $('navSysinfoText').textContent = d.navSysinfo;
     $('navFaultsText').textContent = d.navFaults;
     $('navAlertsText').textContent = d.navAlerts;
     $('navLogText').textContent = d.navLog;
