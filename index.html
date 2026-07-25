@@ -547,25 +547,21 @@
       <svg viewBox="0 0 24 24" fill="none"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span id="navHomeText">Home</span>
     </button>
-    <button type="button" class="page-nav-btn" data-page="settings" id="navSettingsBtn">
-      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span id="navSettingsText">Instellingen</span>
+    <button type="button" class="page-nav-btn" data-page="verbruik" id="navVerbruikBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V11M9 19V5M14 19V13M19 19V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="navVerbruikText">Verbruik</span>
     </button>
     <button type="button" class="page-nav-btn" data-page="readings" id="navReadingsBtn">
       <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M13.2 7.2l-4.4 5.6h3.2l-1.2 4 4.4-5.6h-3.2l1.2-4z" fill="currentColor"/></svg>
       <span id="navReadingsText">Meterstanden</span>
     </button>
-    <button type="button" class="page-nav-btn" data-page="sysinfo" id="navSysinfoBtn">
-      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5.2M12 7.4v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span id="navSysinfoText">Systeeminformatie</span>
-    </button>
     <button type="button" class="page-nav-btn" data-page="faults" id="navFaultsBtn">
       <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l10 18H2L12 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
       <span id="navFaultsText">Storingen</span>
     </button>
-    <button type="button" class="page-nav-btn" data-page="alerts" id="navAlertsBtn">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 18a3 3 0 0 0 6 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <span id="navAlertsText">Meldingen</span>
+    <button type="button" class="page-nav-btn" data-page="settings" id="navSettingsBtn">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="navSettingsText">Instellingen</span>
     </button>
     <button type="button" class="page-nav-btn" data-page="log" id="navLogBtn">
       <svg viewBox="0 0 24 24" fill="none"><path d="M8 6h13M8 12h13M8 18h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor"/></svg>
@@ -733,7 +729,7 @@
     </div>
   </div>
 
-  <div class="page" data-page="alerts">
+  <div class="page" data-page="settings">
   <div class="table-panel">
     <div class="section-title" id="emailTitleText">E-mailalerts</div>
 
@@ -827,7 +823,7 @@
   </div>
   </div>
 
-  <div class="page" data-page="sysinfo">
+  <div class="page" data-page="settings">
   <div class="table-panel">
     <div class="section-title" id="systemInfoTitleText">Systeeminformatie</div>
     <table>
@@ -841,7 +837,7 @@
   </div>
   </div>
 
-  <div class="page" data-page="alerts">
+  <div class="page" data-page="settings">
   <div class="storage-warning" id="storageWarning" style="display:none">
     <span id="storageWarningText"></span>
   </div>
@@ -900,7 +896,9 @@
       </table>
     </div>
   </div>
+  </div>
 
+  <div class="page" data-page="verbruik">
   <div class="table-panel">
     <details class="inline-panel">
       <summary>
@@ -953,7 +951,9 @@
       </table>
     </div>
   </div>
+  </div>
 
+  <div class="page" data-page="log">
   <details class="table-panel email-panel">
     <summary>
       <span class="title-row"><span id="changelogTitleText">Versielogboek</span></span>
@@ -961,6 +961,11 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.6</h4><ul>
+          <li>Volgorde en indeling van de tabbladen aangepast: Home, Verbruik (nieuw, met de verbruikslog), Meterstanden, Storingen, Instellingen, Log.</li>
+          <li>Meldingen-tabblad opgeheven: e-mailalerts en de opslaglimiet-waarschuwing staan nu bij Instellingen.</li>
+          <li>Systeeminformatie is niet langer een eigen tabblad, maar staat nu ook bij Instellingen.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.5</h4><ul>
           <li>Meterstanden en Systeeminformatie zijn nu allebei een eigen pagina in de navigatiebalk, los van Instellingen.</li>
           <li>Meldingen-pagina: de e-mailalerts-tegel is niet meer uitklapbaar, alle onderdelen staan meteen zichtbaar.</li>
@@ -1158,9 +1163,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.5';
+  const APP_VERSION = '3.6';
   const APP_UPDATED = '25-07-2026';
-  const APP_UPDATED_TIME = '16:55:53';
+  const APP_UPDATED_TIME = '17:17:20';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -1396,7 +1401,7 @@
   const I18N = {
     nl: {
       subtitle: 'Live inzicht in je stroomverbruik',
-      navHome: 'Home', navSettings: 'Instellingen', navReadings: 'Meterstanden', navSysinfo: 'Systeeminfo', navFaults: 'Storingen', navAlerts: 'Meldingen', navLog: 'Log',
+      navHome: 'Home', navVerbruik: 'Verbruik', navReadings: 'Meterstanden', navFaults: 'Storingen', navSettings: 'Instellingen', navLog: 'Log',
       statusInitial: 'Vul een IP-adres in en klik Verbinden',
       statusFailed: 'Verbinding mislukt',
       statusConnected: (time) => 'Verbonden · laatste update ' + time,
@@ -1485,7 +1490,7 @@
     },
     en: {
       subtitle: 'Live view of your power usage per phase',
-      navHome: 'Home', navSettings: 'Settings', navReadings: 'Meter readings', navSysinfo: 'System info', navFaults: 'Faults', navAlerts: 'Alerts', navLog: 'Log',
+      navHome: 'Home', navVerbruik: 'Usage', navReadings: 'Meter readings', navFaults: 'Faults', navSettings: 'Settings', navLog: 'Log',
       statusInitial: 'Enter an IP address and click Connect',
       statusFailed: 'Connection failed',
       statusConnected: (time) => 'Connected · last update ' + time,
@@ -1574,7 +1579,7 @@
     },
     de: {
       subtitle: 'Live-Übersicht deines Stromverbrauchs pro Phase',
-      navHome: 'Home', navSettings: 'Einstellungen', navReadings: 'Zählerstände', navSysinfo: 'Systeminfo', navFaults: 'Störungen', navAlerts: 'Meldungen', navLog: 'Protokoll',
+      navHome: 'Home', navVerbruik: 'Verbrauch', navReadings: 'Zählerstände', navFaults: 'Störungen', navSettings: 'Einstellungen', navLog: 'Protokoll',
       statusInitial: 'Gib eine IP-Adresse ein und klicke auf Verbinden',
       statusFailed: 'Verbindung fehlgeschlagen',
       statusConnected: (time) => 'Verbunden · letztes Update ' + time,
@@ -2992,11 +2997,10 @@
     connectBtn.textContent = connectBtn.classList.contains('connected') ? d.connected : d.connect;
 
     $('navHomeText').textContent = d.navHome;
+    $('navVerbruikText').textContent = d.navVerbruik;
     $('navSettingsText').textContent = d.navSettings;
     $('navReadingsText').textContent = d.navReadings;
-    $('navSysinfoText').textContent = d.navSysinfo;
     $('navFaultsText').textContent = d.navFaults;
-    $('navAlertsText').textContent = d.navAlerts;
     $('navLogText').textContent = d.navLog;
 
     $('totalPowerLabel').textContent = d.totalPower;
