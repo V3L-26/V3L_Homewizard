@@ -965,6 +965,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.9</h4><ul>
+          <li>Batterijbesparing: als het scherm uit gaat of de app op de achtergrond komt, wordt er nog maar 1x per minuut gepolld in plaats van op de ingestelde snelheid. Bij terugkomst wordt direct weer een verse meting opgehaald.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.8</h4><ul>
           <li>Fase-meter-popup op mobiel opent nu met een zoom-animatie (van klein naar groot) en zoomt weer terug bij het sluiten.</li>
         </ul></div>
@@ -1173,9 +1176,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.8';
-  const APP_UPDATED = '25-07-2026';
-  const APP_UPDATED_TIME = '17:35:00';
+  const APP_VERSION = '3.9';
+  const APP_UPDATED = '28-07-2026';
+  const APP_UPDATED_TIME = '10:00:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -2976,9 +2979,18 @@
     }
   }
 
+  // Batterijbesparing: als de app naar de achtergrond gaat (scherm uit, andere
+  // app op de voorgrond, tabblad gewisseld) heeft niemand iets aan pollen op de
+  // ingestelde snelheid (vaak elke 1-2 sec) - dat kost alleen radio/batterij
+  // zonder dat het scherm ooit ververst wordt. We vertragen dan sterk naar
+  // BACKGROUND_POLL_SEC en gaan bij terugkomst direct weer op volle snelheid.
+  const BACKGROUND_POLL_SEC = 60;
+  function currentIntervalSecs(){
+    return Math.max(1, parseInt(intervalInput.value, 10) || 2);
+  }
   function start(){
     stop();
-    const secs = Math.max(1, parseInt(intervalInput.value, 10) || 2);
+    const secs = document.hidden ? BACKGROUND_POLL_SEC : currentIntervalSecs();
     poll();
     timer = setInterval(poll, secs * 1000);
   }
@@ -2986,6 +2998,16 @@
     if (timer) clearInterval(timer);
     timer = null;
   }
+  document.addEventListener('visibilitychange', () => {
+    if (!timer) return; // nog niet verbonden, niets te doen
+    clearInterval(timer);
+    if (document.hidden) {
+      timer = setInterval(poll, BACKGROUND_POLL_SEC * 1000);
+    } else {
+      poll(); // meteen een verse meting bij terugkomst, niet wachten op de volgende tik
+      timer = setInterval(poll, currentIntervalSecs() * 1000);
+    }
+  });
 
   connectBtn.addEventListener('click', () => {
     setAppSetting('p1_ip', ipInput.value.trim());
