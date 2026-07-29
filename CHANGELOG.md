@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.10
+- Bug gefixt: het wegschrijven van nieuwe verbruiks-/storingslogregels ververste het sessietoken niet, waardoor dit na verloop van tijd stil bleef mislukken (401) en de log niet meer aangroeide - terwijl eerdere data gewoon veilig in Supabase bleef staan. Schrijven ververst het token nu net als lezen al deed.
+
 ## 3.9
 - Batterijbesparing: als het scherm uit gaat of de app op de achtergrond komt, wordt er nog maar 1x per minuut gepolld in plaats van op de ingestelde snelheid. Bij terugkomst wordt direct weer een verse meting opgehaald.
 
@@ -259,5 +262,4 @@ Ruwweg in chronologische volgorde:
 - Foutmelding bij verbindingsproblemen omgezet naar een uitklapbare tegel (alleen de titelregel zichtbaar, rest pas bij uitklappen).
 - Gauge-gevarenzones gefixt: rode zone startte te vroeg (linecap-bug), vaste oranje waarschuwingszone (4,5k-5k) en dieper rode gevarenzone (5k+) toegevoegd, losgekoppeld van de instelbare overbelastingsgrens, en een overgebleven grijs randje na de rode zone verholpen.
 - Gasverbruik (tijdstip) en Systeeminformatie (meter-model, DSMR-versie, unieke IDs) toegevoegd op basis van de HomeWizard API-velden.
-- Configureerbare elektriciteits- en gasprijzen toegevoegd, met berekende kosten (elektriciteit, gas, totaal) en verwijdering van de native invoerspinners op de prijsvelden.
-- Tegel-layout herzien: volle-breedte "Totaal vermogen"-tegel met daaronder een 2-koloms rij met "Kosten elektriciteit" en "Kosten gas" naast elkaar.
+- Co

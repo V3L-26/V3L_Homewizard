@@ -965,6 +965,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.10</h4><ul>
+          <li>Bug gefixt: het wegschrijven van nieuwe verbruiks-/storingslogregels ververste het sessietoken niet, waardoor dit na verloop van tijd stil bleef mislukken (401) en de log niet meer aangroeide - terwijl eerdere data gewoon veilig in Supabase bleef staan. Schrijven ververst het token nu net als lezen al deed.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.9</h4><ul>
           <li>Batterijbesparing: als het scherm uit gaat of de app op de achtergrond komt, wordt er nog maar 1x per minuut gepolld in plaats van op de ingestelde snelheid. Bij terugkomst wordt direct weer een verse meting opgehaald.</li>
         </ul></div>
@@ -1176,9 +1179,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.9';
-  const APP_UPDATED = '28-07-2026';
-  const APP_UPDATED_TIME = '10:00:00';
+  const APP_VERSION = '3.10';
+  const APP_UPDATED = '29-07-2026';
+  const APP_UPDATED_TIME = '13:15:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -1901,7 +1904,13 @@
   function savePendingQueue(key, arr){
     try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e){ /* storage vol, negeren */ }
   }
-  function postToSupabase(url, apiKeyValue, body){
+  async function postToSupabase(url, apiKeyValue, body){
+    // Zonder dit: als het sessietoken tijdens een lange, open sessie verloopt,
+    // blijft bearerFor() gewoon het (inmiddels verlopen) token teruggeven en
+    // mislukt elke nieuwe logregel stil met 401 - de log lijkt dan "leeg" te
+    // blijven terwijl eerdere regels nog gewoon in Supabase staan. Ververs het
+    // token daarom hier eerst, net als bij het lezen van de log al gebeurde.
+    if (url.indexOf(DEFAULT_SUPABASE_URL) === 0) await ensureValidSession();
     return fetch(url, {
       method: 'POST',
       headers: {
@@ -2632,6 +2641,7 @@
     logApiStatus.textContent = '…';
     logApiStatus.className = 'email-status';
     try {
+      if (url.indexOf(DEFAULT_SUPABASE_URL) === 0) await ensureValidSession();
       const sep = url.indexOf('?') !== -1 ? '&' : '?';
       const res = await fetch(url + sep + 'select=id&limit=1', { headers: { 'apikey': key, 'Authorization': 'Bearer ' + bearerFor(url, key) } });
       if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -2781,6 +2791,7 @@
     faultApiStatus.textContent = '…';
     faultApiStatus.className = 'email-status';
     try {
+      if (url.indexOf(DEFAULT_SUPABASE_URL) === 0) await ensureValidSession();
       const sep = url.indexOf('?') !== -1 ? '&' : '?';
       const res = await fetch(url + sep + 'select=id&limit=1', { headers: { 'apikey': key, 'Authorization': 'Bearer ' + bearerFor(url, key) } });
       if (!res.ok) throw new Error('HTTP ' + res.status);
