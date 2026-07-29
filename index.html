@@ -903,6 +903,13 @@
   </div>
 
   <div class="page" data-page="verbruik">
+  <div class="table-panel" id="highestDayPanel">
+    <div class="section-title" id="highestDayTitleText">Dag met hoogste verbruik</div>
+    <div class="fault-stats">
+      <div class="fault-stat"><div class="fault-num" id="highestDayDate">&mdash;</div><div class="fault-label" id="highestDayDateLabel">datum</div></div>
+      <div class="fault-stat"><div class="fault-num" id="highestDayKwh">&mdash;</div><div class="fault-label" id="highestDayKwhLabel">kWh</div></div>
+    </div>
+  </div>
   <div class="table-panel">
     <details class="inline-panel">
       <summary>
@@ -965,6 +972,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.11</h4><ul>
+          <li>Verbruik-pagina toont nu bovenaan de dag met het hoogste totale stroomverbruik (kWh), berekend uit de verbruikslog.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.10</h4><ul>
           <li>Bug gefixt: het wegschrijven van nieuwe verbruiks-/storingslogregels ververste het sessietoken niet, waardoor dit na verloop van tijd stil bleef mislukken (401) en de log niet meer aangroeide - terwijl eerdere data gewoon veilig in Supabase bleef staan. Schrijven ververst het token nu net als lezen al deed.</li>
         </ul></div>
@@ -1179,9 +1189,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.10';
+  const APP_VERSION = '3.11';
   const APP_UPDATED = '29-07-2026';
-  const APP_UPDATED_TIME = '13:15:00';
+  const APP_UPDATED_TIME = '14:00:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -1453,6 +1463,7 @@
       meterReadings: 'Meterstanden', totalImport: 'Totaal import', totalExport: 'Totaal export', gas: 'Gas', water: 'Water',
       gasTimestamp: 'Tijdstip gas',
       systemInfoTitle: 'Systeeminformatie', meterModel: 'Meter-model', dsmrVersion: 'DSMR-versie', uniqueIdElec: 'Uniek ID (elektriciteit)', uniqueIdGas: 'Uniek ID (gas)',
+      highestDayTitle: 'Dag met hoogste verbruik', highestDayDateLabel: 'datum', highestDayKwhLabel: 'kWh',
       faultsTitle: 'Storingen', faultsTotal: 'Stroomstoringen', faultsTotalUnit: 'totaal', longFaults: 'langdurig', sags: 'dips', swells: 'pieken',
       faultLogTitle: 'Storingslog',
       faultLogRetained: (n) => n + ' gebeurtenissen gelogd',
@@ -1542,6 +1553,7 @@
       meterReadings: 'Meter readings', totalImport: 'Total import', totalExport: 'Total export', gas: 'Gas', water: 'Water',
       gasTimestamp: 'Gas timestamp',
       systemInfoTitle: 'System information', meterModel: 'Meter model', dsmrVersion: 'DSMR version', uniqueIdElec: 'Unique ID (electricity)', uniqueIdGas: 'Unique ID (gas)',
+      highestDayTitle: 'Day with highest consumption', highestDayDateLabel: 'date', highestDayKwhLabel: 'kWh',
       faultsTitle: 'Faults', faultsTotal: 'Power failures', faultsTotalUnit: 'total', longFaults: 'long', sags: 'sags', swells: 'swells',
       faultLogTitle: 'Fault log',
       faultLogRetained: (n) => n + ' events logged',
@@ -1631,6 +1643,7 @@
       meterReadings: 'Zählerstände', totalImport: 'Gesamtbezug', totalExport: 'Gesamteinspeisung', gas: 'Gas', water: 'Wasser',
       gasTimestamp: 'Gas-Zeitstempel',
       systemInfoTitle: 'Systeminformationen', meterModel: 'Zählermodell', dsmrVersion: 'DSMR-Version', uniqueIdElec: 'Eindeutige ID (Strom)', uniqueIdGas: 'Eindeutige ID (Gas)',
+      highestDayTitle: 'Tag mit höchstem Verbrauch', highestDayDateLabel: 'Datum', highestDayKwhLabel: 'kWh',
       faultsTitle: 'Störungen', faultsTotal: 'Stromausfälle', faultsTotalUnit: 'gesamt', longFaults: 'langwierig', sags: 'Spannungseinbrüche', swells: 'Spannungsspitzen',
       faultLogTitle: 'Störungsprotokoll',
       faultLogRetained: (n) => n + ' Ereignisse protokolliert',
@@ -2807,6 +2820,38 @@
   renderFaultLogTable();
   loadRemoteFaultLog();
 
+  // --- Dag met hoogste verbruik: haalt per-dag totalen op via de get_daily_totals
+  // RPC in ons eigen Supabase-project (som van de per-minuut vermogens/60000 =
+  // kWh, in de tijdzone Europe/Amsterdam) en toont de dag met het hoogste totaal
+  // bovenaan de Verbruik-pagina. ---
+  async function loadHighestDay(){
+    await ensureValidSession();
+    try {
+      const res = await fetch(DEFAULT_SUPABASE_URL + '/rest/v1/rpc/get_daily_totals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': DEFAULT_SUPABASE_KEY,
+          'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY)
+        },
+        body: '{}'
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const rows = await res.json();
+      if (!Array.isArray(rows) || !rows.length) return;
+      let best = rows[0];
+      for (const r of rows) { if (r.kwh > best.kwh) best = r; }
+      const dt = new Date(best.day + 'T00:00:00');
+      $('highestDayDate').textContent = isNaN(dt.getTime())
+        ? String(best.day)
+        : (pad(dt.getDate()) + '-' + pad(dt.getMonth() + 1) + '-' + dt.getFullYear());
+      $('highestDayKwh').textContent = fmt(best.kwh, 2);
+    } catch (e) {
+      console.warn('Kon dag met hoogste verbruik niet ophalen:', e);
+    }
+  }
+  loadHighestDay();
+
   function setStatus(ok, text){
     if (statusDot && statusText) {
       statusDot.className = 'dot ' + (ok === null ? '' : (ok ? 'ok' : 'err'));
@@ -3094,6 +3139,10 @@
     $('dsmrVersionLabel').textContent = d.dsmrVersion;
     $('uniqueIdElecLabel').textContent = d.uniqueIdElec;
     $('uniqueIdGasLabel').textContent = d.uniqueIdGas;
+
+    $('highestDayTitleText').textContent = d.highestDayTitle;
+    $('highestDayDateLabel').textContent = d.highestDayDateLabel;
+    $('highestDayKwhLabel').textContent = d.highestDayKwhLabel;
 
     $('faultsTotalLabel').textContent = d.faultsTotal;
     $('faultsTotalUnit').textContent = d.faultsTotalUnit;

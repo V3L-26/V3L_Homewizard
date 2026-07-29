@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.11
+- Verbruik-pagina toont nu bovenaan de dag met het hoogste totale stroomverbruik (kWh), berekend uit de verbruikslog.
+
 ## 3.10
 - Bug gefixt: het wegschrijven van nieuwe verbruiks-/storingslogregels ververste het sessietoken niet, waardoor dit na verloop van tijd stil bleef mislukken (401) en de log niet meer aangroeide - terwijl eerdere data gewoon veilig in Supabase bleef staan. Schrijven ververst het token nu net als lezen al deed.
 
@@ -261,5 +264,4 @@ Ruwweg in chronologische volgorde:
 - Titel/naam overal gewijzigd van "P1 Meter Dashboard" naar "V3L HomeWizard", inclusief het V3L-logo bovenaan (i.p.v. het bliksenschichtje).
 - Foutmelding bij verbindingsproblemen omgezet naar een uitklapbare tegel (alleen de titelregel zichtbaar, rest pas bij uitklappen).
 - Gauge-gevarenzones gefixt: rode zone startte te vroeg (linecap-bug), vaste oranje waarschuwingszone (4,5k-5k) en dieper rode gevarenzone (5k+) toegevoegd, losgekoppeld van de instelbare overbelastingsgrens, en een overgebleven grijs randje na de rode zone verholpen.
-- Gasverbruik (tijdstip) en Systeeminformatie (meter-model, DSMR-versie, unieke IDs) toegevoegd op basis van de HomeWizard API-velden.
-- Co
+- Gasverbrui
