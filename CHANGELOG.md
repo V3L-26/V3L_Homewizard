@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.12
+- Bij de dag met het hoogste verbruik wordt nu ook de opsplitsing per fase (L1/L2/L3 in kWh) getoond.
+
 ## 3.11
 - Verbruik-pagina toont nu bovenaan de dag met het hoogste totale stroomverbruik (kWh), berekend uit de verbruikslog.
 
@@ -263,5 +266,4 @@ Ruwweg in chronologische volgorde:
 - Footer aangepast: HomeWizard-API-uitleg vervangen door een V3L-copyrightregel met dynamisch jaartal ("Alle rechten voorbehouden").
 - Titel/naam overal gewijzigd van "P1 Meter Dashboard" naar "V3L HomeWizard", inclusief het V3L-logo bovenaan (i.p.v. het bliksenschichtje).
 - Foutmelding bij verbindingsproblemen omgezet naar een uitklapbare tegel (alleen de titelregel zichtbaar, rest pas bij uitklappen).
-- Gauge-gevarenzones gefixt: rode zone startte te vroeg (linecap-bug), vaste oranje waarschuwingszone (4,5k-5k) en dieper rode gevarenzone (5k+) toegevoegd, losgekoppeld van de instelbare overbelastingsgrens, en een overgebleven grijs randje na de rode zone verholpen.
-- Gasverbrui
+- Gauge-gevarenzones gefixt: rode zone startte te vroeg (linecap-bug), vaste oranje waarschuwingszone (4,5k-5k) en dieper rode gevarenzone (5k+) toegevoegd, losgekoppeld 

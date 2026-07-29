@@ -909,6 +909,26 @@
       <div class="fault-stat"><div class="fault-num" id="highestDayDate">&mdash;</div><div class="fault-label" id="highestDayDateLabel">datum</div></div>
       <div class="fault-stat"><div class="fault-num" id="highestDayKwh">&mdash;</div><div class="fault-label" id="highestDayKwhLabel">kWh</div></div>
     </div>
+    <div class="fault-phases-grid">
+      <div class="fault-phase l1">
+        <div class="label" id="hdL1Label">Fase 1 (L1)</div>
+        <div class="fault-stats">
+          <div class="fault-stat"><div class="fault-num" id="highestDayL1Kwh">&mdash;</div><div class="fault-label" id="highestDayKwhUnit1">kWh</div></div>
+        </div>
+      </div>
+      <div class="fault-phase l2">
+        <div class="label" id="hdL2Label">Fase 2 (L2)</div>
+        <div class="fault-stats">
+          <div class="fault-stat"><div class="fault-num" id="highestDayL2Kwh">&mdash;</div><div class="fault-label" id="highestDayKwhUnit2">kWh</div></div>
+        </div>
+      </div>
+      <div class="fault-phase l3">
+        <div class="label" id="hdL3Label">Fase 3 (L3)</div>
+        <div class="fault-stats">
+          <div class="fault-stat"><div class="fault-num" id="highestDayL3Kwh">&mdash;</div><div class="fault-label" id="highestDayKwhUnit3">kWh</div></div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="table-panel">
     <details class="inline-panel">
@@ -972,6 +992,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.12</h4><ul>
+          <li>Bij de dag met het hoogste verbruik wordt nu ook de opsplitsing per fase (L1/L2/L3 in kWh) getoond.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.11</h4><ul>
           <li>Verbruik-pagina toont nu bovenaan de dag met het hoogste totale stroomverbruik (kWh), berekend uit de verbruikslog.</li>
         </ul></div>
@@ -1189,9 +1212,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.11';
+  const APP_VERSION = '3.12';
   const APP_UPDATED = '29-07-2026';
-  const APP_UPDATED_TIME = '14:00:00';
+  const APP_UPDATED_TIME = '14:20:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -2846,6 +2869,9 @@
         ? String(best.day)
         : (pad(dt.getDate()) + '-' + pad(dt.getMonth() + 1) + '-' + dt.getFullYear());
       $('highestDayKwh').textContent = fmt(best.kwh, 2);
+      $('highestDayL1Kwh').textContent = best.l1_kwh !== undefined && best.l1_kwh !== null ? fmt(best.l1_kwh, 2) : '—';
+      $('highestDayL2Kwh').textContent = best.l2_kwh !== undefined && best.l2_kwh !== null ? fmt(best.l2_kwh, 2) : '—';
+      $('highestDayL3Kwh').textContent = best.l3_kwh !== undefined && best.l3_kwh !== null ? fmt(best.l3_kwh, 2) : '—';
     } catch (e) {
       console.warn('Kon dag met hoogste verbruik niet ophalen:', e);
     }
@@ -3143,6 +3169,12 @@
     $('highestDayTitleText').textContent = d.highestDayTitle;
     $('highestDayDateLabel').textContent = d.highestDayDateLabel;
     $('highestDayKwhLabel').textContent = d.highestDayKwhLabel;
+    $('hdL1Label').textContent = d.phase(1);
+    $('hdL2Label').textContent = d.phase(2);
+    $('hdL3Label').textContent = d.phase(3);
+    $('highestDayKwhUnit1').textContent = d.highestDayKwhLabel;
+    $('highestDayKwhUnit2').textContent = d.highestDayKwhLabel;
+    $('highestDayKwhUnit3').textContent = d.highestDayKwhLabel;
 
     $('faultsTotalLabel').textContent = d.faultsTotal;
     $('faultsTotalUnit').textContent = d.faultsTotalUnit;

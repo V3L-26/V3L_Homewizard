@@ -2,7 +2,7 @@
 // zodat de app na installatie zonder internet kan opstarten. De live meterdata
 // wordt NOOIT gecachet - die moet altijd vers over je lokale wifi opgehaald worden.
 
-const CACHE_NAME = 'p1-dashboard-v3.11';
+const CACHE_NAME = 'p1-dashboard-v3.12';
 const ASSETS = [
   './',
   './index.html',
