@@ -851,7 +851,7 @@
   <div class="table-panel">
     <details class="inline-panel">
       <summary>
-        <span class="title-row"><span id="faultApiTitleText">Storingslog</span></span>
+        <span class="title-row"><span id="faultApiTitleText">Storingen</span></span>
         <span class="chevron">&#9656;</span>
       </summary>
       <div class="email-body">
@@ -987,11 +987,14 @@
   <div class="page" data-page="log">
   <details class="table-panel email-panel">
     <summary>
-      <span class="title-row"><span id="changelogTitleText">Versielogboek</span></span>
+      <span class="title-row"><span id="changelogTitleText">Versie</span></span>
       <span class="chevron">&#9656;</span>
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.14</h4><ul>
+          <li>Tegels op de Log-pagina hernoemd: "Versielogboek" wordt "Versie", "Storingslog" wordt "Storingen".</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.13</h4><ul>
           <li>Dag met hoogste verbruik toont de getallen nu in Wh in plaats van kWh.</li>
         </ul></div>
@@ -1215,9 +1218,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.13';
+  const APP_VERSION = '3.14';
   const APP_UPDATED = '29-07-2026';
-  const APP_UPDATED_TIME = '14:35:00';
+  const APP_UPDATED_TIME = '14:45:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -1491,7 +1494,7 @@
       systemInfoTitle: 'Systeeminformatie', meterModel: 'Meter-model', dsmrVersion: 'DSMR-versie', uniqueIdElec: 'Uniek ID (elektriciteit)', uniqueIdGas: 'Uniek ID (gas)',
       highestDayTitle: 'Dag met hoogste verbruik', highestDayDateLabel: 'datum', highestDayWhLabel: 'Wh',
       faultsTitle: 'Storingen', faultsTotal: 'Stroomstoringen', faultsTotalUnit: 'totaal', longFaults: 'langdurig', sags: 'dips', swells: 'pieken',
-      faultLogTitle: 'Storingslog',
+      faultLogTitle: 'Storingen',
       faultLogRetained: (n) => n + ' gebeurtenissen gelogd',
       clearFaultLog: 'Wis storingslog',
       clearFaultLogConfirm: 'Weet je zeker dat je de storingslog wilt wissen?',
@@ -1526,7 +1529,7 @@
       errorDetail: (msg) => 'Foutdetail: ' + msg,
       csvHeader: 'Tijd;Totaal_W;L1_W;L2_W;L3_W' + String.fromCharCode(10),
       faultCsvHeader: 'Tijdstip;Type;Aantal' + String.fromCharCode(10),
-      changelogTitle: 'Versielogboek',
+      changelogTitle: 'Versie',
       storageWarning: (mb, pct) => 'Let op: de Supabase-database gebruikt al ' + mb + ' MB (' + pct + '% van de gratis limiet van 500 MB). Overweeg oude regels op te ruimen of te upgraden.',
       storageAlertLabel: 'Opslaglimiet',
       authSubtitle: 'Log in om je dashboard te bekijken',
@@ -1581,7 +1584,7 @@
       systemInfoTitle: 'System information', meterModel: 'Meter model', dsmrVersion: 'DSMR version', uniqueIdElec: 'Unique ID (electricity)', uniqueIdGas: 'Unique ID (gas)',
       highestDayTitle: 'Day with highest consumption', highestDayDateLabel: 'date', highestDayWhLabel: 'Wh',
       faultsTitle: 'Faults', faultsTotal: 'Power failures', faultsTotalUnit: 'total', longFaults: 'long', sags: 'sags', swells: 'swells',
-      faultLogTitle: 'Fault log',
+      faultLogTitle: 'Faults',
       faultLogRetained: (n) => n + ' events logged',
       clearFaultLog: 'Clear fault log',
       clearFaultLogConfirm: 'Are you sure you want to clear the fault log?',
@@ -1616,7 +1619,7 @@
       errorDetail: (msg) => 'Error detail: ' + msg,
       csvHeader: 'Time;Total_W;L1_W;L2_W;L3_W' + String.fromCharCode(10),
       faultCsvHeader: 'Time;Type;Count' + String.fromCharCode(10),
-      changelogTitle: 'Version log',
+      changelogTitle: 'Version',
       storageWarning: (mb, pct) => 'Note: the Supabase database is already using ' + mb + ' MB (' + pct + '% of the 500 MB free limit). Consider cleaning up old rows or upgrading.',
       storageAlertLabel: 'Supabase storage limit',
       authSubtitle: 'Log in to view your dashboard',
@@ -1671,7 +1674,7 @@
       systemInfoTitle: 'Systeminformationen', meterModel: 'Zählermodell', dsmrVersion: 'DSMR-Version', uniqueIdElec: 'Eindeutige ID (Strom)', uniqueIdGas: 'Eindeutige ID (Gas)',
       highestDayTitle: 'Tag mit höchstem Verbrauch', highestDayDateLabel: 'Datum', highestDayWhLabel: 'Wh',
       faultsTitle: 'Störungen', faultsTotal: 'Stromausfälle', faultsTotalUnit: 'gesamt', longFaults: 'langwierig', sags: 'Spannungseinbrüche', swells: 'Spannungsspitzen',
-      faultLogTitle: 'Störungsprotokoll',
+      faultLogTitle: 'Störungen',
       faultLogRetained: (n) => n + ' Ereignisse protokolliert',
       clearFaultLog: 'Störungsprotokoll löschen',
       clearFaultLogConfirm: 'Möchtest du das Störungsprotokoll wirklich löschen?',
@@ -1706,7 +1709,7 @@
       errorDetail: (msg) => 'Fehlerdetail: ' + msg,
       csvHeader: 'Zeit;Gesamt_W;L1_W;L2_W;L3_W' + String.fromCharCode(10),
       faultCsvHeader: 'Zeitpunkt;Typ;Anzahl' + String.fromCharCode(10),
-      changelogTitle: 'Versionsprotokoll',
+      changelogTitle: 'Version',
       storageWarning: (mb, pct) => 'Hinweis: Die Supabase-Datenbank nutzt bereits ' + mb + ' MB (' + pct + '% des kostenlosen Limits von 500 MB). Erwäge, alte Zeilen zu löschen oder ein Upgrade durchzuführen.',
       storageAlertLabel: 'Supabase-Speicherlimit',
       authSubtitle: 'Melde dich an, um dein Dashboard zu sehen',

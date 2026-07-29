@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.14
+- Tegels op de Log-pagina hernoemd: "Versielogboek" wordt "Versie", "Storingslog" wordt "Storingen".
+
 ## 3.13
 - Dag met hoogste verbruik toont de getallen nu in Wh in plaats van kWh.
 
@@ -268,5 +271,4 @@ Ruwweg in chronologische volgorde:
 - Bug verholpen waarbij scrollen in het logboek de waarden over de koptekst liet schuiven (transparante koptekst-achtergrond).
 - Footer aangepast: HomeWizard-API-uitleg vervangen door een V3L-copyrightregel met dynamisch jaartal ("Alle rechten voorbehouden").
 - Titel/naam overal gewijzigd van "P1 Meter Dashboard" naar "V3L HomeWizard", inclusief het V3L-logo bovenaan (i.p.v. het bliksenschichtje).
-- Foutmelding bij verbindingsproblemen omgezet naar een uitklapbare tegel (alleen de titelregel zichtbaar, rest pas bij uitklappen).
-- Gauge-gevarenzones gefixt: rode zone startte te vroeg (linecap-bug), vaste oranje waar
+- Foutmelding bij verbindingsproblemen omgezet naar een uitklapbare tegel (alleen de titelregel zichtbaar, rest
