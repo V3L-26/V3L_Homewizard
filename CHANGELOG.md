@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.15
+- Dag-met-hoogste-verbruik-tegel schaalt nu netjes mee op mobiel: de datum breekt niet meer af naar 2 regels en de fase-opsplitsing (L1/L2/L3) blijft compact naast elkaar staan in plaats van onder elkaar te vallen. Ook de labelopmaak van de fasegetallen hersteld.
+
 ## 3.14
 - Tegels op de Log-pagina hernoemd: "Versielogboek" wordt "Versie", "Storingslog" wordt "Storingen".
 
@@ -269,6 +272,4 @@ Ruwweg in chronologische volgorde:
 - Statuspil naast de taalvlaggen in de header verwijderd.
 - Storingstegels (dips/pieken) in dezelfde stijl en grootte gebracht als de andere tegels; "Stroomstoringen"-tegel eveneens gelijkgetrokken.
 - Bug verholpen waarbij scrollen in het logboek de waarden over de koptekst liet schuiven (transparante koptekst-achtergrond).
-- Footer aangepast: HomeWizard-API-uitleg vervangen door een V3L-copyrightregel met dynamisch jaartal ("Alle rechten voorbehouden").
-- Titel/naam overal gewijzigd van "P1 Meter Dashboard" naar "V3L HomeWizard", inclusief het V3L-logo bovenaan (i.p.v. het bliksenschichtje).
-- Foutmelding bij verbindingsproblemen omgezet naar een uitklapbare tegel (alleen de titelregel zichtbaar, rest
+- Footer aangepast: HomeWizard-API-uitleg vervangen door een V3L-copyrightregel met dynamisch jaartal ("Alle rec

@@ -322,6 +322,11 @@
   .fault-phase.l1 .label{color:var(--l1);}
   .fault-phase.l2 .label{color:var(--l2);}
   .fault-phase.l3 .label{color:var(--l3);}
+  /* #highestDayPanel is een .table-panel, geen .card - zonder deze regel missen
+     de fase-labels (L1/L2/L3) de opmaak die .card .label elders wel geeft
+     (grootte/hoofdletters/vetgedrukt), los van de kleur die .fault-phase.lX
+     .label hierboven al regelt. */
+  #highestDayPanel .fault-phase .label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:700;}
   @keyframes overloadBorderBlink{
     0%,100%{border-color:#ef4444;box-shadow:0 10px 30px rgba(0,0,0,0.35), 0 0 16px rgba(239,68,68,0.7);}
     50%{border-color:rgba(239,68,68,0.1);box-shadow:0 10px 30px rgba(0,0,0,0.35), 0 0 0 rgba(239,68,68,0);}
@@ -475,6 +480,14 @@
     #phaseCardsRow .gauge-unit{font-size:clamp(8px, 2.2vw, 11px);margin-left:2px;}
     #phaseCardsRow .stats{gap:6px;font-size:clamp(8px, 2.2vw, 11px);margin-top:6px;flex-wrap:wrap;}
     #phaseCardsRow .sub{font-size:9px;min-height:10px;margin-top:4px;}
+
+    /* Dag-met-hoogste-verbruik-tegel: eigen, kleinere schaal zodat de datum
+       (10 tekens, bijv. 29-07-2026) niet afbreekt en de drie fase-getallen
+       (elk maar 1 waarde, dus lichter dan de storingstegel) naast elkaar
+       kunnen blijven staan in plaats van onder elkaar te vallen. */
+    #highestDayPanel .fault-num{font-size:clamp(15px, 5vw, 26px);white-space:nowrap;}
+    #highestDayPanel .fault-phases-grid{grid-template-columns:repeat(3, 1fr);gap:8px;margin-top:16px;padding-top:16px;}
+    #highestDayPanel .fault-phase .label{font-size:10px;}
   }
 
   @media (max-width: 380px){
@@ -486,6 +499,9 @@
     #phaseCardsRow .card{padding:8px 4px;}
     #phaseCardsRow .label{font-size:8px;}
     #phaseCardsRow .gauge-num{font-size:clamp(13px, 5.5vw, 20px);}
+
+    #highestDayPanel .fault-num{font-size:clamp(12px, 4.5vw, 20px);}
+    #highestDayPanel .fault-phases-grid{gap:6px;}
   }
 </style>
 </head>
@@ -992,6 +1008,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.15</h4><ul>
+          <li>Dag-met-hoogste-verbruik-tegel schaalt nu netjes mee op mobiel: de datum breekt niet meer af naar 2 regels en de fase-opsplitsing (L1/L2/L3) blijft compact naast elkaar staan in plaats van onder elkaar te vallen. Ook de labelopmaak van de fasegetallen hersteld.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.14</h4><ul>
           <li>Tegels op de Log-pagina hernoemd: "Versielogboek" wordt "Versie", "Storingslog" wordt "Storingen".</li>
         </ul></div>
@@ -1218,9 +1237,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.14';
+  const APP_VERSION = '3.15';
   const APP_UPDATED = '29-07-2026';
-  const APP_UPDATED_TIME = '14:45:00';
+  const APP_UPDATED_TIME = '15:00:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
