@@ -907,25 +907,25 @@
     <div class="section-title" id="highestDayTitleText">Dag met hoogste verbruik</div>
     <div class="fault-stats">
       <div class="fault-stat"><div class="fault-num" id="highestDayDate">&mdash;</div><div class="fault-label" id="highestDayDateLabel">datum</div></div>
-      <div class="fault-stat"><div class="fault-num" id="highestDayKwh">&mdash;</div><div class="fault-label" id="highestDayKwhLabel">kWh</div></div>
+      <div class="fault-stat"><div class="fault-num" id="highestDayWh">&mdash;</div><div class="fault-label" id="highestDayWhLabel">Wh</div></div>
     </div>
     <div class="fault-phases-grid">
       <div class="fault-phase l1">
         <div class="label" id="hdL1Label">Fase 1 (L1)</div>
         <div class="fault-stats">
-          <div class="fault-stat"><div class="fault-num" id="highestDayL1Kwh">&mdash;</div><div class="fault-label" id="highestDayKwhUnit1">kWh</div></div>
+          <div class="fault-stat"><div class="fault-num" id="highestDayL1Wh">&mdash;</div><div class="fault-label" id="highestDayWhUnit1">Wh</div></div>
         </div>
       </div>
       <div class="fault-phase l2">
         <div class="label" id="hdL2Label">Fase 2 (L2)</div>
         <div class="fault-stats">
-          <div class="fault-stat"><div class="fault-num" id="highestDayL2Kwh">&mdash;</div><div class="fault-label" id="highestDayKwhUnit2">kWh</div></div>
+          <div class="fault-stat"><div class="fault-num" id="highestDayL2Wh">&mdash;</div><div class="fault-label" id="highestDayWhUnit2">Wh</div></div>
         </div>
       </div>
       <div class="fault-phase l3">
         <div class="label" id="hdL3Label">Fase 3 (L3)</div>
         <div class="fault-stats">
-          <div class="fault-stat"><div class="fault-num" id="highestDayL3Kwh">&mdash;</div><div class="fault-label" id="highestDayKwhUnit3">kWh</div></div>
+          <div class="fault-stat"><div class="fault-num" id="highestDayL3Wh">&mdash;</div><div class="fault-label" id="highestDayWhUnit3">Wh</div></div>
         </div>
       </div>
     </div>
@@ -992,6 +992,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.13</h4><ul>
+          <li>Dag met hoogste verbruik toont de getallen nu in Wh in plaats van kWh.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.12</h4><ul>
           <li>Bij de dag met het hoogste verbruik wordt nu ook de opsplitsing per fase (L1/L2/L3 in kWh) getoond.</li>
         </ul></div>
@@ -1212,9 +1215,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.12';
+  const APP_VERSION = '3.13';
   const APP_UPDATED = '29-07-2026';
-  const APP_UPDATED_TIME = '14:20:00';
+  const APP_UPDATED_TIME = '14:35:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -1486,7 +1489,7 @@
       meterReadings: 'Meterstanden', totalImport: 'Totaal import', totalExport: 'Totaal export', gas: 'Gas', water: 'Water',
       gasTimestamp: 'Tijdstip gas',
       systemInfoTitle: 'Systeeminformatie', meterModel: 'Meter-model', dsmrVersion: 'DSMR-versie', uniqueIdElec: 'Uniek ID (elektriciteit)', uniqueIdGas: 'Uniek ID (gas)',
-      highestDayTitle: 'Dag met hoogste verbruik', highestDayDateLabel: 'datum', highestDayKwhLabel: 'kWh',
+      highestDayTitle: 'Dag met hoogste verbruik', highestDayDateLabel: 'datum', highestDayWhLabel: 'Wh',
       faultsTitle: 'Storingen', faultsTotal: 'Stroomstoringen', faultsTotalUnit: 'totaal', longFaults: 'langdurig', sags: 'dips', swells: 'pieken',
       faultLogTitle: 'Storingslog',
       faultLogRetained: (n) => n + ' gebeurtenissen gelogd',
@@ -1576,7 +1579,7 @@
       meterReadings: 'Meter readings', totalImport: 'Total import', totalExport: 'Total export', gas: 'Gas', water: 'Water',
       gasTimestamp: 'Gas timestamp',
       systemInfoTitle: 'System information', meterModel: 'Meter model', dsmrVersion: 'DSMR version', uniqueIdElec: 'Unique ID (electricity)', uniqueIdGas: 'Unique ID (gas)',
-      highestDayTitle: 'Day with highest consumption', highestDayDateLabel: 'date', highestDayKwhLabel: 'kWh',
+      highestDayTitle: 'Day with highest consumption', highestDayDateLabel: 'date', highestDayWhLabel: 'Wh',
       faultsTitle: 'Faults', faultsTotal: 'Power failures', faultsTotalUnit: 'total', longFaults: 'long', sags: 'sags', swells: 'swells',
       faultLogTitle: 'Fault log',
       faultLogRetained: (n) => n + ' events logged',
@@ -1666,7 +1669,7 @@
       meterReadings: 'Zählerstände', totalImport: 'Gesamtbezug', totalExport: 'Gesamteinspeisung', gas: 'Gas', water: 'Wasser',
       gasTimestamp: 'Gas-Zeitstempel',
       systemInfoTitle: 'Systeminformationen', meterModel: 'Zählermodell', dsmrVersion: 'DSMR-Version', uniqueIdElec: 'Eindeutige ID (Strom)', uniqueIdGas: 'Eindeutige ID (Gas)',
-      highestDayTitle: 'Tag mit höchstem Verbrauch', highestDayDateLabel: 'Datum', highestDayKwhLabel: 'kWh',
+      highestDayTitle: 'Tag mit höchstem Verbrauch', highestDayDateLabel: 'Datum', highestDayWhLabel: 'Wh',
       faultsTitle: 'Störungen', faultsTotal: 'Stromausfälle', faultsTotalUnit: 'gesamt', longFaults: 'langwierig', sags: 'Spannungseinbrüche', swells: 'Spannungsspitzen',
       faultLogTitle: 'Störungsprotokoll',
       faultLogRetained: (n) => n + ' Ereignisse protokolliert',
@@ -2863,15 +2866,15 @@
       const rows = await res.json();
       if (!Array.isArray(rows) || !rows.length) return;
       let best = rows[0];
-      for (const r of rows) { if (r.kwh > best.kwh) best = r; }
+      for (const r of rows) { if (r.wh > best.wh) best = r; }
       const dt = new Date(best.day + 'T00:00:00');
       $('highestDayDate').textContent = isNaN(dt.getTime())
         ? String(best.day)
         : (pad(dt.getDate()) + '-' + pad(dt.getMonth() + 1) + '-' + dt.getFullYear());
-      $('highestDayKwh').textContent = fmt(best.kwh, 2);
-      $('highestDayL1Kwh').textContent = best.l1_kwh !== undefined && best.l1_kwh !== null ? fmt(best.l1_kwh, 2) : '—';
-      $('highestDayL2Kwh').textContent = best.l2_kwh !== undefined && best.l2_kwh !== null ? fmt(best.l2_kwh, 2) : '—';
-      $('highestDayL3Kwh').textContent = best.l3_kwh !== undefined && best.l3_kwh !== null ? fmt(best.l3_kwh, 2) : '—';
+      $('highestDayWh').textContent = fmt(best.wh, 0);
+      $('highestDayL1Wh').textContent = best.l1_wh !== undefined && best.l1_wh !== null ? fmt(best.l1_wh, 0) : '—';
+      $('highestDayL2Wh').textContent = best.l2_wh !== undefined && best.l2_wh !== null ? fmt(best.l2_wh, 0) : '—';
+      $('highestDayL3Wh').textContent = best.l3_wh !== undefined && best.l3_wh !== null ? fmt(best.l3_wh, 0) : '—';
     } catch (e) {
       console.warn('Kon dag met hoogste verbruik niet ophalen:', e);
     }
@@ -3168,13 +3171,13 @@
 
     $('highestDayTitleText').textContent = d.highestDayTitle;
     $('highestDayDateLabel').textContent = d.highestDayDateLabel;
-    $('highestDayKwhLabel').textContent = d.highestDayKwhLabel;
+    $('highestDayWhLabel').textContent = d.highestDayWhLabel;
     $('hdL1Label').textContent = d.phase(1);
     $('hdL2Label').textContent = d.phase(2);
     $('hdL3Label').textContent = d.phase(3);
-    $('highestDayKwhUnit1').textContent = d.highestDayKwhLabel;
-    $('highestDayKwhUnit2').textContent = d.highestDayKwhLabel;
-    $('highestDayKwhUnit3').textContent = d.highestDayKwhLabel;
+    $('highestDayWhUnit1').textContent = d.highestDayWhLabel;
+    $('highestDayWhUnit2').textContent = d.highestDayWhLabel;
+    $('highestDayWhUnit3').textContent = d.highestDayWhLabel;
 
     $('faultsTotalLabel').textContent = d.faultsTotal;
     $('faultsTotalUnit').textContent = d.faultsTotalUnit;
