@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>V3L HomeWizard</title>
+<title>V3L HomeWizard - Server</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#05070a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="V3L HomeWizard">
+<meta name="apple-mobile-web-app-title" content="V3L HomeWizard - Server">
 <link rel="apple-touch-icon" href="v3l-icon-256.png">
 <style>
   :root{
@@ -144,11 +144,6 @@
   }
   .field select option{background:#0b0f14;color:var(--text);}
   .field input:disabled, .field select:disabled{opacity:.4;cursor:not-allowed;}
-  /* Clientversie: het IP-adres van de P1-meter ligt vast (wordt alleen op de
-     serverversie ingesteld) - deze stijl maakt dat visueel duidelijk zonder het
-     veld helemaal te verbergen. */
-  .field input:read-only{opacity:.65;cursor:default;}
-  .fixed-ip-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;}
   .field input[type=number]::-webkit-outer-spin-button,
   .field input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
   .field input[type=number]{-moz-appearance:textfield;appearance:textfield;}
@@ -514,7 +509,7 @@
 <div class="wrap auth-wrap" id="authWrap">
   <header style="margin-bottom:28px;">
     <div>
-      <h1><img src="v3l-logo.png" alt="V3L logo" style="height:38px;width:auto;display:block;"> V3L HomeWizard</h1>
+      <h1><img src="v3l-logo.png" alt="V3L logo" style="height:38px;width:auto;display:block;"> V3L HomeWizard <span style="font-size:13px;font-weight:600;color:var(--muted);">(Server)</span></h1>
       <p class="subtitle" id="authSubtitleText">Log in om je dashboard te bekijken</p>
     </div>
   </header>
@@ -539,7 +534,7 @@
 <div class="wrap" id="dashboardWrap">
   <header>
     <div>
-      <h1><img src="v3l-logo.png" alt="V3L logo" style="height:38px;width:auto;display:block;"> V3L HomeWizard</h1>
+      <h1><img src="v3l-logo.png" alt="V3L logo" style="height:38px;width:auto;display:block;"> V3L HomeWizard <span style="font-size:13px;font-weight:600;color:var(--muted);">(Server)</span></h1>
       <p class="subtitle" id="subtitleText">Live inzicht in je stroomverbruik</p>
     </div>
     <div class="header-right">
@@ -598,8 +593,13 @@
   <div class="settings">
     <div class="field field-ip">
       <label for="ipInput" id="ipLabelText">IP-adres / hostnaam P1 meter</label>
-      <input id="ipInput" name="x-ip" type="text" readonly placeholder="bijv. 192.168.1.50" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
-      <div class="fixed-ip-hint" id="fixedIpHintText">Vast ingesteld op de serverversie, hier niet wijzigbaar.</div>
+      <div class="field-row">
+        <input id="ipInput" name="x-ip" type="text" placeholder="bijv. 192.168.1.50" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+        <button type="button" class="lock-btn" data-target="ipInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+          <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+          <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
     </div>
     <div class="field" style="flex:0 1 150px">
       <label for="intervalInput" id="intervalLabelText">Ververssnelheid (sec)</label>
@@ -1482,8 +1482,6 @@
       statusInitial: 'Vul een IP-adres in en klik Verbinden',
       statusFailed: 'Verbinding mislukt',
       statusConnected: (time) => 'Verbonden · laatste update ' + time,
-      statusConnectedFallback: (time) => 'Verbonden via Supabase (serverversie) · ' + time,
-      fixedIpHint: 'Vast ingesteld op de serverversie, hier niet wijzigbaar.',
       ipLabel: 'IP-adres / hostnaam P1 meter',
       ipPlaceholder: 'bijv. 192.168.1.50',
       intervalLabel: 'Ververssnelheid (sec)',
@@ -1574,8 +1572,6 @@
       statusInitial: 'Enter an IP address and click Connect',
       statusFailed: 'Connection failed',
       statusConnected: (time) => 'Connected · last update ' + time,
-      statusConnectedFallback: (time) => 'Connected via Supabase (server version) · ' + time,
-      fixedIpHint: 'Fixed on the server version, cannot be changed here.',
       ipLabel: 'IP address / hostname P1 meter',
       ipPlaceholder: 'e.g. 192.168.1.50',
       intervalLabel: 'Refresh rate (sec)',
@@ -1666,8 +1662,6 @@
       statusInitial: 'Gib eine IP-Adresse ein und klicke auf Verbinden',
       statusFailed: 'Verbindung fehlgeschlagen',
       statusConnected: (time) => 'Verbunden · letztes Update ' + time,
-      statusConnectedFallback: (time) => 'Verbunden über Supabase (Serverversion) · ' + time,
-      fixedIpHint: 'Fest eingestellt auf der Serverversion, hier nicht änderbar.',
       ipLabel: 'IP-Adresse / Hostname P1-Zähler',
       ipPlaceholder: 'z.B. 192.168.1.50',
       intervalLabel: 'Aktualisierungsrate (Sek.)',
@@ -3056,119 +3050,106 @@
     $('longFail').textContent = d.long_power_fail_count !== undefined ? fmt(d.long_power_fail_count, 0) : '—';
   }
 
-  // ============ Clientversie: hybride verbinding ============
-  // Deze (client-)versie probeert eerst rechtstreeks de P1-meter te bereiken
-  // (snel, werkt alleen op hetzelfde netwerk) en valt bij falen terug op de
-  // laatste snapshot die de serverversie in Supabase heeft gezet (latest_status).
-  // De client schrijft zelf nooit meer naar minute_log/fault_log - dat is
-  // voortaan uitsluitend het werk van de serverversie, om dubbele/onvolledige
-  // logregels te voorkomen wanneer client en server tegelijk open staan.
-  const DIRECT_FETCH_TIMEOUT_MS = 2500;
-
-  async function fetchDirectFromP1(ip){
-    const hasScheme = /^https?:\/\//i.test(ip);
-    const url = (hasScheme ? ip.replace(/\/$/, '') : 'http://' + ip) + '/api/v1/data';
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), DIRECT_FETCH_TIMEOUT_MS);
+  // ============ Server-versie: volledige snapshot naar Supabase (latest_status) ============
+  // Deze (server-)versie draait op een altijd-aan apparaat in hetzelfde netwerk als de
+  // P1-meter en is de enige bron die naar minute_log/fault_log EN latest_status schrijft.
+  // latest_status is een enkele rij (upsert op id=true, dus geen opslaggroei) die de
+  // publieke clientversie kan uitlezen wanneer die de meter niet rechtstreeks kan
+  // bereiken (bijv. onderweg).
+  function buildLatestStatusPayload(d){
+    const water = Array.isArray(d.external) ? d.external.find((e) => e.type === 'water_meter') : null;
+    const gas = Array.isArray(d.external) ? d.external.find((e) => e.type === 'gas_meter') : null;
+    const totalImport = d.total_power_import_kwh !== undefined ? d.total_power_import_kwh :
+      ((d.total_power_import_t1_kwh || 0) + (d.total_power_import_t2_kwh || 0) + (d.total_power_import_t3_kwh || 0) + (d.total_power_import_t4_kwh || 0));
+    const totalExport = d.total_power_export_kwh !== undefined ? d.total_power_export_kwh :
+      ((d.total_power_export_t1_kwh || 0) + (d.total_power_export_t2_kwh || 0) + (d.total_power_export_t3_kwh || 0) + (d.total_power_export_t4_kwh || 0));
+    return {
+      id: true,
+      active_power_w: d.active_power_w ?? null,
+      active_power_l1_w: d.active_power_l1_w ?? null,
+      active_power_l2_w: d.active_power_l2_w ?? null,
+      active_power_l3_w: d.active_power_l3_w ?? null,
+      active_voltage_l1_v: d.active_voltage_l1_v ?? null,
+      active_voltage_l2_v: d.active_voltage_l2_v ?? null,
+      active_voltage_l3_v: d.active_voltage_l3_v ?? null,
+      active_voltage_v: d.active_voltage_v ?? null,
+      active_current_l1_a: d.active_current_l1_a ?? null,
+      active_current_l2_a: d.active_current_l2_a ?? null,
+      active_current_l3_a: d.active_current_l3_a ?? null,
+      active_current_a: d.active_current_a ?? null,
+      total_power_import_kwh: totalImport || null,
+      total_power_export_kwh: totalExport || null,
+      total_gas_m3: gas && gas.value !== undefined ? gas.value : (d.total_gas_m3 ?? null),
+      gas_timestamp: d.gas_timestamp ?? null,
+      water_m3: water && water.value !== undefined ? water.value : null,
+      meter_model: d.meter_model ?? null,
+      smr_version: d.smr_version ?? null,
+      unique_id: d.unique_id ?? null,
+      unique_id_gas: gas && gas.unique_id !== undefined ? gas.unique_id : null,
+      any_power_fail_count: d.any_power_fail_count ?? null,
+      long_power_fail_count: d.long_power_fail_count ?? null,
+      voltage_sag_l1_count: d.voltage_sag_l1_count ?? null,
+      voltage_sag_l2_count: d.voltage_sag_l2_count ?? null,
+      voltage_sag_l3_count: d.voltage_sag_l3_count ?? null,
+      voltage_swell_l1_count: d.voltage_swell_l1_count ?? null,
+      voltage_swell_l2_count: d.voltage_swell_l2_count ?? null,
+      voltage_swell_l3_count: d.voltage_swell_l3_count ?? null,
+      updated_at: new Date().toISOString()
+    };
+  }
+  async function pushLatestStatus(d){
     try {
-      const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return await res.json();
-    } finally {
-      clearTimeout(timer);
+      await ensureValidSession();
+      await fetch(DEFAULT_SUPABASE_URL + '/rest/v1/latest_status?on_conflict=id', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': DEFAULT_SUPABASE_KEY,
+          'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY),
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify(buildLatestStatusPayload(d))
+      });
+    } catch (e) {
+      console.warn('Kon latest_status niet bijwerken:', e);
     }
   }
 
-  // Zet een latest_status-rij uit Supabase om naar dezelfde vorm als de
-  // rechtstreekse P1-API-respons, zodat renderData() ongewijzigd kan blijven.
-  function mapLatestStatusRow(r){
-    const external = [];
-    if (r.water_m3 !== null && r.water_m3 !== undefined) external.push({ type: 'water_meter', value: r.water_m3 });
-    if (r.total_gas_m3 !== null && r.total_gas_m3 !== undefined) external.push({ type: 'gas_meter', value: r.total_gas_m3, unique_id: r.unique_id_gas || undefined });
-    return {
-      active_power_w: r.active_power_w,
-      active_power_l1_w: r.active_power_l1_w,
-      active_power_l2_w: r.active_power_l2_w,
-      active_power_l3_w: r.active_power_l3_w,
-      active_voltage_l1_v: r.active_voltage_l1_v,
-      active_voltage_l2_v: r.active_voltage_l2_v,
-      active_voltage_l3_v: r.active_voltage_l3_v,
-      active_voltage_v: r.active_voltage_v,
-      active_current_l1_a: r.active_current_l1_a,
-      active_current_l2_a: r.active_current_l2_a,
-      active_current_l3_a: r.active_current_l3_a,
-      active_current_a: r.active_current_a,
-      total_power_import_kwh: r.total_power_import_kwh,
-      total_power_export_kwh: r.total_power_export_kwh,
-      total_gas_m3: r.total_gas_m3,
-      gas_timestamp: r.gas_timestamp,
-      meter_model: r.meter_model,
-      smr_version: r.smr_version,
-      unique_id: r.unique_id,
-      any_power_fail_count: r.any_power_fail_count,
-      long_power_fail_count: r.long_power_fail_count,
-      voltage_sag_l1_count: r.voltage_sag_l1_count,
-      voltage_sag_l2_count: r.voltage_sag_l2_count,
-      voltage_sag_l3_count: r.voltage_sag_l3_count,
-      voltage_swell_l1_count: r.voltage_swell_l1_count,
-      voltage_swell_l2_count: r.voltage_swell_l2_count,
-      voltage_swell_l3_count: r.voltage_swell_l3_count,
-      external: external
-    };
-  }
-
-  async function fetchViaSupabaseFallback(){
-    await ensureValidSession();
-    const res = await fetch(DEFAULT_SUPABASE_URL + '/rest/v1/latest_status?select=*&id=eq.true', {
-      headers: { 'apikey': DEFAULT_SUPABASE_KEY, 'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY) }
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const rows = await res.json();
-    if (!rows.length) throw new Error('Nog geen data ontvangen van de serverversie');
-    return mapLatestStatusRow(rows[0]);
-  }
-
-  function handleData(d, viaFallback){
+  function handleData(d){
     hideError();
     lastData = d;
-    connState = viaFallback ? 'fallback' : 'ok';
-    const timeStr = new Date().toLocaleTimeString(LOCALE_MAP[currentLang]);
-    setStatus(true, viaFallback ? t().statusConnectedFallback(timeStr) : t().statusConnected(timeStr));
+    connState = 'ok';
+    setStatus(true, t().statusConnected(new Date().toLocaleTimeString(LOCALE_MAP[currentLang])));
 
     renderData(d);
 
-    // Alleen bij een rechtstreekse verbinding actief storingen/overbelasting
-    // checken - bij de Supabase-fallback doet de serverversie dat al, en zou
-    // dubbel checken tot dubbele e-mails/storingsregels kunnen leiden.
-    if (!viaFallback) {
-      checkOverloadEmail('l1', 'L1', d.active_power_l1_w);
-      checkOverloadEmail('l2', 'L2', d.active_power_l2_w);
-      checkOverloadEmail('l3', 'L3', d.active_power_l3_w);
-      checkFaultCounters(d);
-    }
+    checkOverloadEmail('l1', 'L1', d.active_power_l1_w);
+    checkOverloadEmail('l2', 'L2', d.active_power_l2_w);
+    checkOverloadEmail('l3', 'L3', d.active_power_l3_w);
+
+    checkFaultCounters(d);
+    logSample(d, new Date());
+    pushLatestStatus(d);
   }
 
   async function poll(){
     const ip = ipInput.value.trim();
-    let data = null;
-    if (ip) {
-      try {
-        data = await fetchDirectFromP1(ip);
-      } catch (directErr) {
-        data = null; // niet op hetzelfde netwerk (of anderszins onbereikbaar) - hieronder terugvallen op Supabase
-      }
-    }
-    if (data) {
-      handleData(data, false);
-      return;
-    }
+    if (!ip) return;
+    // Standaard http:// (de HomeWizard P1-meter spreekt lokaal alleen http, geen
+    // https). Vul je hier later een eigen https-adres in (bijv. een reverse-proxy
+    // of tunnel naar de meter toe), dan wordt dat als volledige URL gebruikt i.p.v.
+    // er zelf http:// voor te plakken.
+    const hasScheme = /^https?:\/\//i.test(ip);
+    const url = (hasScheme ? ip.replace(/\/$/, '') : 'http://' + ip) + '/api/v1/data';
     try {
-      const fallbackData = await fetchViaSupabaseFallback();
-      handleData(fallbackData, true);
-    } catch (fallbackErr) {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      handleData(data);
+    } catch (err) {
       connState = 'err';
       lastErrorIp = ip;
-      lastErrorDetail = fallbackErr.message || String(fallbackErr);
+      lastErrorDetail = err.message || String(err);
       setStatus(false, t().statusFailed);
       showError(lastErrorIp, lastErrorDetail);
     }
@@ -3219,7 +3200,6 @@
     $('subtitleText').textContent = d.subtitle;
     $('ipLabelText').textContent = d.ipLabel;
     ipInput.placeholder = d.ipPlaceholder;
-    $('fixedIpHintText').textContent = d.fixedIpHint;
     $('intervalLabelText').textContent = d.intervalLabel;
     $('thresholdFieldLabel').textContent = d.thresholdField;
     connectBtn.textContent = connectBtn.classList.contains('connected') ? d.connected : d.connect;
@@ -3329,7 +3309,6 @@
     if (lastData) renderData(lastData);
 
     if (connState === 'ok') setStatus(true, d.statusConnected(new Date().toLocaleTimeString(LOCALE_MAP[lang])));
-    else if (connState === 'fallback') setStatus(true, d.statusConnectedFallback(new Date().toLocaleTimeString(LOCALE_MAP[lang])));
     else if (connState === 'err') setStatus(false, d.statusFailed);
     else setStatus(null, d.statusInitial);
 

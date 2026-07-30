@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.16
+- Architectuur uitgebreid met een aparte serverversie (server.html) die lokaal bij de P1-meter draait en de volledige actuele meterstand naar Supabase (latest_status) schrijft. De clientversie (dit bestand/index.html) valt nu automatisch terug op die Supabase-data wanneer de meter niet rechtstreeks bereikbaar is (bijv. onderweg); het IP-adres van de meter ligt in de client vast en is daar niet meer wijzigbaar.
+
 ## 3.15
 - Dag-met-hoogste-verbruik-tegel schaalt nu netjes mee op mobiel: de datum breekt niet meer af naar 2 regels en de fase-opsplitsing (L1/L2/L3) blijft compact naast elkaar staan in plaats van onder elkaar te vallen. Ook de labelopmaak van de fasegetallen hersteld.
 
@@ -272,4 +275,10 @@ Ruwweg in chronologische volgorde:
 - Statuspil naast de taalvlaggen in de header verwijderd.
 - Storingstegels (dips/pieken) in dezelfde stijl en grootte gebracht als de andere tegels; "Stroomstoringen"-tegel eveneens gelijkgetrokken.
 - Bug verholpen waarbij scrollen in het logboek de waarden over de koptekst liet schuiven (transparante koptekst-achtergrond).
-- Footer aangepast: HomeWizard-API-uitleg vervangen door een V3L-copyrightregel met dynamisch jaartal ("Alle rec
+- Footer aangepast: HomeWizard-API-uitleg vervangen door een V3L-copyrightregel met dynamisch jaartal ("Alle rechten voorbehouden").
+- Titel/naam overal gewijzigd van "P1 Meter Dashboard" naar "V3L HomeWizard", inclusief het V3L-logo bovenaan (i.p.v. het bliksenschichtje).
+- Foutmelding bij verbindingsproblemen omgezet naar een uitklapbare tegel (alleen de titelregel zichtbaar, rest pas bij uitklappen).
+- Gauge-gevarenzones gefixt: rode zone startte te vroeg (linecap-bug), vaste oranje waarschuwingszone (4,5k-5k) en dieper rode gevarenzone (5k+) toegevoegd, losgekoppeld van de instelbare overbelastingsgrens, en een overgebleven grijs randje na de rode zone verholpen.
+- Gasverbruik (tijdstip) en Systeeminformatie (meter-model, DSMR-versie, unieke IDs) toegevoegd op basis van de HomeWizard API-velden.
+- Configureerbare elektriciteits- en gasprijzen toegevoegd, met berekende kosten (elektriciteit, gas, totaal) en verwijdering van de native invoerspinners op de prijsvelden.
+- Tegel-layout herzien: volle-breedte "Totaal vermogen"-tegel met daaronder een 2-koloms rij met "Kosten elektriciteit" en "Kosten gas" naast elkaar.
