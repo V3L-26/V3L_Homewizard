@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.18 (client) / 3.17 (server)
+- In- en uitloggen herladen de pagina niet meer, maar wisselen direct tussen login- en dashboardscherm. Voorkomt een wit scherm dat in de losse Windows-serverapp kon optreden na inloggen of uitloggen (het herladen van een lokale pagina bleek daar onbetrouwbaar).
+
 ## 3.17
 - Het (vergrendelde) IP-veld in de client toont nu "Supabase" zodra data via de Supabase-fallback binnenkomt, en het echte IP-adres zodra er rechtstreeks met de meter verbonden is. Dat IP-adres synchroniseert voortaan ook elke 15 seconden met de serverversie, zodat een wijziging daar direct doorkomt in een al openstaand clienttabblad, zonder verversen.
 

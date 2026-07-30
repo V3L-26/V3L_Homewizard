@@ -1008,6 +1008,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.18</h4><ul>
+          <li>In- en uitloggen herladen de pagina niet meer, maar wisselen direct tussen login- en dashboardscherm. Dit voorkomt een wit scherm dat in de losse Windows-serverapp kon optreden na inloggen of uitloggen.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.17</h4><ul>
           <li>Het (vergrendelde) IP-veld toont nu "Supabase" zodra de client via de Supabase-fallback data ontvangt, en het echte IP-adres zodra er rechtstreeks met de meter verbonden is. Dat IP-adres wordt voortaan ook elke 15 seconden opnieuw gesynchroniseerd vanaf de serverversie, zodat een wijziging daar automatisch doorkomt in een al openstaand clienttabblad - zonder dat je hoeft te verversen.</li>
         </ul></div>
@@ -1243,9 +1246,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.17';
+  const APP_VERSION = '3.18';
   const APP_UPDATED = '30-07-2026';
-  const APP_UPDATED_TIME = '20:00:00';
+  const APP_UPDATED_TIME = '21:00:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -1868,7 +1871,14 @@
       }).catch(() => {});
     }
     clearAuthSession();
-    location.reload();
+    // Bewust GEEN location.reload() (meer): voorkomt onbetrouwbaar herladen
+    // van een lokale file://-pagina wanneer dit bestand ook in een Electron-
+    // schil draait. Inlogscherm tonen via bestaande functies werkt overal
+    // identiek (browser én Electron).
+    loginEmail.value = '';
+    loginPassword.value = '';
+    setLoginStatus(null, '');
+    showAuthScreen();
   }
 
   // Zorgt dat er, vóór een API-oproep naar ons eigen project, een nog-geldig
@@ -1941,7 +1951,13 @@
     try {
       const session = await authSignIn(email, pw);
       persistAuthSession(session);
-      location.reload();
+      // Bewust GEEN location.reload() (meer) - zie toelichting bij
+      // authSignOut().
+      loginPassword.value = '';
+      setLoginStatus(null, '');
+      showDashboard();
+      loadRemoteMinuteLog();
+      loadRemoteFaultLog();
     } catch (err) {
       setLoginStatus(false, t().authLoginFailed(err.message || err));
     }

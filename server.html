@@ -1008,6 +1008,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.17</h4><ul>
+          <li>In- en uitloggen herladen de pagina niet meer, maar wisselen direct tussen login- en dashboardscherm. Dit voorkomt een wit scherm dat in de losse Windows-app kon optreden na inloggen of uitloggen.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.16</h4><ul>
           <li>Architectuur uitgebreid met een aparte serverversie (server.html) die lokaal bij de P1-meter draait en de volledige actuele meterstand naar Supabase (latest_status) schrijft. De clientversie (dit bestand/index.html) valt nu automatisch terug op die Supabase-data wanneer de meter niet rechtstreeks bereikbaar is (bijv. onderweg); het IP-adres van de meter ligt in de client vast en is daar niet meer wijzigbaar.</li>
         </ul></div>
@@ -1240,9 +1243,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.16';
+  const APP_VERSION = '3.17';
   const APP_UPDATED = '30-07-2026';
-  const APP_UPDATED_TIME = '09:00:00';
+  const APP_UPDATED_TIME = '21:00:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -1856,7 +1859,16 @@
       }).catch(() => {});
     }
     clearAuthSession();
-    location.reload();
+    // Bewust GEEN location.reload() (meer): in de gepackagede Electron-app kan
+    // het opnieuw laden van een lokale file://-pagina onbetrouwbaar zijn en tot
+    // een permanent wit scherm leiden. Het inlogscherm tonen via bestaande
+    // functies werkt overal identiek (browser én Electron) en is bovendien
+    // sneller - de achtergrondpolling naar de P1-meter/Supabase blijft
+    // gewoon doorlopen, uitloggen betreft alleen het zichtbare dashboard.
+    loginEmail.value = '';
+    loginPassword.value = '';
+    setLoginStatus(null, '');
+    showAuthScreen();
   }
 
   // Zorgt dat er, vóór een API-oproep naar ons eigen project, een nog-geldig
@@ -1929,7 +1941,15 @@
     try {
       const session = await authSignIn(email, pw);
       persistAuthSession(session);
-      location.reload();
+      // Bewust GEEN location.reload() (meer) - zie toelichting bij
+      // authSignOut(). Dashboard rechtstreeks tonen via bestaande functies,
+      // zelfde als het pad dat bij een herstelde sessie bij opstarten gebruikt
+      // wordt.
+      loginPassword.value = '';
+      setLoginStatus(null, '');
+      showDashboard();
+      loadRemoteMinuteLog();
+      loadRemoteFaultLog();
     } catch (err) {
       setLoginStatus(false, t().authLoginFailed(err.message || err));
     }
