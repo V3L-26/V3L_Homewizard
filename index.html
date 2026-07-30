@@ -1008,6 +1008,9 @@
     </summary>
     <div class="email-body">
       <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.17</h4><ul>
+          <li>Het (vergrendelde) IP-veld toont nu "Supabase" zodra de client via de Supabase-fallback data ontvangt, en het echte IP-adres zodra er rechtstreeks met de meter verbonden is. Dat IP-adres wordt voortaan ook elke 15 seconden opnieuw gesynchroniseerd vanaf de serverversie, zodat een wijziging daar automatisch doorkomt in een al openstaand clienttabblad - zonder dat je hoeft te verversen.</li>
+        </ul></div>
         <div class="changelog-entry"><h4>3.16</h4><ul>
           <li>Architectuur uitgebreid met een aparte serverversie (server.html) die lokaal bij de P1-meter draait en de volledige actuele meterstand naar Supabase (latest_status) schrijft. De clientversie (dit bestand/index.html) valt nu automatisch terug op die Supabase-data wanneer de meter niet rechtstreeks bereikbaar is (bijv. onderweg); het IP-adres van de meter ligt in de client vast en is daar niet meer wijzigbaar.</li>
         </ul></div>
@@ -1240,9 +1243,9 @@
   // ze worden onder de copyrightregel in de footer getoond.
   // Versienummering: x.y - y loopt 0 t/m 9, daarna x+1 en y terug naar 0
   // (dus ...3.8, 3.9, 4.0, 4.1, ...).
-  const APP_VERSION = '3.16';
+  const APP_VERSION = '3.17';
   const APP_UPDATED = '30-07-2026';
-  const APP_UPDATED_TIME = '09:00:00';
+  const APP_UPDATED_TIME = '20:00:00';
   const ipInput = $('ipInput');
   const intervalInput = $('intervalInput');
   const thresholdInput = $('thresholdInput');
@@ -1483,6 +1486,7 @@
       statusFailed: 'Verbinding mislukt',
       statusConnected: (time) => 'Verbonden · laatste update ' + time,
       statusConnectedFallback: (time) => 'Verbonden via Supabase (serverversie) · ' + time,
+      ipFallbackLabel: 'Supabase',
       fixedIpHint: 'Vast ingesteld op de serverversie, hier niet wijzigbaar.',
       ipLabel: 'IP-adres / hostnaam P1 meter',
       ipPlaceholder: 'bijv. 192.168.1.50',
@@ -1575,6 +1579,7 @@
       statusFailed: 'Connection failed',
       statusConnected: (time) => 'Connected · last update ' + time,
       statusConnectedFallback: (time) => 'Connected via Supabase (server version) · ' + time,
+      ipFallbackLabel: 'Supabase',
       fixedIpHint: 'Fixed on the server version, cannot be changed here.',
       ipLabel: 'IP address / hostname P1 meter',
       ipPlaceholder: 'e.g. 192.168.1.50',
@@ -1667,6 +1672,7 @@
       statusFailed: 'Verbindung fehlgeschlagen',
       statusConnected: (time) => 'Verbunden · letztes Update ' + time,
       statusConnectedFallback: (time) => 'Verbunden über Supabase (Serverversion) · ' + time,
+      ipFallbackLabel: 'Supabase',
       fixedIpHint: 'Fest eingestellt auf der Serverversion, hier nicht änderbar.',
       ipLabel: 'IP-Adresse / Hostname P1-Zähler',
       ipPlaceholder: 'z.B. 192.168.1.50',
@@ -1945,7 +1951,12 @@
   logoutBtn.addEventListener('click', () => { authSignOut(); });
 
   // restore saved settings
-  ipInput.value = localStorage.getItem('p1_ip') || '192.168.178.161';
+  // configuredIp is de daadwerkelijke waarde die gebruikt wordt om rechtstreeks
+  // naar de P1-meter te pollen (gesynchroniseerd vanaf de serverversie via
+  // Supabase). Het IP-veld zelf toont dit alleen als label - zie updateIpDisplay() -
+  // en wordt dus nooit rechtstreeks door poll() uitgelezen.
+  let configuredIp = localStorage.getItem('p1_ip') || '192.168.178.161';
+  ipInput.value = configuredIp;
   const savedInterval = parseInt(localStorage.getItem('p1_interval'), 10) || 2;
   selectNearest(intervalInput, savedInterval);
   OVERLOAD_W = selectNearest(thresholdInput, OVERLOAD_W);
@@ -2523,7 +2534,7 @@
       localStorage.setItem(r.field_id, r.value);
     });
 
-    if (values.p1_ip !== undefined) ipInput.value = values.p1_ip;
+    if (values.p1_ip !== undefined) { configuredIp = values.p1_ip; updateIpDisplay(); }
     if (values.p1_interval !== undefined) selectNearest(intervalInput, parseInt(values.p1_interval, 10) || 2);
     if (values.p1_overload_w !== undefined) {
       OVERLOAD_W = selectNearest(thresholdInput, parseInt(values.p1_overload_w, 10) || OVERLOAD_W);
@@ -2912,6 +2923,35 @@
   }
   loadHighestDay();
 
+  // Toont in het (vergrendelde) IP-veld ofwel het echte, met de serverversie
+  // gesynchroniseerde IP-adres (als we rechtstreeks verbonden zijn, of nog
+  // niets weten), ofwel "Supabase" zodra we via de Supabase-fallback draaien -
+  // zodat in één oogopslag duidelijk is via welke weg de data binnenkomt.
+  function updateIpDisplay(){
+    ipInput.value = (connState === 'fallback') ? t().ipFallbackLabel : configuredIp;
+  }
+
+  // Haalt periodiek (los van de ingestelde ververssnelheid) het actuele
+  // IP-adres op dat op de serverversie is ingesteld, zodat een wijziging daar
+  // ook in een al openstaand clienttabblad doorkomt zonder dat er herladen
+  // hoeft te worden.
+  async function refreshConfiguredIpFromServer(){
+    try {
+      await ensureValidSession();
+      const res = await fetch(APP_SETTINGS_URL + '?select=value&field_id=eq.p1_ip', {
+        headers: { 'apikey': DEFAULT_SUPABASE_KEY, 'Authorization': 'Bearer ' + (authAccessToken || DEFAULT_SUPABASE_KEY) }
+      });
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (rows.length && rows[0].value && rows[0].value !== configuredIp) {
+        configuredIp = rows[0].value;
+        localStorage.setItem('p1_ip', configuredIp);
+        updateIpDisplay();
+      }
+    } catch (e) { /* stil negeren, volgende ronde weer geprobeerd */ }
+  }
+  setInterval(refreshConfiguredIpFromServer, 15000);
+
   function setStatus(ok, text){
     if (statusDot && statusText) {
       statusDot.className = 'dot ' + (ok === null ? '' : (ok ? 'ok' : 'err'));
@@ -3132,6 +3172,7 @@
     hideError();
     lastData = d;
     connState = viaFallback ? 'fallback' : 'ok';
+    updateIpDisplay();
     const timeStr = new Date().toLocaleTimeString(LOCALE_MAP[currentLang]);
     setStatus(true, viaFallback ? t().statusConnectedFallback(timeStr) : t().statusConnected(timeStr));
 
@@ -3149,7 +3190,7 @@
   }
 
   async function poll(){
-    const ip = ipInput.value.trim();
+    const ip = configuredIp.trim();
     let data = null;
     if (ip) {
       try {
@@ -3167,6 +3208,7 @@
       handleData(fallbackData, true);
     } catch (fallbackErr) {
       connState = 'err';
+      updateIpDisplay();
       lastErrorIp = ip;
       lastErrorDetail = fallbackErr.message || String(fallbackErr);
       setStatus(false, t().statusFailed);
@@ -3220,6 +3262,7 @@
     $('ipLabelText').textContent = d.ipLabel;
     ipInput.placeholder = d.ipPlaceholder;
     $('fixedIpHintText').textContent = d.fixedIpHint;
+    updateIpDisplay();
     $('intervalLabelText').textContent = d.intervalLabel;
     $('thresholdFieldLabel').textContent = d.thresholdField;
     connectBtn.textContent = connectBtn.classList.contains('connected') ? d.connected : d.connect;
@@ -3350,7 +3393,7 @@
   applyLanguage(currentLang);
 
   // auto-start if we have a saved IP
-  if (ipInput.value) {
+  if (configuredIp) {
     start();
   } else {
     setStatus(null, t().statusInitial);

@@ -2,6 +2,9 @@
 
 Overzicht van de wijzigingen per versie (cache-versie zoals gebruikt in `sw.js`, `CACHE_NAME`). Nieuwste bovenaan.
 
+## 3.17
+- Het (vergrendelde) IP-veld in de client toont nu "Supabase" zodra data via de Supabase-fallback binnenkomt, en het echte IP-adres zodra er rechtstreeks met de meter verbonden is. Dat IP-adres synchroniseert voortaan ook elke 15 seconden met de serverversie, zodat een wijziging daar direct doorkomt in een al openstaand clienttabblad, zonder verversen.
+
 ## 3.16
 - Architectuur uitgebreid met een aparte serverversie (server.html) die lokaal bij de P1-meter draait en de volledige actuele meterstand naar Supabase (latest_status) schrijft. De clientversie (dit bestand/index.html) valt nu automatisch terug op die Supabase-data wanneer de meter niet rechtstreeks bereikbaar is (bijv. onderweg); het IP-adres van de meter ligt in de client vast en is daar niet meer wijzigbaar.
 
