@@ -1,2 +1,1800 @@
-&lt;!DOCTYPE html&gt;
-PLACEHOLDER_CHUNK1_MARKER
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V3L EnergyControl</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#05070a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="V3L EnergyControl">
+<link rel="apple-touch-icon" href="v3l-icon-256.png">
+<style>
+  :root{
+    --bg:#05070a;
+    --panel:rgba(255,255,255,0.04);
+    --panel-border:rgba(255,255,255,0.08);
+    --panel2:rgba(255,255,255,0.06);
+    --text:#eef2f6;
+    --muted:#8b98a8;
+    --l1:#2dd4bf;
+    --l2:#fb923c;
+    --l3:#a78bfa;
+    --total:#34d399;
+    --danger:#f87171;
+    --warn:#fbbf24;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);
+    padding:24px 24px 24px 88px;
+    background:
+      radial-gradient(1000px 500px at 15% -10%, rgba(52,211,153,0.10), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(167,139,250,0.08), transparent 55%),
+      var(--bg);
+    min-height:100vh;
+  }
+  .wrap{max-width:1100px;margin:0 auto;}
+
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-bottom:24px;
+  }
+  h1{font-size:22px;margin:0 0 4px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;}
+  .subtitle{margin:0;font-size:13px;color:var(--muted);}
+  .header-right{display:flex;flex-direction:row;align-items:center;gap:10px;flex-wrap:wrap;}
+  .lang-switch{display:flex;gap:6px;}
+  .lang-btn{
+    background:var(--panel2);
+    border:1px solid var(--panel-border);
+    border-radius:8px;
+    padding:4px 8px;
+    font-size:16px;
+    line-height:1.2;
+    cursor:pointer;
+    box-shadow:none;
+  }
+  .lang-btn.active{border-color:var(--l1);background:rgba(45,212,191,0.18);}
+
+  /* Op verzoek: taalkeuze + account-acties (uitloggen) gebundeld in één klein
+     uitklapbaar menu i.p.v. losse knopjes in de kop - de vlaggetjes waren als
+     tikdoel aan de kleine kant op tablet/telefoon en concurreerden visueel
+     met de logout-knop; nu staat er nog maar één rustige "..."-knop in de
+     header. */
+  .header-menu{position:relative;}
+  .header-menu-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    padding:0;
+    background:var(--panel2);
+    border:1px solid var(--panel-border);
+    color:var(--text);
+    box-shadow:none;
+  }
+  .header-menu-btn svg{width:20px;height:20px;display:block;pointer-events:none;}
+  .header-menu-panel{
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
+    min-width:190px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    border-radius:14px;
+    padding:10px;
+    display:none;
+    flex-direction:column;
+    gap:8px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.45);
+    z-index:40;
+  }
+  .header-menu-panel.open{display:flex;}
+  .header-menu-lang{display:flex;gap:8px;justify-content:center;padding-bottom:8px;border-bottom:1px solid var(--panel-border);}
+  .header-menu-panel .lang-btn{padding:9px 12px;}
+  .header-menu-panel button.secondary{width:100%;}
+
+  /* Navigatie als in-/uitklapbare zijbalk (was een horizontale balk bovenin -
+     paste niet meer op 1 rij zodra er een pagina bijkomt). Standaard smal
+     (alleen iconen, onder elkaar), klapt via de knop bovenin uit tot een
+     bredere balk mét labels - die uitgeklapte staat overlapt de inhoud (geen
+     herindeling van de pagina nodig) totdat 'm weer wordt ingeklapt. */
+  .sidebar{
+    position:fixed;
+    top:0;
+    left:0;
+    height:100vh;
+    width:64px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    background:var(--panel);
+    border-right:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    padding:12px 8px;
+    overflow-y:auto;
+    overflow-x:hidden;
+    z-index:30;
+    transition:width .18s ease, box-shadow .18s ease;
+  }
+  .sidebar.expanded{width:224px;box-shadow:12px 0 32px rgba(0,0,0,0.35);}
+  .sidebar-toggle-btn{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:transparent;
+    border:none;
+    border-radius:12px;
+    padding:10px 8px;
+    color:var(--muted);
+    cursor:pointer;
+    box-shadow:none;
+    margin-bottom:6px;
+    flex:none;
+    width:100%;
+  }
+  .sidebar-toggle-btn:hover{transform:none;filter:none;color:var(--text);background:rgba(255,255,255,0.05);}
+  .sidebar-toggle-btn svg{width:20px;height:20px;flex:none;display:block;transition:transform .18s ease;}
+  .sidebar.expanded .sidebar-toggle-btn svg{transform:rotate(180deg);}
+  .page-nav-btn{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:transparent;
+    border:none;
+    border-radius:12px;
+    padding:10px 8px;
+    color:var(--muted);
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.01em;
+    cursor:pointer;
+    box-shadow:none;
+    white-space:nowrap;
+    width:100%;
+    flex:none;
+    transition:background .15s ease, color .15s ease;
+  }
+  .page-nav-btn:hover{transform:none;filter:none;color:var(--text);background:rgba(255,255,255,0.05);}
+  .page-nav-btn:active{transform:none;}
+  .page-nav-btn svg{width:20px;height:20px;flex:none;display:block;}
+  .page-nav-btn span{opacity:0;width:0;overflow:hidden;display:inline-block;transition:opacity .12s ease;}
+  .sidebar.expanded .page-nav-btn span{opacity:1;width:auto;}
+  .page-nav-btn.active{color:var(--l1);background:rgba(45,212,191,0.14);}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  .settings{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:24px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    align-items:stretch;
+  }
+  .settings .field{flex:1 1 auto !important;}
+  .field{display:flex;flex-direction:column;gap:6px;flex:1 1 160px;}
+  .field.field-ip{flex:2 1 320px;}
+  .field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+  .field-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;}
+  .field input, .field select{
+    background:rgba(0,0,0,0.25);
+    border:1px solid var(--panel-border);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:10px;
+    font-size:14px;
+    width:100%;
+    min-width:0;
+    transition:border-color .15s, box-shadow .15s, opacity .15s;
+  }
+  .field input:focus, .field select:focus{outline:none;border-color:var(--l1);box-shadow:0 0 0 3px rgba(45,212,191,0.18);}
+  .field select{
+    appearance:none;-webkit-appearance:none;-moz-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238b98a8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+    background-size:11px;
+    padding-right:34px;
+    cursor:pointer;
+  }
+  .field select option{background:#0b0f14;color:var(--text);}
+  .field input:disabled, .field select:disabled{opacity:.4;cursor:not-allowed;}
+  /* Clientversie: het IP-adres van de P1-meter ligt vast (wordt alleen op de
+     serverversie ingesteld) - deze stijl maakt dat visueel duidelijk zonder het
+     veld helemaal te verbergen. */
+  .field input:read-only{opacity:.65;cursor:default;}
+  .fixed-ip-hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .field input[type=number]::-webkit-outer-spin-button,
+  .field input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .field input[type=number]{-moz-appearance:textfield;appearance:textfield;}
+  .lock-btn{
+    flex:0 0 auto;
+    width:28px;
+    padding:0;
+    margin:0;
+    box-shadow:none;
+    background:none;
+    border:none;
+    display:flex;align-items:center;justify-content:center;
+    color:#facc15;
+    cursor:pointer;
+    transition:opacity .15s;
+  }
+  .lock-btn:hover{opacity:.7;transform:none;}
+  .lock-btn svg{width:19px;height:19px;pointer-events:none;display:block;}
+  .lock-btn .lock-closed{display:none;}
+  .lock-btn.locked .lock-open{display:none;}
+  .lock-btn.locked .lock-closed{display:block;}
+  button{
+    background:linear-gradient(135deg, var(--l1), #14b8a6);
+    color:#042320;
+    border:none;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    box-shadow:0 6px 16px rgba(45,212,191,0.25);
+    transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  }
+  button:hover{transform:translateY(-1px);filter:brightness(1.05);}
+  button:active{transform:translateY(0);}
+  button.secondary{
+    background:var(--panel2);
+    color:var(--text);
+    border:1px solid var(--panel-border);
+    box-shadow:none;
+  }
+  button.connected{background:linear-gradient(135deg, var(--total), #10b981);color:#04241a;cursor:default;}
+
+  /* Externe links (Mijnaansluiting.nl / Stedin), zelfde look als een
+     secondary-knop maar dan als <a>-tag, incl. een pijltje om duidelijk te
+     maken dat dit naar een andere website toe gaat. */
+  .link-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:var(--panel2);
+    color:var(--text);
+    border:1px solid var(--panel-border);
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    text-decoration:none;
+    cursor:pointer;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .link-btn:hover{transform:translateY(-1px);filter:brightness(1.1);}
+  .link-btn svg{width:14px;height:14px;flex:none;}
+  .link-row{display:flex;gap:10px;flex-wrap:wrap;}
+
+  /* Lokale installatie-pagina: knoppenrij + rasterweergave van geuploade
+     foto's/documenten van de eigen elektrische installatie (meterkast,
+     bekabeling, P1-meter e.d. - ter eigen documentatie). */
+  .photos-help-text{
+    font-size:12px;color:var(--muted);margin:-4px 0 14px;
+  }
+  /* Documenttegel (niet-afbeelding, bijv. PDF/Word/Excel): zelfde afmeting als
+     een fototegel maar met een generiek document-icoontje + bestandsnaam
+     i.p.v. een miniatuur - er wordt bewust geen voorbeeldweergave van de
+     inhoud gegenereerd (te zwaar voor client-side canvas). */
+  .photo-thumb.doc-thumb{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;padding:10px 8px;
+    background:rgba(255,255,255,0.03);
+  }
+  .doc-thumb .doc-icon{color:var(--l1);opacity:.85;}
+  .doc-thumb .doc-icon svg{width:30px;height:30px;display:block;}
+  .doc-thumb .doc-ext{
+    font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--muted);
+    text-transform:uppercase;
+  }
+  .doc-thumb .doc-filename{
+    font-size:10px;color:var(--text);text-align:center;
+    overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+    word-break:break-word;line-height:1.3;padding:0 4px;margin-top:2px;
+  }
+  .photo-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));
+    gap:10px;
+    margin-top:16px;
+  }
+  .photo-thumb{
+    position:relative;
+    aspect-ratio:1/1;
+    border-radius:12px;
+    overflow:hidden;
+    background:rgba(0,0,0,0.25);
+    border:1px solid var(--panel-border);
+    transition:box-shadow .15s ease;
+    cursor:pointer;
+  }
+  .photo-thumb img{
+    width:100%;height:100%;object-fit:cover;display:block;
+    -webkit-user-drag:none;
+    user-select:none;
+    -webkit-user-select:none;
+    pointer-events:none; /* klikken/slepen lopen via de omliggende .photo-thumb */
+  }
+  .photo-thumb.dragging, .photo-thumb.drag-floating{cursor:grabbing;}
+  .photo-thumb.selected{box-shadow:0 0 0 3px var(--l1) inset;}
+  .photo-thumb .photo-select-box{
+    position:absolute;
+    top:8px;
+    right:8px;
+    width:22px;
+    height:22px;
+    border-radius:6px;
+    background:rgba(5,7,10,0.55);
+    border:2px solid #fff;
+    box-shadow:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    padding:0;
+  }
+  .photo-thumb .photo-select-box:hover{transform:none;filter:none;background:rgba(5,7,10,0.75);}
+  .photo-thumb.selected .photo-select-box{background:var(--l1);border-color:var(--l1);}
+  .photo-thumb .photo-select-box svg{width:14px;height:14px;pointer-events:none;color:#0b1013;opacity:0;}
+  .photo-thumb.selected .photo-select-box svg{opacity:1;}
+  /* Verplaats-handvat: alleen zichtbaar (en alleen dan sleepbaar) als de foto
+     is aangevinkt via het selectievakje. Zo blijft gewoon scrollen over de
+     foto's altijd werken - touch-action:none/de pointerdown-sleeplogica
+     zitten expliciet alleen op dit kleine handvat, niet op de hele tegel. */
+  .photo-thumb .photo-drag-handle{
+    display:none;
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:rgba(5,7,10,0.6);
+    border:2px solid #fff;
+    align-items:center;
+    justify-content:center;
+    cursor:grab;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-select:none;
+    z-index:2;
+    color:#fff;
+  }
+  .photo-thumb.selected .photo-drag-handle{display:flex;}
+  .photo-thumb .photo-drag-handle:hover{background:rgba(5,7,10,0.8);}
+  .photo-thumb .photo-drag-handle svg{width:40px;height:40px;pointer-events:none;display:block;}
+  .photo-thumb.dragging .photo-drag-handle, .photo-thumb.drag-floating .photo-drag-handle{cursor:grabbing;}
+  .photo-empty-text{color:var(--muted);font-size:13px;margin-top:12px;}
+  .photo-hint-text{color:var(--muted);font-size:12px;margin-top:14px;margin-bottom:-6px;}
+  .photo-delete-selected-btn{color:#f87171;border-color:rgba(248,113,113,0.4);}
+  .photo-delete-selected-btn:hover{background:rgba(248,113,113,0.12);filter:none;}
+  .photo-thumb .photo-caption-preview{
+    position:absolute;left:0;right:0;bottom:0;
+    padding:16px 8px 6px;
+    background:linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0));
+    color:#fff;font-size:11px;line-height:1.3;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    pointer-events:none;
+  }
+  /* Opnamedatum uit de EXIF-metadata van de foto (niet de uploaddatum) -
+     klein label linksboven, tegenover het selectievakje rechtsboven. */
+  .photo-thumb .photo-date-badge{
+    position:absolute;top:8px;left:8px;
+    background:rgba(5,7,10,0.6);
+    color:#fff;font-size:10px;font-weight:600;letter-spacing:.02em;
+    padding:3px 7px;border-radius:6px;
+    pointer-events:none;
+  }
+  .photo-modal-date{
+    align-self:center;
+    color:var(--muted);font-size:12px;margin-top:-2px;
+  }
+  /* Sleepstatus tijdens handmatig herordenen: het gesleepte item volgt de
+     vinger/muis los van de grid-flow (zie JS, pointer events i.p.v. HTML5 DnD
+     zodat dit ook op mobiel/touch werkt), de rest van het raster dooft licht. */
+  .photo-thumb.dragging{
+    opacity:.35;
+  }
+  .photo-thumb.drag-floating{
+    position:fixed;
+    z-index:1200;
+    pointer-events:none;
+    box-shadow:0 12px 30px rgba(0,0,0,0.5);
+    transform:scale(1.05);
+    opacity:.95;
+  }
+  .photo-thumb.drag-over{box-shadow:0 0 0 3px #fff inset;}
+
+  /* Foto-lightbox: vergrote weergave bij klikken op een foto, zelfde
+     openings-/sluitanimatie als de bestaande fase-meter-popup. */
+  .photo-modal-backdrop .photo-modal-card{
+    width:auto;height:auto;max-width:92vw;max-height:88vh;
+    padding:0;background:none;border:none;box-shadow:none;
+    display:flex;flex-direction:column;gap:10px;
+  }
+  /* Wrapper rond de foto in de lightbox: knipt de ingezoomde/versleepte foto
+     netjes af binnen de afgeronde hoeken, en vangt de pinch-/sleepgebaren op
+     (touch-action:none - we handelen het zelf af via Pointer Events, zodat de
+     browser niet ook nog zijn eigen pagina-zoom/scroll erover probeert te doen). */
+  .photo-modal-imgwrap{
+    display:inline-flex;align-items:center;justify-content:center;
+    max-width:92vw;max-height:70vh;
+    border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.5);
+    overflow:hidden;
+    align-self:center;
+    touch-action:none;
+  }
+  .photo-modal-card img{
+    display:block;max-width:92vw;max-height:70vh;
+    object-fit:contain;
+    transform-origin:center center;
+    user-select:none;-webkit-user-select:none;-webkit-user-drag:none;
+  }
+  .photo-modal-comment{
+    background:var(--panel2, rgba(20,24,30,0.9));
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    padding:12px 14px;
+    text-align:left;
+    width:min(92vw, 420px);
+    align-self:center;
+  }
+  .photo-modal-comment label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600;display:block;margin-bottom:6px;}
+  .photo-modal-comment textarea{
+    background:rgba(0,0,0,0.25);
+    border:1px solid var(--panel-border);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:10px;
+    font-size:14px;
+    width:100%;
+    min-width:0;
+    resize:vertical;
+    font-family:inherit;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .photo-modal-comment textarea:focus{outline:none;border-color:var(--l1);box-shadow:0 0 0 3px rgba(45,212,191,0.18);}
+  .photo-modal-comment .email-status{margin-top:6px;}
+
+  .error-banner{
+    display:none;
+    background:linear-gradient(160deg, rgba(248,113,113,0.15), rgba(127,29,29,0.15));
+    border:1px solid rgba(248,113,113,0.35);
+    color:#ffd9d9;
+    border-radius:14px;
+    margin-bottom:20px;
+    font-size:13px;
+    line-height:1.6;
+    overflow-wrap:break-word;
+  }
+  .error-banner a{color:#fff;}
+  .error-banner > summary{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    cursor:pointer;list-style:none;padding:14px 16px;
+  }
+  .error-banner > summary::-webkit-details-marker{display:none;}
+  .error-banner > summary::marker{content:'';}
+  .error-banner > summary strong{font-weight:700;}
+  .error-banner .chevron{transition:transform .15s ease;font-size:13px;color:#ffd9d9;flex-shrink:0;}
+  .error-banner[open] .chevron{transform:rotate(90deg);}
+  .error-banner .error-body{padding:0 16px 16px;}
+
+  .cards{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-bottom:28px;
+  }
+  .card-row{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:14px;
+  }
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    border-radius:18px;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    transition:transform .15s ease, box-shadow .15s ease, background .2s ease;
+    min-width:0;
+  }
+  .card::before{
+    content:'';
+    position:absolute;
+    left:0;right:0;top:0;
+    height:3px;
+    border-radius:18px 18px 0 0;
+  }
+  .card.total::before{background:linear-gradient(90deg, var(--total), transparent);}
+  .card.l1::before{background:linear-gradient(90deg, var(--l1), transparent);}
+  .card.l2::before{background:linear-gradient(90deg, var(--l2), transparent);}
+  .card.l3::before{background:linear-gradient(90deg, var(--l3), transparent);}
+  .card.total{position:relative;}
+  .card.total::after{
+    content:'';
+    position:absolute;
+    width:280px;height:280px;
+    background:radial-gradient(circle, var(--total) 0%, transparent 70%);
+    opacity:.14;
+    top:-100px;right:-100px;
+    filter:blur(6px);
+    pointer-events:none;
+  }
+  .card .label{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:700;color:var(--muted);}
+  .card.total .label{color:var(--total);}
+  .card.l1 .label{color:var(--l1);}
+  .card.l2 .label{color:var(--l2);}
+  .card.l3 .label{color:var(--l3);}
+  .card .value{font-size:64px;font-weight:800;letter-spacing:-.02em;line-height:1.05;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;}
+  .card.total .value{font-size:92px;overflow-wrap:anywhere;}
+  .card .value span{font-size:18px;font-weight:600;color:var(--muted);margin-left:6px;}
+  /* Balk met het live totaalvermogen - staat op de plek waar voorheen de
+     "Fasen in balans"-balk stond (zelfde afmetingen: padding/font-size/
+     border-radius), nu permanent in de rustige/neutrale kleurstijl in plaats
+     van rood/oranje bij onbalans, want dit is puur een informatieve
+     weergave, geen waarschuwing. */
+  .total-power-bar{
+    margin-bottom:14px;
+    padding:9px 14px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.01em;
+    background:rgba(52,211,153,0.12);
+    color:var(--total);
+    border:1px solid rgba(52,211,153,0.3);
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .total-power-bar .unit{font-weight:600;}
+  /* "Gas"/"Elektra"-tegel: minder hoog dan de andere totaal-tegels, zelfde breedte */
+  #cardTotalPower{padding-top:10px;padding-bottom:10px;}
+  #cardTotalPower .label{margin-bottom:2px;}
+  #cardTotalPower .sub{margin-top:2px;min-height:0;}
+  /* Twee denkbeeldige, even brede vakken naast elkaar (Gas / Elektra), met de
+     inhoud van elk vak gecentreerd i.p.v. naar de buitenkant van de tegel
+     geduwd. Beide waardes even groot/dik. Zelfde opmaak als de serverversie;
+     de clientversie berekent de kosten niet zelf (geen tarieveninstelling
+     hier), maar leest de al berekende bedragen van vandaag uit de
+     daily_cost-tabel die de serverversie bijhoudt. */
+  .total-split{display:flex;align-items:center;gap:14px;}
+  .total-power-block, .total-cost-block{flex:1 1 50%;min-width:0;text-align:center;}
+  .total-power-block .label,
+  .total-cost-block .label{color:var(--muted);}
+  /* text-align:center hierboven staat op het blok zelf; het getal in .value
+     heeft daaronder ook een eigen, expliciete text-align:center (nodig voor
+     de gedeelde font-size-regel). Het label en de lege sub-regel hadden geen
+     eigen regel en moesten dus op overerving vertrouwen - dat bleek in de
+     praktijk (op het toestel) niet altijd zichtbaar te centreren, met een
+     schuin-links ogend label als gevolg. Nu ook expliciet gecentreerd. */
+  #cardTotalPower .total-power-block .label,
+  #cardTotalPower .total-cost-block .label,
+  #cardTotalPower .total-power-block .sub,
+  #cardTotalPower .total-cost-block .sub{text-align:center;}
+  #cardTotalPower .total-power-block .value,
+  #cardTotalPower .total-cost-block .value{
+    font-size:clamp(34px, 6.5vw, 48px);
+    text-align:center;
+    font-weight:800;
+    letter-spacing:-.02em;
+  }
+  #cardTotalPower .total-power-block .value.credit,
+  #cardTotalPower .total-cost-block .value.credit{color:var(--total);}
+  #monthlyCostsTable td.credit{color:var(--total);font-weight:700;}
+  @media (max-width: 380px){
+    .total-split{gap:8px;}
+    #cardTotalPower .total-power-block .value,
+    #cardTotalPower .total-cost-block .value{font-size:clamp(22px, 7.5vw, 32px);}
+  }
+  /* Toont, gecentreerd ONDER de "Totaal vermogen"-tegel (dus buiten het
+     tegel-kader zelf), of de client rechtstreeks met de P1-meter praat of
+     via Supabase (de fallback-databron die de serverversie bijhoudt). */
+  .total-conn-info{text-align:center;font-size:12px;color:var(--muted);font-weight:600;opacity:.85;}
+  .total-conn-info.warn{color:var(--warn);opacity:1;}
+  .card .stats{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:12px;}
+  .card .stats b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;}
+  /* Voorkomt dat de V-waarde en het bliksempje op een smal scherm los van
+     elkaar op een nieuwe regel terechtkomen (elk los tekstelement mag anders
+     op zijn eigen woordgrens afbreken): de V- en A-waarde blijven zo altijd
+     één geheel, op dezelfde regel naast elkaar. Past het echt niet (extreem
+     smal scherm), dan valt de hele A-waarde als geheel terug naar een tweede
+     regel (via flex-wrap op .stats hierboven) i.p.v. lelijk af te breken. */
+  .stats span{white-space:nowrap;}
+  .card .sub{font-size:12px;color:var(--muted);margin-top:8px;min-height:14px;font-weight:600;}
+  .card.dim{opacity:.32;}
+  .card.overload{border-width:3px;animation:overloadBorderBlink 1s ease-in-out infinite;}
+
+  /* Tik-hint: alleen op touch-apparaten (telefoon/tablet) tonen we dat de fase-tegels
+     aantikbaar zijn - op een computer met muis blijft de cursor normaal. */
+  @media (pointer: coarse){
+    #phaseCardsRow .card{cursor:pointer;}
+  }
+
+  .gauge-wrap{position:relative;display:flex;justify-content:center;margin:0 -4px;}
+  .gauge-svg{width:100%;max-width:none;height:auto;overflow:visible;}
+  .gauge-needle{transform-box:view-box;transform-origin:110px 112px;transition:transform .6s cubic-bezier(.4,0,.2,1);}
+  .gauge-readout{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);text-align:center;line-height:1;}
+  .gauge-num{font-size:32px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  .gauge-unit{font-size:12px;font-weight:600;color:var(--muted);margin-left:3px;}
+  .gauge-num.flash{animation:valueFlash .4s ease-out;}
+  .card.dim .gauge-wrap{opacity:.4;}
+  .fault-stats{display:flex;gap:20px;margin-top:8px;}
+  .fault-stat{flex:1;text-align:center;}
+  .fault-num{font-size:40px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.05;}
+  .fault-label{font-size:12px;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+  .card.dim .fault-stats{opacity:.4;}
+  .fault-phases-grid{display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;margin-top:24px;padding-top:20px;border-top:1px solid var(--panel-border);}
+
+  /* Popup met vergrote fase-meter - alleen actief op touch-apparaten (zie JS: pointer:coarse),
+     schaalt automatisch mee met de schermbreedte via width:min(...). */
+  .meter-modal-backdrop{
+    display:flex;position:fixed;inset:0;z-index:1000;
+    background:rgba(4,7,10,0.72);backdrop-filter:blur(6px);
+    align-items:center;justify-content:center;padding:24px;
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .22s cubic-bezier(.2,0,0,1);
+  }
+  .meter-modal-backdrop.open{opacity:1;visibility:visible;pointer-events:auto;}
+  .meter-modal-card{
+    position:relative;width:min(88vw, 420px);
+    padding:32px 26px;text-align:center;
+    transform:scale(.4);
+    transition:transform .26s cubic-bezier(.2,0,0,1);
+  }
+  .meter-modal-backdrop.open .meter-modal-card{transform:scale(1);}
+  .meter-modal-card .label{font-size:14px;margin-bottom:10px;}
+  .meter-modal-card .gauge-wrap{margin:0 auto;max-width:320px;}
+  .meter-modal-card .gauge-num{font-size:clamp(38px, 11vw, 56px);}
+  .meter-modal-card .gauge-unit{font-size:16px;}
+  .meter-modal-card .sub{margin-top:14px;font-size:13px;}
+  .meter-modal-card .stats{justify-content:center;gap:24px;font-size:15px;margin-top:16px;}
+  .fault-phase .label{text-align:center;}
+  .fault-phase.l1 .label{color:var(--l1);}
+  .fault-phase.l2 .label{color:var(--l2);}
+  .fault-phase.l3 .label{color:var(--l3);}
+  @keyframes overloadBorderBlink{
+    0%,100%{border-color:#ef4444;box-shadow:0 10px 30px rgba(0,0,0,0.35), 0 0 16px rgba(239,68,68,0.7);}
+    50%{border-color:rgba(239,68,68,0.1);box-shadow:0 10px 30px rgba(0,0,0,0.35), 0 0 0 rgba(239,68,68,0);}
+  }
+  @keyframes valueFlash{
+    0%{opacity:.55;}
+    100%{opacity:1;}
+  }
+  .value.flash{animation:valueFlash .4s ease-out;}
+
+  /* "Spanning-stress"-bliksem per fase: laat zien hoe stabiel de netspanning
+     op dat moment is, los van de toerenteller/gauge (die blijft ongewijzigd
+     staan voor het vermogen in Watt). Bij een normale spanning (220-240V)
+     blijft het icoontje bewust rustig/grijs - het moet pas opvallen zodra er
+     echt iets aan de hand is, niet de hele tijd knipperen. Verder van 230V
+     (215-220V of 240-245V) kleurt hij oranje; voorbij die grens (<215V of
+     >245V, bijv. tijdens avondspits-onderbelasting of een zonnige-middag-
+     overbelasting van het net) kleurt hij rood en knippert hij. */
+  .volt-bolt{display:inline-flex;vertical-align:-3px;margin-left:6px;color:var(--muted);opacity:.4;transition:color .3s ease, opacity .3s ease;}
+  .volt-bolt svg{width:17px;height:17px;display:block;}
+  /* In de fase-tegel staat het bliksempje op verzoek los van de V/A-regel, in
+     een eigen rijtje direct onder het gauge (hoger dan voorheen, dicht tegen
+     de meterstand aan) - zo blijven de V- en A-waarde altijd naast elkaar
+     staan zonder dat het icoontje daar ruimte tussenin inneemt. */
+  .volt-bolt-row{display:flex;justify-content:center;margin:-2px 0 2px;}
+  .volt-bolt-row .volt-bolt{margin-left:0;vertical-align:0;}
+  .volt-bolt-row .volt-bolt svg{width:20px;height:20px;}
+  /* In de vergrote fase-popup (na aantikken van een tegel) is alles al groter
+     weergegeven - het bliksempje schaalt daarin evenredig mee. */
+  .meter-modal-card .volt-bolt-row{margin:-4px 0 4px;}
+  .meter-modal-card .volt-bolt-row .volt-bolt svg{width:26px;height:26px;}
+  /* Tekstlabel "Overbelast"/"Onderbelast": alleen zichtbaar zodra het
+     bliksempje ook echt knippert (kritieke afwijking), zodat je in één
+     oogopslag ziet wát er aan de hand is i.p.v. alleen dát er iets is. Wit
+     (i.p.v. de gedempte grijze tint van .sub) om echt op te vallen, met een
+     gereserveerde minimum-hoogte zodat de tegel niet van hoogte verspringt
+     zodra de tekst verschijnt/verdwijnt. */
+  .volt-status{text-align:center;color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;min-height:13px;margin:0 0 2px;}
+  .meter-modal-card .volt-status{font-size:14px;min-height:17px;margin:0 0 6px;}
+  .volt-bolt.warn{color:var(--warn);opacity:1;}
+  .volt-bolt.critical{color:#ef4444;opacity:1;animation:boltBlink 1s ease-in-out infinite;}
+  @keyframes boltBlink{
+    0%,100%{opacity:1;}
+    50%{opacity:.3;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .volt-bolt.critical{animation:none;}
+  }
+
+  .section-title{
+    font-size:12px;color:var(--total);margin:0 0 6px;text-transform:uppercase;letter-spacing:.08em;
+    font-weight:700;
+  }
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--panel-border);}
+  th{color:var(--muted);font-weight:600;position:sticky;top:0;background:#0b0f14;font-size:12px;text-transform:uppercase;letter-spacing:.05em;z-index:1;white-space:nowrap;}
+  tbody tr:hover td{background:rgba(255,255,255,0.03);}
+  td{font-variant-numeric:tabular-nums;}
+  .table-panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:20px;
+    overflow-x:auto;
+  }
+  .log-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+  .log-toolbar span{font-size:12px;color:var(--muted);}
+  .log-toolbar .btns{display:flex;gap:8px;flex-wrap:wrap;}
+  .log-toolbar button{padding:7px 14px;font-size:12px;box-shadow:none;}
+  .log-scroll{max-height:340px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .changelog-scroll{max-height:320px;padding-right:4px;}
+  #dailyTotalsTable td.credit{color:var(--total);font-weight:700;}
+  .changelog-entry{margin-bottom:14px;}
+  .changelog-entry:last-child{margin-bottom:0;}
+  .changelog-entry h4{margin:0 0 6px;font-size:12px;color:var(--l1);text-transform:uppercase;letter-spacing:.06em;}
+  .changelog-entry ul{margin:0;padding-left:18px;font-size:12px;color:var(--muted);line-height:1.6;}
+  .storage-warning{background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.4);color:#fdba74;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;line-height:1.5;}
+
+  .email-panel .helptext{font-size:12px;color:var(--muted);line-height:1.6;margin:0 0 14px;}
+  .email-panel .helptext a{color:var(--l1);}
+  .email-subsection{margin-bottom:22px;padding-bottom:20px;border-bottom:1px solid var(--panel-border);}
+  .email-subsection:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+  .email-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:14px;}
+  .toggle-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .toggle-row label{font-size:13px;font-weight:600;}
+  .email-status{font-size:12px;color:var(--muted);margin-top:10px;min-height:16px;}
+  .email-status.ok{color:var(--total);}
+  .email-status.err{color:var(--danger);}
+  .email-status.warn{color:var(--warn);}
+
+  .email-panel{padding:0;}
+  .email-panel > summary{
+    display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;list-style:none;padding:18px;
+    font-size:12px;color:var(--total);text-transform:uppercase;letter-spacing:.08em;font-weight:700;
+  }
+  .email-panel > summary::-webkit-details-marker{display:none;}
+  .email-panel > summary::marker{content:'';}
+  .email-panel .title-row{display:flex;align-items:center;gap:8px;}
+  .email-panel .chevron{transition:transform .15s ease;font-size:13px;color:var(--muted);}
+  .email-panel[open] .chevron{transform:rotate(90deg);}
+  .email-panel .email-body{padding:0 18px 18px;}
+
+  /* Genest instellingenpaneel binnen een table-panel (bijv. "eigen database"
+     onder een logboek-tegel) - zonder eigen achtergrond/rand, die komt al van
+     de omringende .table-panel. */
+  .inline-panel{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--panel-border);}
+  .inline-panel > summary{
+    display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;list-style:none;padding:0;
+    font-size:12px;color:var(--total);text-transform:uppercase;letter-spacing:.08em;font-weight:700;
+  }
+  .inline-panel > summary::-webkit-details-marker{display:none;}
+  .inline-panel > summary::marker{content:'';}
+  .inline-panel .title-row{display:flex;align-items:center;gap:8px;}
+  .inline-panel .chevron{transition:transform .15s ease;font-size:13px;color:var(--muted);}
+  .inline-panel[open] .chevron{transform:rotate(90deg);}
+  .inline-panel .email-body{padding:14px 0 0;}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:32px;opacity:.7;line-height:1.6;}
+  footer a{color:var(--muted);}
+  .app-version{color:var(--muted);font-size:12px;text-align:center;opacity:.7;line-height:1.6;}
+
+  /* Inlogscherm */
+  #dashboardWrap{display:none;}
+  .auth-wrap{max-width:420px;margin:60px auto;}
+  .auth-wrap header{justify-content:center;text-align:center;}
+  .auth-wrap h1{justify-content:center;}
+  .auth-card{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter:blur(16px);
+    border-radius:16px;
+    padding:24px;
+  }
+  .pw-requirements{list-style:none;margin:0 0 4px;padding:0;font-size:12px;color:var(--muted);line-height:2;}
+  .pw-requirements li{position:relative;padding-left:22px;}
+  .pw-requirements li::before{
+    content:'\2716';
+    position:absolute;left:0;color:var(--danger);font-size:11px;top:2px;
+  }
+  .pw-requirements li[data-ok="1"]{color:var(--total);}
+  .pw-requirements li[data-ok="1"]::before{content:'\2714';color:var(--total);}
+  @media (max-width: 600px){
+    .auth-wrap{margin:24px auto;max-width:none;}
+    .auth-card{padding:18px;}
+  }
+
+  @media (max-width: 600px){
+    body{padding:14px 14px 14px 62px;}
+    h1{font-size:18px;gap:6px;}
+    h1 img{height:28px !important;}
+    header{gap:10px;}
+    .sidebar{width:48px;padding:8px 4px;}
+    .sidebar.expanded{width:200px;}
+    .page-nav-btn{font-size:12px;padding:9px 6px;gap:10px;}
+    .page-nav-btn svg{width:18px;height:18px;}
+    .sidebar-toggle-btn{padding:9px 6px;}
+    .sidebar-toggle-btn svg{width:18px;height:18px;}
+    .header-right{align-items:center;gap:8px;}
+    .header-menu-panel .lang-btn{padding:9px 12px;}
+    .settings{flex-direction:column;align-items:stretch;padding:14px;gap:10px;}
+    .settings button{width:100%;}
+    .settings .field{flex:1 1 auto !important;}
+    .lock-btn{width:36px;}
+    .lock-btn svg{width:22px;height:22px;}
+    .cards{gap:10px;}
+    /* De drie fase-tegels blijven altijd naast elkaar in 1 rij, ook op smalle
+       telefoons - de inhoud krimpt (via clamp/vw) automatisch mee met de
+       schermbreedte in plaats van dat de tegels onder elkaar gaan staan. */
+    .card-row{grid-template-columns:repeat(3, 1fr);gap:6px;}
+    .fault-phases-grid{grid-template-columns:1fr;gap:16px;}
+    .card{padding:16px;}
+    .card .value{font-size:clamp(44px, 16vw, 64px);}
+    .card.total .value{font-size:clamp(52px, 18vw, 76px);}
+    .card .stats{gap:10px;font-size:12px;}
+    .gauge-num{font-size:38px;}
+    .fault-stats{gap:12px;}
+    .fault-num{font-size:clamp(26px, 9vw, 40px);}
+    .table-panel{padding:14px;}
+    table{font-size:12px;}
+    th,td{padding:8px 6px;}
+    .email-grid{grid-template-columns:1fr;}
+    .btns button, .log-toolbar button{flex:1 1 auto;}
+
+    /* Fase-tegels (L1/L2/L3): compacte variant zodat 3 kolommen op 1 scherm passen. */
+    #phaseCardsRow .card{padding:10px 6px;}
+    #phaseCardsRow .label{font-size:9px;letter-spacing:.03em;margin-bottom:4px;}
+    #phaseCardsRow .gauge-wrap{margin:0 -2px;}
+    #phaseCardsRow .gauge-readout{bottom:8%;}
+    #phaseCardsRow .gauge-num{font-size:clamp(15px, 6vw, 24px);}
+    #phaseCardsRow .gauge-unit{font-size:clamp(8px, 2.2vw, 11px);margin-left:2px;}
+    #phaseCardsRow .stats{gap:6px;font-size:clamp(8px, 2.2vw, 11px);margin-top:6px;flex-wrap:wrap;}
+    #phaseCardsRow .sub{font-size:9px;min-height:10px;margin-top:4px;}
+    #phaseCardsRow .volt-bolt-row{margin:-2px 0 2px;}
+    #phaseCardsRow .volt-bolt-row .volt-bolt svg{width:17px;height:17px;}
+    #phaseCardsRow .volt-status{font-size:9px;min-height:10px;}
+  }
+
+  @media (max-width: 380px){
+    .card .value{font-size:clamp(36px, 15vw, 52px);}
+    .card.total .value{font-size:clamp(42px, 17vw, 60px);}
+    .gauge-num{font-size:32px;}
+    .fault-num{font-size:clamp(22px, 8vw, 32px);}
+
+    #phaseCardsRow .card{padding:8px 4px;}
+    #phaseCardsRow .label{font-size:8px;}
+    #phaseCardsRow .gauge-num{font-size:clamp(13px, 5.5vw, 20px);}
+
+    /* Extra krappe tabellen (bijv. Kosten per maand met 4 kolommen) op zeer
+       smalle schermen: kleinere letter, minder padding en minder letter-
+       spacing zodat koppen als "TOTAAL"/"ELEKTRA" niet buiten hun kolom
+       vallen. Zit dit toch nog te krap, dan kan .log-scroll/.table-panel nu
+       altijd horizontaal scrollen (overflow-x:auto) in plaats van tekst af
+       te snijden. */
+    table{font-size:11px;}
+    th,td{padding:6px 4px;}
+    th{letter-spacing:.02em;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap auth-wrap" id="authWrap">
+  <header style="margin-bottom:28px;">
+    <div>
+      <h1><img src="v3l-logo.png" alt="V3L logo" style="height:38px;width:auto;display:block;"> V3L EnergyControl</h1>
+      <p class="subtitle" id="authSubtitleText">Log in om je dashboard te bekijken</p>
+    </div>
+  </header>
+
+  <div class="auth-card">
+    <div id="loginForm">
+      <div class="section-title" id="loginTitleText">Verbinden…</div>
+      <div class="email-status" id="loginStatus">&nbsp;</div>
+      <button type="button" id="retryAutoLoginBtn" style="width:100%;display:none;">Opnieuw proberen</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="dashboardWrap">
+  <header>
+    <div>
+      <h1><img src="v3l-logo.png" alt="V3L logo" style="height:38px;width:auto;display:block;"> V3L EnergyControl</h1>
+      <p class="subtitle" id="subtitleText">Master your energy</p>
+    </div>
+    <div class="header-right">
+      <div class="header-menu" id="headerMenu">
+        <button type="button" class="header-menu-btn" id="headerMenuBtn" title="Menu" aria-label="Menu">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="19" r="1.8" fill="currentColor"/></svg>
+        </button>
+        <div class="header-menu-panel" id="headerMenuPanel">
+          <div class="header-menu-lang" id="langSwitch">
+            <button type="button" class="lang-btn" data-lang="nl" title="Nederlands">
+              <svg viewBox="0 0 30 20" width="22" height="15"><rect width="30" height="20" fill="#21468B"/><rect width="30" height="13.34" fill="#fff"/><rect width="30" height="6.67" fill="#AE1C28"/></svg>
+            </button>
+            <button type="button" class="lang-btn" data-lang="en" title="English">
+              <svg viewBox="0 0 60 40" width="22" height="15">
+                <rect width="60" height="40" fill="#00247d"/>
+                <path d="M0,0 L60,40 M60,0 L0,40" stroke="#fff" stroke-width="8"/>
+                <path d="M0,0 L60,40" stroke="#cf142b" stroke-width="3"/>
+                <path d="M60,0 L0,40" stroke="#cf142b" stroke-width="3"/>
+                <rect x="24" width="12" height="40" fill="#fff"/>
+                <rect y="14" width="60" height="12" fill="#fff"/>
+                <rect x="27" width="6" height="40" fill="#cf142b"/>
+                <rect y="17" width="60" height="6" fill="#cf142b"/>
+              </svg>
+            </button>
+            <button type="button" class="lang-btn" data-lang="de" title="Deutsch">
+              <svg viewBox="0 0 30 20" width="22" height="15"><rect width="30" height="20" fill="#FFCE00"/><rect width="30" height="13.34" fill="#DD0000"/><rect width="30" height="6.67" fill="#000"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="sidebar" id="pageNav">
+    <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Menu in-/uitklappen" aria-label="Menu in-/uitklappen">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" class="page-nav-btn active" data-page="home" id="navHomeBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span id="navHomeText">Home</span>
+    </button>
+    <button type="button" class="page-nav-btn" data-page="verbruik" id="navVerbruikBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 19V11M9 19V5M14 19V13M19 19V8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="navVerbruikText">Verbruik</span>
+    </button>
+    <button type="button" class="page-nav-btn" data-page="readings" id="navReadingsBtn">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M13.2 7.2l-4.4 5.6h3.2l-1.2 4 4.4-5.6h-3.2l1.2-4z" fill="currentColor"/></svg>
+      <span id="navReadingsText">Meterstanden</span>
+    </button>
+    <button type="button" class="page-nav-btn" data-page="kosten" id="navKostenBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M18 8c-1.2-1.8-3-3-5.5-3-4 0-6.5 3-6.5 7s2.5 7 6.5 7c2.5 0 4.3-1.2 5.5-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M3 10.5h9M3 13.5h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="navKostenText">Kosten per maand</span>
+    </button>
+    <button type="button" class="page-nav-btn" data-page="faults" id="navFaultsBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l10 18H2L12 3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+      <span id="navFaultsText">Storingen</span>
+    </button>
+    <button type="button" class="page-nav-btn" data-page="photos" id="navPhotosBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M9 2v6M15 2v6M6 8h12v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 19v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="navPhotosText">Lokale installatie</span>
+    </button>
+    <button type="button" class="page-nav-btn" data-page="settings" id="navSettingsBtn">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="navSettingsText">Instellingen</span>
+    </button>
+    <button type="button" class="page-nav-btn" data-page="log" id="navLogBtn">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M8 6h13M8 12h13M8 18h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="3.5" cy="6" r="1.3" fill="currentColor"/><circle cx="3.5" cy="12" r="1.3" fill="currentColor"/><circle cx="3.5" cy="18" r="1.3" fill="currentColor"/></svg>
+      <span id="navLogText">Versielog</span>
+    </button>
+  </nav>
+
+  <div class="page" data-page="photos">
+  <div class="table-panel">
+    <div class="section-title" id="photosTitleText">Lokale installatie</div>
+    <div class="photos-help-text" id="photosHelpText">Documentatie Elektrische installatie</div>
+    <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" id="choosePhotoBtn">
+        <svg viewBox="0 0 24 24" fill="none" style="width:16px;height:16px;vertical-align:-3px;margin-right:6px;"><path d="M4 16l4-4 3 3 5-5 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/></svg>
+        <span id="choosePhotoBtnText">Bestand kiezen</span>
+      </button>
+      <button type="button" class="secondary" id="takePhotoBtn">
+        <svg viewBox="0 0 24 24" fill="none" style="width:16px;height:16px;vertical-align:-3px;margin-right:6px;"><path d="M4 8h3l2-2h6l2 2h3v11a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13.5" r="3.2" stroke="currentColor" stroke-width="2"/></svg>
+        <span id="takePhotoBtnText">Foto maken</span>
+      </button>
+      <button type="button" class="secondary photo-delete-selected-btn" id="deleteSelectedPhotosBtn" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" style="width:16px;height:16px;vertical-align:-3px;margin-right:6px;"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span id="deleteSelectedPhotosBtnText">Verwijder geselecteerde</span>
+      </button>
+    </div>
+    <input type="file" id="photoFileInput" accept="image/*,application/pdf,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" multiple style="display:none">
+    <input type="file" id="photoCameraInput" accept="image/*" capture="environment" style="display:none">
+    <div class="email-status" id="photoStatus">&nbsp;</div>
+    <div class="photo-empty-text" id="photoEmptyText" style="display:none;">Nog geen foto's of documenten toegevoegd.</div>
+    <div class="photo-hint-text" id="photoReorderHintText" style="display:none;">Vink een foto/document aan en sleep aan het rondje om de volgorde te wijzigen. Klik op een foto om te vergroten en met twee vingers in/uit te zoomen, of op een document om het te openen.</div>
+    <div class="photo-grid" id="photoGrid"></div>
+  </div>
+  </div>
+
+  <div class="meter-modal-backdrop photo-modal-backdrop" id="photoModalBackdrop">
+    <div class="photo-modal-card" id="photoModalCard">
+      <div class="photo-modal-imgwrap" id="photoModalImgWrap">
+        <img id="photoModalImg" src="" alt="" draggable="false">
+      </div>
+      <div class="photo-modal-date" id="photoModalDate" style="display:none;"></div>
+      <div class="photo-modal-comment">
+        <label for="photoCommentInput" id="photoCommentLabelText">Notitie</label>
+        <textarea id="photoCommentInput" rows="2" placeholder="Voeg een notitie toe..."></textarea>
+        <div class="email-status" id="photoCommentStatus">&nbsp;</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" data-page="settings">
+  <div class="settings">
+    <div class="field field-ip">
+      <label for="ipInput" id="ipLabelText">IP-adres / hostnaam P1 meter</label>
+      <input id="ipInput" name="x-ip" type="text" readonly placeholder="bijv. 192.168.1.50" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+      <div class="fixed-ip-hint" id="fixedIpHintText">Vast ingesteld op de serverversie, hier niet wijzigbaar.</div>
+    </div>
+    <div class="field" style="flex:0 1 150px">
+      <label for="intervalInput" id="intervalLabelText">Ververssnelheid (sec)</label>
+      <div class="field-row">
+        <select id="intervalInput">
+          <option value="1">1 sec</option>
+          <option value="2">2 sec</option>
+          <option value="3">3 sec</option>
+          <option value="5">5 sec</option>
+          <option value="10">10 sec</option>
+          <option value="15">15 sec</option>
+          <option value="30">30 sec</option>
+          <option value="60">60 sec</option>
+        </select>
+        <button type="button" class="lock-btn" data-target="intervalInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+          <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+          <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="field" style="flex:0 1 190px">
+      <label for="thresholdInput" id="thresholdFieldLabel">Overbelastingsgrens (W)</label>
+      <div class="field-row">
+        <select id="thresholdInput" disabled title="Vast op 5250 W (gelijk aan Home Assistant)">
+          <option value="5250" selected>5250 W</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="flex:0 1 150px">
+      <label for="elecPriceInput" id="elecPriceLabel">Tarief stroom (&euro;/kWh)</label>
+      <input id="elecPriceInput" name="x-elec-price" type="number" inputmode="decimal" step="0.00001" min="0" placeholder="&mdash;" readonly tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore="true" />
+      <div class="fixed-ip-hint" id="elecPriceHint">Vast ingesteld in Home Assistant, hier niet wijzigbaar.</div>
+    </div>
+    <div class="field" style="flex:0 1 150px">
+      <label for="gasPriceInput" id="gasPriceLabel">Tarief gas (&euro;/m&sup3;)</label>
+      <input id="gasPriceInput" name="x-gas-price" type="number" inputmode="decimal" step="0.00001" min="0" placeholder="&mdash;" readonly tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore="true" />
+      <div class="fixed-ip-hint" id="gasPriceHint">Vast ingesteld in Home Assistant, hier niet wijzigbaar.</div>
+    </div>
+    <button id="connectBtn">Verbinden</button>
+  </div>
+  </div>
+
+  <div class="page active" data-page="home">
+  <details class="error-banner" id="errorBanner">
+    <summary><strong id="errorSummaryText"></strong><span class="chevron">&#9656;</span></summary>
+    <div class="error-body" id="errorBodyText"></div>
+  </details>
+
+  <div class="total-power-bar" id="totalPowerBar">
+    <span id="totalPowerLabel">Totaal vermogen</span>
+    <span><span id="totalPower">&mdash;</span> <span class="unit">W</span></span>
+    <span id="totalSub"></span>
+  </div>
+
+  <div class="cards" id="powerCards">
+    <div class="card-row" id="phaseCardsRow">
+      <div class="card l1" id="cardL1">
+        <div class="label" id="l1Label">Fase 1 (L1)</div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" id="gaugeL1" viewBox="0 0 220 170"></svg>
+          <div class="gauge-readout"><span class="gauge-num" id="l1Power">&mdash;</span><span class="gauge-unit">W</span></div>
+        </div>
+        <div class="volt-bolt-row"><span class="volt-bolt calm" id="l1Bolt" title=""><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg></span></div>
+        <div class="sub" id="l1Sub">&nbsp;</div>
+        <div class="volt-status" id="l1VoltStatus"></div>
+        <div class="stats">
+          <span><b id="l1Voltage">&mdash;</b> V</span>
+          <span><b id="l1Current">&mdash;</b> A</span>
+        </div>
+      </div>
+      <div class="card l2" id="cardL2">
+        <div class="label" id="l2Label">Fase 2 (L2)</div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" id="gaugeL2" viewBox="0 0 220 170"></svg>
+          <div class="gauge-readout"><span class="gauge-num" id="l2Power">&mdash;</span><span class="gauge-unit">W</span></div>
+        </div>
+        <div class="volt-bolt-row"><span class="volt-bolt calm" id="l2Bolt" title=""><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg></span></div>
+        <div class="sub" id="l2Sub">&nbsp;</div>
+        <div class="volt-status" id="l2VoltStatus"></div>
+        <div class="stats">
+          <span><b id="l2Voltage">&mdash;</b> V</span>
+          <span><b id="l2Current">&mdash;</b> A</span>
+        </div>
+      </div>
+      <div class="card l3" id="cardL3">
+        <div class="label" id="l3Label">Fase 3 (L3)</div>
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" id="gaugeL3" viewBox="0 0 220 170"></svg>
+          <div class="gauge-readout"><span class="gauge-num" id="l3Power">&mdash;</span><span class="gauge-unit">W</span></div>
+        </div>
+        <div class="volt-bolt-row"><span class="volt-bolt calm" id="l3Bolt" title=""><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg></span></div>
+        <div class="sub" id="l3Sub">&nbsp;</div>
+        <div class="volt-status" id="l3VoltStatus"></div>
+        <div class="stats">
+          <span><b id="l3Voltage">&mdash;</b> V</span>
+          <span><b id="l3Current">&mdash;</b> A</span>
+        </div>
+      </div>
+    </div>
+    <div class="card total" id="cardTotalPower">
+      <div class="total-split">
+        <div class="total-power-block">
+          <div class="label" id="gasCostLabel">Gas</div>
+          <div class="value cost-value" id="gasCostValue">&mdash;</div>
+          <div class="sub">&nbsp;</div>
+        </div>
+        <div class="total-cost-block">
+          <div class="label" id="dailyCostLabel">Elektra</div>
+          <div class="value cost-value" id="dailyCostValue">&mdash;</div>
+          <div class="sub">&nbsp;</div>
+        </div>
+      </div>
+    </div>
+    <div class="total-conn-info" id="totalConnInfo">&nbsp;</div>
+  </div>
+  </div>
+
+  <div class="page" data-page="kosten">
+  <div class="table-panel">
+    <div class="section-title" id="monthlyCostsTitleText">Kosten per maand</div>
+    <div class="log-scroll">
+      <table id="monthlyCostsTable">
+        <thead>
+          <tr><th id="colMonth">Maand</th><th id="colMonthGas">Gas</th><th id="colMonthElec">Elektra</th><th id="colMonthTotal">Totaal</th></tr>
+        </thead>
+        <tbody id="monthlyCostsBody"></tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+
+  <div class="page" data-page="faults">
+    <div class="cards" id="faultCards">
+      <div class="card total">
+        <div class="label" id="faultsTotalLabel">Stroomstoringen</div>
+        <div class="fault-stats">
+          <div class="fault-stat"><div class="fault-num" id="anyFail">&mdash;</div><div class="fault-label" id="faultsTotalUnit">totaal</div></div>
+          <div class="fault-stat"><div class="fault-num" id="longFail">&mdash;</div><div class="fault-label" id="longFailUnit">langdurig</div></div>
+        </div>
+        <div class="fault-phases-grid">
+          <div class="fault-phase l1">
+            <div class="label" id="fL1Label">Fase 1 (L1)</div>
+            <div class="fault-stats">
+              <div class="fault-stat"><div class="fault-num" id="sag1">&mdash;</div><div class="fault-label" id="sag1Unit">dips</div></div>
+              <div class="fault-stat"><div class="fault-num" id="swell1">&mdash;</div><div class="fault-label" id="swell1Unit">pieken</div></div>
+            </div>
+          </div>
+          <div class="fault-phase l2">
+            <div class="label" id="fL2Label">Fase 2 (L2)</div>
+            <div class="fault-stats">
+              <div class="fault-stat"><div class="fault-num" id="sag2">&mdash;</div><div class="fault-label" id="sag2Unit">dips</div></div>
+              <div class="fault-stat"><div class="fault-num" id="swell2">&mdash;</div><div class="fault-label" id="swell2Unit">pieken</div></div>
+            </div>
+          </div>
+          <div class="fault-phase l3">
+            <div class="label" id="fL3Label">Fase 3 (L3)</div>
+            <div class="fault-stats">
+              <div class="fault-stat"><div class="fault-num" id="sag3">&mdash;</div><div class="fault-label" id="sag3Unit">dips</div></div>
+              <div class="fault-stat"><div class="fault-num" id="swell3">&mdash;</div><div class="fault-label" id="swell3Unit">pieken</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="table-panel">
+      <details class="inline-panel">
+        <summary>
+          <span class="title-row"><span id="faultApiTitleText">Storingen</span></span>
+          <span class="chevron">&#9656;</span>
+        </summary>
+        <div class="email-body">
+          <div class="email-grid">
+            <div class="field">
+              <label for="faultApiUrlInput" id="faultApiUrlLabel">API-endpoint URL</label>
+              <div class="field-row">
+                <input id="faultApiUrlInput" name="x-fault-url" type="text" placeholder="https://jouwproject.supabase.co/rest/v1/fault_log" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+                <button type="button" class="lock-btn" data-target="faultApiUrlInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                  <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                  <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="faultApiKeyInput" id="faultApiKeyLabel">API-sleutel</label>
+              <div class="field-row">
+                <input id="faultApiKeyInput" name="x-fault-key" type="text" placeholder="sb_publishable_..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+                <button type="button" class="lock-btn" data-target="faultApiKeyInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                  <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                  <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="saveFaultApiBtn">Instellingen opslaan</button>
+            <button class="secondary" id="testFaultApiBtn">Verbinding testen</button>
+          </div>
+          <div class="email-status" id="faultApiStatus">&nbsp;</div>
+        </div>
+      </details>
+      <div class="log-toolbar">
+        <span id="faultLogRetainedText">0 gebeurtenissen gelogd</span>
+        <div class="btns">
+          <button class="secondary" id="refreshFaultLogBtn">Ververs</button>
+          <button class="secondary" id="exportFaultCsvBtn">Exporteer CSV</button>
+          <button class="secondary" id="clearFaultLogBtn">Wis storingslog</button>
+        </div>
+      </div>
+      <div class="log-scroll">
+        <table id="faultLogTable">
+          <thead>
+            <tr><th id="colFaultTime">Tijdstip</th><th id="colFaultType">Type</th><th id="colFaultCount">Aantal</th></tr>
+          </thead>
+          <tbody id="faultLogBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="meter-modal-backdrop" id="meterModalBackdrop">
+    <div class="card meter-modal-card" id="meterModalCard">
+      <div class="label" id="meterModalLabel">Fase 1 (L1)</div>
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" id="gaugeModal" viewBox="0 0 220 170"></svg>
+        <div class="gauge-readout"><span class="gauge-num" id="modalPower">&mdash;</span><span class="gauge-unit">W</span></div>
+      </div>
+      <div class="volt-bolt-row"><span class="volt-bolt calm" id="modalBolt" title=""><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg></span></div>
+      <div class="sub" id="modalSub">&nbsp;</div>
+      <div class="volt-status" id="modalVoltStatus"></div>
+      <div class="stats">
+        <span><b id="modalVoltage">&mdash;</b> V</span>
+        <span><b id="modalCurrent">&mdash;</b> A</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" data-page="settings">
+  <div class="table-panel">
+    <div class="section-title" id="emailTitleText">E-mailalerts</div>
+
+      <div class="email-subsection">
+        <div class="section-title" id="emailjsQuotaTitleText">Verzendlimiet</div>
+        <div class="link-row" style="margin-bottom:12px;">
+          <a class="link-btn" href="https://dashboard.emailjs.com/admin" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M10 14 21 3M21 3h-6M21 3v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            EmailJS dashboard
+          </a>
+        </div>
+        <div class="email-grid">
+          <div class="field">
+            <label for="emailjsQuotaInput" id="emailjsQuotaLabel">Maandelijkse limiet (aantal e-mails)</label>
+            <div class="field-row">
+              <input id="emailjsQuotaInput" type="number" min="1" step="1" placeholder="200" />
+              <button type="button" class="lock-btn" data-target="emailjsQuotaInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="email-status" id="emailjsQuotaStatus">&nbsp;</div>
+      </div>
+
+      <div class="email-subsection">
+        <div class="section-title" id="overloadEmailTitleText">Overbelasting</div>
+        <p class="helptext" id="emailHelpText"></p>
+        <div class="toggle-row">
+          <input type="checkbox" id="emailEnabled" style="width:18px;height:18px;" />
+          <label for="emailEnabled" id="emailEnableLabel">E-mailalert inschakelen</label>
+        </div>
+        <div class="email-grid">
+          <div class="field">
+            <label for="emailTo" id="toEmailLabel">Naar e-mailadres</label>
+            <div class="field-row">
+              <input id="emailTo" name="x-email-to" type="email" placeholder="jij@voorbeeld.nl" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="emailTo" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="saveEmailBtn">Instellingen opslaan</button>
+          <button class="secondary" id="testEmailL1">Testmail L1</button>
+          <button class="secondary" id="testEmailL2">Testmail L2</button>
+          <button class="secondary" id="testEmailL3">Testmail L3</button>
+        </div>
+        <div class="email-status" id="emailStatus">&nbsp;</div>
+      </div>
+
+      <div class="email-subsection">
+        <div class="section-title" id="storageEmailTitleText">Opslaglimiet</div>
+        <p class="helptext" id="storageEmailHelpText"></p>
+        <div class="toggle-row">
+          <input type="checkbox" id="storageEmailEnabled" style="width:18px;height:18px;" />
+          <label for="storageEmailEnabled" id="storageEmailEnableLabel">E-mailalert inschakelen</label>
+        </div>
+        <div class="email-grid">
+          <div class="field">
+            <label for="storageEmailTo" id="storageToEmailLabel">Naar e-mailadres</label>
+            <div class="field-row">
+              <input id="storageEmailTo" name="x-storage-email-to" type="email" placeholder="jij@voorbeeld.nl" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="storageEmailTo" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="storageSaveEmailBtn">Instellingen opslaan</button>
+          <button class="secondary" id="storageTestEmailBtn">Testmail</button>
+        </div>
+        <div class="email-status" id="storageEmailStatus">&nbsp;</div>
+      </div>
+
+  </div>
+  </div>
+
+  <div class="page" data-page="readings">
+  <div class="table-panel">
+    <div class="section-title" id="meterReadingsTitle">Meterstanden</div>
+    <table>
+      <tbody>
+        <tr><td id="totalImportLabel">Totaal import</td><td id="totalImport">&mdash; kWh</td></tr>
+        <tr><td id="totalExportLabel">Totaal export</td><td id="totalExport">&mdash; kWh</td></tr>
+        <tr id="gasRow" style="display:none"><td id="gasLabel">Gas</td><td id="gasVal">&mdash; m&sup3;</td></tr>
+        <tr id="gasTimestampRow" style="display:none"><td id="gasTimestampLabel">Tijdstip gas</td><td id="gasTimestampVal">&mdash;</td></tr>
+        <tr id="waterRow" style="display:none"><td id="waterLabel">Water</td><td id="waterVal">&mdash; m&sup3;</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-panel">
+    <div class="section-title" id="usefulLinksTitleText">Handige links</div>
+    <div class="link-row">
+      <a class="link-btn" href="https://www.mijnaansluiting.nl" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M10 14 21 3M21 3h-6M21 3v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        mijnaansluiting.nl
+      </a>
+      <a class="link-btn" href="https://www.stedin.net/mijn-stedin" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M10 14 21 3M21 3h-6M21 3v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Mijn Stedin
+      </a>
+    </div>
+  </div>
+  </div>
+
+  <div class="page" data-page="settings">
+  <div class="table-panel">
+    <div class="section-title" id="systemInfoTitleText">Systeeminformatie</div>
+    <table>
+      <tbody>
+        <tr><td id="meterModelLabel">Meter-model</td><td id="meterModelVal">&mdash;</td></tr>
+        <tr><td id="dsmrVersionLabel">DSMR-versie</td><td id="dsmrVersionVal">&mdash;</td></tr>
+        <tr><td id="uniqueIdElecLabel">Uniek ID (elektriciteit)</td><td id="uniqueIdElecVal">&mdash;</td></tr>
+        <tr id="uniqueIdGasRow" style="display:none"><td id="uniqueIdGasLabel">Uniek ID (gas)</td><td id="uniqueIdGasVal">&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+
+  <div class="page" data-page="settings">
+  <div class="storage-warning" id="storageWarning" style="display:none">
+    <span id="storageWarningText"></span>
+  </div>
+  </div>
+
+  <div class="page" data-page="verbruik">
+  <div class="table-panel" id="highestDayPanel">
+    <div class="section-title" id="highestDayTitleText">Verbruik per dag</div>
+    <div class="log-scroll">
+      <table id="dailyTotalsTable">
+        <thead>
+          <tr><th id="colDailyDate">Dag</th><th id="colDailyTotal">Totaal (Wh)</th><th id="colDailyCost">Kosten</th><th id="colDailyL1">L1 (Wh)</th><th id="colDailyL2">L2 (Wh)</th><th id="colDailyL3">L3 (Wh)</th></tr>
+        </thead>
+        <tbody id="dailyTotalsBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="table-panel">
+    <details class="inline-panel">
+      <summary>
+        <span class="title-row"><span id="logApiTitleText">Verbruikslog</span></span>
+        <span class="chevron">&#9656;</span>
+      </summary>
+      <div class="email-body">
+        <div class="email-grid">
+          <div class="field">
+            <label for="logApiUrlInput" id="logApiUrlLabel">API-endpoint URL</label>
+            <div class="field-row">
+              <input id="logApiUrlInput" name="x-log-url" type="text" placeholder="https://jouwproject.supabase.co/rest/v1/minute_log" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="logApiUrlInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="logApiKeyInput" id="logApiKeyLabel">API-sleutel</label>
+            <div class="field-row">
+              <input id="logApiKeyInput" name="x-log-key" type="text" placeholder="sb_publishable_..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+              <button type="button" class="lock-btn" data-target="logApiKeyInput" title="Veld vergrendelen/ontgrendelen" aria-label="Veld vergrendelen/ontgrendelen">
+                <svg class="lock-open" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" transform="rotate(40 16.5 10.5)" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+                <svg class="lock-closed" viewBox="0 0 24 24" fill="none"><path d="M7.5 10.5V8a4.5 4.5 0 0 1 9 0v2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="5" y="10.5" width="14" height="9.5" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="btns" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="saveLogApiBtn">Instellingen opslaan</button>
+          <button class="secondary" id="testLogApiBtn">Verbinding testen</button>
+        </div>
+        <div class="email-status" id="logApiStatus">&nbsp;</div>
+      </div>
+    </details>
+    <div class="log-toolbar">
+      <span id="logRetainedText">0 minuten bewaard (max 24 uur)</span>
+      <div class="btns">
+        <button class="secondary" id="refreshLogBtn">Ververs</button>
+        <button class="secondary" id="exportCsvBtn">Exporteer CSV</button>
+        <button class="secondary" id="clearLogBtn">Wis logboek</button>
+      </div>
+    </div>
+    <div class="log-scroll">
+      <table id="logTable">
+        <thead>
+          <tr><th id="colTime">Tijd</th><th id="colTotal">Totaal (W)</th><th>L1 (W)</th><th>L2 (W)</th><th>L3 (W)</th></tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+
+  <div class="page" data-page="log">
+  <div class="table-panel">
+    <div class="section-title" id="changelogTitleText">Versie</div>
+    <div class="log-scroll changelog-scroll" id="changelogBody">
+        <div class="changelog-entry"><h4>3.67</h4><ul>
+          <li>Overbelasting-e-mails en het loggen van storingen (stroomstoringen, spanningsdips en -pieken) worden niet meer door de app zelf gedaan, ook niet als je rechtstreeks met de P1-meter verbonden bent. Dat doet nu volledig Home Assistant, zodat je geen dubbele mails of dubbele regels in het storingenlogboek meer krijgt. De app toont het logboek en de waarschuwingskleur op de meters nog steeds.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.66</h4><ul>
+          <li>Kostenberekening robuuster: als een meting geen gas- of exportstand bevat (zoals de gegevens die Home Assistant via Supabase doorgeeft), wordt de al opgeslagen stand van vandaag niet meer overschreven met "leeg", en het totaalbedrag bevat dan nog steeds zowel stroom als gas. De dagrij wordt bovendien elke keer opnieuw opgehaald, zodat een gecorrigeerde beginstand direct wordt overgenomen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.65</h4><ul>
+          <li>De tarieven voor stroom en gas zijn nu alleen-lezen in de app: ze worden vanuit Home Assistant (helpers Stroomprijs/Gasprijs, via een automatisering) naar Supabase gestuurd en hier alleen getoond en gebruikt voor de kostenberekening. Wijzigen doe je voortaan in Home Assistant.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.64</h4><ul>
+          <li>De clientversie berekent en bewaart nu zelf de dagkosten (stroom en gas) in de daily_cost-tabel, net als de serverversie: (import - export) x tarief stroom + gasverbruik x tarief gas, op basis van de beginstanden van de dag. Nieuw op Instellingen: de velden "Tarief stroom" en "Tarief gas", gedeeld met de serverversie via app_settings (p1_elec_price / p1_gas_price). Er wordt hooguit 1x per minuut weggeschreven, en niet op basis van verouderde Supabase-data.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.63</h4><ul>
+          <li>De overbelastingsgrens staat nu vast op 5250 W per fase (gelijk aan Home Assistant); het veld is niet meer instelbaar en het slotje is verwijderd. Voorheen ontbrak 5250 W in de keuzelijst waardoor de app feitelijk op 5000 W stond.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.62</h4><ul>
+          <li>Inlogscherm verwijderd: de app meldt zichzelf voortaan onzichtbaar aan bij het opstarten (er is toch niets meer in te stellen dat een eigen account vereist). Mislukt dat een keer (bijv. geen internet), dan verschijnt kort een "Opnieuw proberen"-schermpje in plaats van een kapotte lege pagina. De Uitloggen-knop is uit het menu verdwenen.</li>
+          <li>De overbelastingsdrempel (rode rand/waarschuwing) staat standaard nu op 5250 W per fase (was 5500 W), gelijk aan de nieuwe waarschuwingsautomatisering in Home Assistant.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.61</h4><ul>
+          <li>Op verzoek: de drie taalvlaggetjes en de Uitloggen-knop stonden los naast elkaar in de kop, wat op tablet/telefoon aan de kleine kant was als tikdoel en visueel om aandacht streed. Deze staan nu gebundeld achter één rustige "..."-knop rechtsboven; erop tikken klapt een klein menu open met de taalkeuze bovenin en Uitloggen eronder. Het menu sluit vanzelf na een keuze of bij een tik ernaast.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.60</h4><ul>
+          <li>Op verzoek teruggedraaid: de vaste donkere kleur voor de statusbalk/navigatiebalk/vensterachtergrond uit 3.59 is voor de clientversie weer ongedaan gemaakt - deze volgt weer de standaard Android-instellingen zoals vóór 3.59. De serverversie (3.52) behoudt de donkere balken wel.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.59</h4><ul>
+          <li>Bugfix (gerapporteerd via foto): boven en onder de app was op sommige tablets/telefoons een witte balk zichtbaar (de Android-statusbalk en navigatiebalk), die niet meeklonk met de donkere kleurstijl van de app. Oorzaak: het Android-thema volgde automatisch de systeeminstelling licht/donker en had geen eigen kleur voor deze balken ingesteld, waardoor op een systeem in lichte modus de standaard witte kleur zichtbaar bleef - dit was een instelling in de Android-app zelf, niet in deze webpagina. Statusbalk, navigatiebalk en vensterachtergrond staan nu vast op dezelfde donkere kleur als de rest van de app, met lichte balk-iconen zodat de klok/batterij-indicatoren leesbaar blijven.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.58</h4><ul>
+          <li>Bugfix: foto's/documenten in "Lokale installatie" konden na een tijdje kapot gaan (klein icoontje plus de ruwe, ongestylede bestandsnaam in plaats van de afbeelding). Oorzaak: Supabase geeft foto-links die maar 1 uur geldig zijn, en de app haalde die links alleen op bij het inloggen - stond de app langer dan een uur open voordat je naar deze pagina ging, dan waren alle links inmiddels verlopen. Nu worden de links automatisch ververst zodra je deze pagina opent (als het langer dan een minuut geleden is) en ook direct wanneer het scherm weer actief wordt na een tijd op de achtergrond/vergrendeld, terwijl je toevallig al op deze pagina stond.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.57</h4><ul>
+          <li>Nieuw: zodra het bliksempje echt knippert (kritieke afwijking, &lt;215V of &gt;245V) staat er nu in het wit boven de V/A-waarde ook een woord bij: "Overbelast" bij een te lage spanning (te veel gelijktijdige vraag op het net, bijv. avondspits) of "Onderbelast" bij een te hoge spanning (bijv. veel teruglevering van zonnepanelen in de buurt). Zo is in één oogopslag duidelijk wát er precies aan de hand is, niet alleen dát er iets is. Bij een normale of licht afwijkende (oranje) spanning blijft dit tekstveld leeg. Ook toegevoegd aan de vergrote fase-weergave.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.56</h4><ul>
+          <li>De V- en A-waarde onder in de fase-tegel staan nu horizontaal gecentreerd (was links uitgelijnd) en blijven dat ook als de getallen breder worden (bijv. van "0,2 A" naar "24,9 A") - de centrering is nu op de hele regel toegepast in plaats van op een vaste positie, dus die schuift automatisch mee met de inhoud.</li>
+          <li>Het bliksempje staat nu hoger: direct onder de meterstand (gauge), dicht tegen het getal aan, in plaats van met ruimte ertussen. Ook doorgevoerd in de vergrote fase-weergave die verschijnt na het aantikken van een tegel (waar het bliksempje bovendien nog iets groter is, passend bij de rest van de vergrote weergave).</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.55</h4><ul>
+          <li>Aanpassing na feedback op 3.54: die fix maakte het bliksempje weer inline naast de V-waarde bij alle drie de fasen (zoals Fase 2/3 er al uitzagen), maar dat bleek niet de bedoeling - juist de losstaande positie die per ongeluk bij Fase 1 ontstond (het bliksempje in een eigen regel, los van de V/A-waarden) was gewenst, en moest bij alle drie de fasen zo worden. Dat is nu doorgevoerd: het bliksempje staat bij elke fase-tegel in een eigen rijtje tussen de gauge en de V/A-regel, en is nog iets groter gemaakt (20px). De V- en A-waarde staan daardoor ook weer gewoon naast elkaar op één regel, zonder dat het icoontje daar ruimte tussenin hoeft in te nemen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.54</h4><ul>
+          <li>Fix, gemeld via een screenshot: bij de fase-tegels kon het spanning-stress-bliksempje soms los van de V-waarde op een eigen regel terechtkomen (bijv. bij Fase 1) terwijl het bij de andere fasen wel gewoon naast de V-waarde stond. Oorzaak: de V-waarde+bliksempje samen vormden geen "onbreekbaar" tekstblok, waardoor de browser op een net iets te smal scherm de regel kon afbreken tussen "V" en het icoontje - bij de andere fasen paste het toevallig nog net wel. De V-waarde en de A-waarde vormen nu elk een eigen onbreekbaar blok, zodat ze altijd samen op één regel blijven staan (net als voorheen bedoeld) en alleen in echt extreme gevallen als geheel naar een tweede regel uitwijken, in plaats van lelijk af te breken.</li>
+          <li>Op verzoek: het bliksempje zelf is groter gemaakt (13px naar 17px) voor betere leesbaarheid.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.53</h4><ul>
+          <li>De pagina "Foto's" heet voortaan "Lokale installatie" (nieuw icoon: een stekker i.p.v. een camera), met een helptekst "Documentatie Elektrische installatie" - om duidelijker te maken dat het om foto's/documenten van de eigen elektrische installatie gaat (meterkast, bekabeling, P1-meter e.d.) en niet om willekeurige foto's. Alleen in de clientversie (de serverversie heeft deze pagina niet).</li>
+          <li>Nieuw: een geopende foto in de vergrote weergave kan nu met twee vingers in- en uitgezoomd worden (pinch-to-zoom), met slepen om het ingezoomde deel te bekijken en dubbeltikken als snelkoppeling. Zoom wordt automatisch teruggezet zodra je de foto sluit of een andere opent.</li>
+          <li>Naast foto's kunnen nu ook documenten (PDF/Word/Excel/tekst) geüpload worden via dezelfde "Bestand kiezen"-knop - handig voor bijv. installatiehandleidingen, certificaten of facturen bij de installatie. Documenten krijgen een herkenbare tegel met bestandsicoon, extensie en bestandsnaam i.p.v. een miniatuur (die kan technisch niet gegenereerd worden zonder de inhoud te decoderen); klikken opent het bestand in de daarvoor geïnstalleerde app op het toestel (bijv. een PDF-viewer), die daar zelf doorgaans ook op kan zoomen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.52</h4><ul>
+          <li>Fix: op smalle telefoon/tabletschermen kon de laatste letter van een tabelkop (bijv. "TOTAAL" bij Kosten per maand) net buiten beeld vallen zonder dat duidelijk was dat je kon scrollen. Tabellen kunnen nu altijd horizontaal scrollen als de inhoud niet past (in plaats van onzichtbaar afgesneden te worden), en op zeer smalle schermen (&lt;380px) zijn tabelkoppen/-cellen compacter gemaakt zodat de meeste tabellen sowieso zonder scrollen passen. Toegepast op alle tabellen (Kosten per maand, Storingenlog, Dagtotalen, Logboek) in beide apps.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.51</h4><ul>
+          <li>Nieuw: een "spanning-stress"-bliksempje per fase, naast de V-waarde in de statregel onder elke fase-gauge (de toerenteller/gauge zelf is ongewijzigd gebleven). Bij een normale netspanning (220-240V) blijft het icoontje rustig grijs; wijkt de spanning verder af (215-220V of 240-245V, bijv. tijdens de avondspits of op een zonnige middag met veel teruglevering), dan kleurt hij oranje; voorbij die grens (&lt;215V of &gt;245V) kleurt hij rood en knippert hij - een signaal van mogelijke netcongestie in de buurt. Ook toegevoegd aan de vergrote fase-popup op mobiel/tablet.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.50</h4><ul>
+          <li>Rebranding: de app heet voortaan "V3L EnergyControl" in plaats van "V3L HomeWizard" (titel, app-naam op het beginscherm, headers) - dit betreft alleen de naam van deze app zelf; verwijzingen naar de HomeWizard P1-meter en de bijbehorende HomeWizard-app (voor "Lokale API" etc.) blijven uiteraard ongewijzigd, dat is en blijft het fysieke apparaat waar deze app data van uitleest.</li>
+          <li>Subtitel gewijzigd van "Live inzicht in je stroomverbruik" naar "Master your energy", in alle drie de taalversies (NL/EN/DE) - bewust dezelfde Engelse tagline overal, als onderdeel van de nieuwe naamgeving.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.49</h4><ul>
+          <li>De balk "Totaal vermogen"/"Kosten vandaag" boven de fase-tegels is herzien: "Totaal vermogen" (het live wattage) is verplaatst naar een dunne balk bovenaan de homepagina, op de plek waar voorheen "Fasen in balans" stond (die indicator is hiermee vervallen - zelfde afmetingen, nu in vaste rustige kleur in plaats van rood/oranje bij onbalans). De tegel zelf toont nu in plaats daarvan "Gas" en "Elektra", elk met het bedrag van vandaag (uit dezelfde daily_cost-tabel als voorheen "Kosten vandaag").</li>
+          <li>Nieuw menu-tabblad "Kosten per maand" (€-icoon) met een tabel van alle maanden: kosten Gas, Elektra en het totaal, opgeteld uit dezelfde daily_cost-rijen als de andere kostenoverzichten. Ontbreekt voor een dag in die maand een tarief, dan telt die dag voor dat onderdeel niet mee (staat "—" als er voor de hele maand niets bekend is).</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.48</h4><ul>
+          <li>Bugfix (echte oorzaak van de scheve/niet-gecentreerde balk uit 3.47): het bedrag bij "Kosten vandaag" werd opgebouwd als "€" + gewone spatie + getal. Die spatie is een normaal breekpunt, waardoor de tekst op een smal scherm soms na het €-teken naar een tweede regel omklapte terwijl het getal bij "Totaal vermogen" (geen spatie erin) altijd op één regel bleef. Daardoor werd het kosten-vak hoger dan het vermogen-vak, en omdat beide vakken door "align-items:center" verticaal ten opzichte van elkaar gecentreerd worden, kwam het (kortere) vermogen-vak - en dus het label "Totaal vermogen" - lager te staan dan "Kosten vandaag". Precies wat gerapporteerd werd: "Kosten" stond goed, "Totaal" stond lager. De vorige fix (3.47, expliciete text-align:center op label/sub) loste een andere, kleinere kwestie op maar niet deze. Nu staat er een niet-brekende spatie tussen "€" en het getal, zodat dit vak nooit meer om kan klappen en beide helften even hoog blijven.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.47</h4><ul>
+          <li>Bugfix: het label "Totaal vermogen"/"Kosten vandaag" stond op het toestel niet gecentreerd (zag er schuin-links uit), ondanks `text-align:center` op het omliggende vak. Het getal (`.value`) had daar al een eigen, expliciete centreerregel voor nodig (voor de gedeelde font-size), maar het label en de lege regel eronder vertrouwden alleen op overerving vanuit het vak - dat bleek in de praktijk niet zichtbaar door te werken. Beide krijgen nu ook een eigen, expliciete `text-align:center`.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.46</h4><ul>
+          <li>De balk "Totaal vermogen" toont nu ook "Kosten vandaag" ernaast, net als op de serverversie. Deze clientversie heeft zelf geen tarieveninstelling en berekent dus niets zelf - ze leest het al berekende bedrag van vandaag rechtstreeks uit de daily_cost-tabel die de serverversie bijhoudt, en ververst dat elke 30 sec. Is er nog geen rij voor vandaag (server nog niet actief geweest, of daar nog geen tarieven ingesteld), dan staat er "—".</li>
+          <li>Bijvangst: het getal bij "Totaal vermogen" bleek al langer te klein en grijzig weer te geven door dezelfde CSS-fout die in de serverversie (3.39) is gevonden en gefixt - een algemene regel voor kleine eenheidslabels (zoals "V"/"A") pakte per ongeluk ook dit getal, omdat het in een eigen &lt;span&gt; staat (nodig voor de flash-animatie). Dat viel hier niet eerder op omdat er nog geen tweede waarde naast stond om mee te vergelijken. Nu hersteld, net als op de serverversie.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.45</h4><ul>
+          <li>Dezelfde opschoning als in de serverversie doorgevoerd: de "Storingen"-balk (eigen database-koppeling + storingslog-tabel) stond op de Log-pagina maar hoort inhoudelijk bij Storingen - staat daar nu onder de tegel "Stroomstoringen".</li>
+          <li>Op de Verbruik-pagina is de tegel "Dag met hoogste verbruik" vervangen door een tabel "Verbruik per dag" met alle dagen: totaal verbruik, kosten en de opsplitsing per fase (L1/L2/L3), zoals dat gedurende die dag is opgelopen. De kosten komen uit dezelfde daily_cost-tabel die de serverversie vult op basis van de daar ingestelde tarieven (deze clientversie heeft zelf geen tarieveninstelling); voor dagen van vóór die functie bestond staat er "—".</li>
+          <li>Menu-item "Log" hernoemd naar "Versielog" (enige overgebleven inhoud van dat tabblad na het verhuizen van de Storingen-balk).</li>
+          <li>De tegel "Versie" is niet meer uit-/inklapbaar - staat nu altijd volledig open.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.44</h4><ul>
+          <li>Nieuw: als je via de Supabase-fallback (dus niet thuis) meekijkt, wordt nu ook gecontroleerd of de serverversie nog wel nieuwe data wegschrijft. Komt er langer dan 3 minuten geen nieuw tijdstip meer binnen, dan verandert de regel onder "Totaal vermogen" in een oranje waarschuwing ("Server lijkt offline ...") in plaats van gewoon "Verbonden via Supabase" te blijven tonen alsof alles in orde is.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.43</h4><ul>
+          <li>Bugfix: de nieuwe connectie-regel bij "Totaal vermogen" zei "Verbonden via de server" tijdens de Supabase-fallback, terwijl je dan juist niet rechtstreeks met de server verbonden bent - tekst aangepast naar "Verbonden via Supabase", consistent met het IP-veld op het instellingen-tabblad.</li>
+          <li>Die connectie-regel stond nog binnen het kader van de "Totaal vermogen"-tegel; staat nu gecentreerd er los onder.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.42</h4><ul>
+          <li>De "Fasen uit balans"-melding is nu oranje/waarschuwend in plaats van rood (rood blijft gereserveerd voor echte storingen/overbelasting).</li>
+          <li>De "Totaal vermogen"-tegel is compacter gemaakt en toont er nu ook bij of de client rechtstreeks met de P1-meter verbonden is, of via de server (Supabase-fallback).</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.41</h4><ul>
+          <li>Bug gefixt: de nieuwe fasebalans-balk uit 3.40 werd nooit zichtbaar. Oorzaak: de code zette <code>display</code> terug naar een lege waarde om 'm te tonen, maar daarmee viel de tegel terug op de CSS-standaardregel die 'm juist verborgen hield - nu wordt <code>display</code> expliciet aangezet.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.40</h4><ul>
+          <li>Nieuw op de homepagina: een balk boven de fase-tegels die aangeeft of de belasting redelijk gelijk over L1/L2/L3 verdeeld is ("Fasen in balans"). Bij een verschil van meer dan 3A tussen de hoogst- en laagstbelaste fase springt de balk om naar "Fasen uit balans" met knipperende witte tekst op een rode ondergrond.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.39</h4><ul>
+          <li>Het pijl-icoon in het verplaats-handvat stond nog steeds niet goed in verhouding tot het rondje - de vormgeving van het pijltje zelf liet te veel lege ruimte binnen zijn eigen tekengebied. Het icoon is nu opnieuw getekend zodat het bijna randvullend is, en het handvat en icoon zijn beide vergroot.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.38</h4><ul>
+          <li>Bug gefixt in de service worker: na een update moest je de pagina soms twee keer verversen voordat de nieuwe versie zichtbaar werd (de eerste keer toonde 'm nog de oude, gecachete versie). De app-schil wordt nu altijd meteen vers van de server gehaald zolang er internet is; de cache dient alleen nog als terugvaloptie wanneer je offline bent.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.37</h4><ul>
+          <li>Het pijl-icoontje in het verplaats-handvat was te klein t.o.v. het rondje eromheen - vergroot zodat het beter in verhouding staat.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.36</h4><ul>
+          <li>Verplaats-handvat verplaatst naar het midden van de foto (i.p.v. rechtsonder) en vergroot, met een dikkere lijndikte - de pijlen waren te klein/dun om goed te zien.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.35</h4><ul>
+          <li>Het verplaats-handvat op geselecteerde foto's is subtieler gemaakt en beter in verhouding met de foto: kleiner, een neutraal donker bolletje (i.p.v. fel groen) met een dunner kruis-met-pijlen-icoon in plaats van het vorige icoon.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.34</h4><ul>
+          <li>Foto's laden nu veel sneller: het raster toont alleen nog kleine, snel geladen miniaturen, en pas bij het aanklikken van een foto wordt de volledige originele versie geladen. Bestaande foto's krijgen automatisch op de achtergrond alsnog een miniatuur.</li>
+          <li>Bug gefixt: het slepen van een foto blokkeerde het gewoon scrollen van de pagina (aanraken van een foto startte meteen een sleepbeweging). Foto's zijn nu alleen nog te verslepen via een verplaats-handvat dat verschijnt zodra je een foto aanvinkt met het selectievakje - scrollen over de foto's blijft daarbuiten altijd gewoon werken.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.33</h4><ul>
+          <li>De opnamedatum wordt nu uit de EXIF-metadata van de foto zelf gehaald (i.p.v. de uploaddatum) en getoond als klein label linksboven op de foto, en boven de notitie in de vergrote weergave. Werkt voor JPEG-foto's (verreweg de meeste camera-/telefoonfoto's); foto's zonder deze metadata (bijv. screenshots) tonen simpelweg geen datum.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.32</h4><ul>
+          <li>Bug gefixt: handmatig foto's verslepen deed niets. Oorzaak: de browser zelf greep de vasthoud-beweging af (scrollen op de telefoon, of een native "afbeelding verslepen"-cursor op de laptop) vóórdat onze eigen sleepfunctie een kans kreeg. Foto-tegels reageren nu niet meer op deze standaard browsergebaren, waardoor vasthouden-en-slepen naar een andere plek goed werkt (met muis én vinger).</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.31</h4><ul>
+          <li>Foto's kunnen nu handmatig gesorteerd worden: sleep een foto naar een andere plek in het raster om de volgorde te wijzigen (werkt met muis én touch). Daarnaast is er nu een notitieveld: klik op een foto om 'm vergroot te bekijken en er een notitie bij te typen. Beide worden opgeslagen in een nieuwe tabel in Supabase, gekoppeld aan de foto.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.30</h4><ul>
+          <li>Uitlegtekst bij "Verzendlimiet" (die uitlegde wat de teller bijhoudt) weggehaald; hier staat nu in plaats daarvan een directe link naar het EmailJS-dashboard.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.29</h4><ul>
+          <li>Foto's-pagina verbeterd: de "Ververs"-knop is verwijderd (de galerij ververst zelf al na uploaden/verwijderen/inloggen). Klikken op een foto toont 'm nu vergroot in een uitklappend venster. De kruisjes om foto's te verwijderen zijn vervangen door een wit selectievierkantje rechtsboven elke foto; met één of meer foto's geselecteerd verschijnt een knop "Verwijder geselecteerde" om ze in één keer te verwijderen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.28</h4><ul>
+          <li>Nieuwe tab "Foto's": foto's toevoegen vanaf bestandsopslag (laptop/telefoon) of rechtstreeks maken met de telefooncamera, opgeslagen in een privé Supabase Storage-bucket. Foto's worden getoond als miniaturen en kunnen weer verwijderd worden. Omdat de navigatie niet meer op één rij paste, is de paginanavigatie omgebouwd naar een in-/uitklapbaar zijmenu (hamburgerknop), met alle pagina's als iconen onder elkaar.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.27</h4><ul>
+          <li>Nieuwe tegel "Handige links" toegevoegd op de Meterstanden-pagina, met directe links naar mijnaansluiting.nl en Mijn Stedin.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.26</h4><ul>
+          <li>De automatische, periodieke ververs van Verbruikslog/Storingslog/"dag met hoogste verbruik" (elke minuut) is weer verwijderd - kostte onnodig accu/data op een telefoon die het tabblad open laat staan. Beide logtabellen hebben nu in plaats daarvan een "Ververs"-knop naast Exporteren/Wissen; die van de Verbruikslog ververst meteen ook de "dag met hoogste verbruik".</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.25</h4><ul>
+          <li>Verbruikslog, Storingslog en "dag met hoogste verbruik" werden voorheen alleen bij het opstarten/inloggen één keer opgehaald en daarna nooit meer ververst - een openstaand tabblad liet dus niet zien wat de server intussen bleef wegschrijven naar Supabase. Deze worden nu ook elke minuut automatisch ververst. Daarnaast haalde "dag met hoogste verbruik" soms al op vóórdat inloggen voltooid was en werd daarna nooit opnieuw geprobeerd - dit gebeurt nu ook opnieuw direct na een geslaagde login.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.24</h4><ul>
+          <li>Extra beveiliging tegen het (opnieuw) corrupt raken van het IP-adres in Supabase: elke plek waar het IP-adres wordt gelezen of geschreven controleert nu eerst of de waarde er echt als adres uitziet. Een label als "Supabase" wordt daardoor nooit meer overgenomen of doorgestuurd, ook niet als het via een oude/verouderde paginaversie of een andere weg opnieuw zou binnenkomen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.23</h4><ul>
+          <li>Bug gefixt: de "Verbinden"-knop schreef het IP-veld terug naar Supabase zoals het op dat moment in beeld stond - en dat kon dus de tekst "Supabase" zijn (het label tijdens de fallback-weergave) in plaats van het echte IP-adres, waardoor dat per ongeluk overschreven werd. De client schrijft het IP-adres nu helemaal niet meer weg; dat blijft uitsluitend een serverinstelling.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.22</h4><ul>
+          <li>Automatisch vergrendelen na 15 minuten inactiviteit gooit het sessietoken niet meer weg - alleen het zichtbare scherm springt terug naar het inlogscherm. Voorheen brak dit ook de achtergrond-synchronisatie met Supabase af, waardoor instellingen en het logboek stilletjes niet meer ververst werden totdat er opnieuw werd ingelogd.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.21</h4><ul>
+          <li>Ververssnelheid en overbelastingsgrens worden nu ook direct naar Supabase weggeschreven zodra je in de client het slotje van dat veld sluit, net zoals dat al op de server werkte. Zo werkt de synchronisatie nu twee kanten op: een wijziging in de client komt ook door in de server, en andersom.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.20</h4><ul>
+          <li>Vertraging bij het via Supabase volgen van de meter (buiten het P1-netwerk) verkleind: eerder werd elke ronde eerst 2,5 sec gewacht op een gegarandeerd mislukkende rechtstreekse verbinding voordat de Supabase-data werd opgehaald. Na een paar mislukkingen op rij wordt die rechtstreekse poging nu een tijdje overgeslagen (en om de 30 sec opnieuw geprobeerd), zodat de Supabase-waarden sneller en met minder vertraging ten opzichte van de server binnenkomen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.19</h4><ul>
+          <li>Ververssnelheid en overbelastingsgrens synchroniseren nu ook (net als het IP-adres) elke 15 seconden vanaf de serverversie - een wijziging daar (na het sluiten van het slotje) komt zo automatisch door in een al openstaand clienttabblad, zonder verversen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.18</h4><ul>
+          <li>In- en uitloggen herladen de pagina niet meer, maar wisselen direct tussen login- en dashboardscherm. Dit voorkomt een wit scherm dat in de losse Windows-serverapp kon optreden na inloggen of uitloggen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.17</h4><ul>
+          <li>Het (vergrendelde) IP-veld toont nu "Supabase" zodra de client via de Supabase-fallback data ontvangt, en het echte IP-adres zodra er rechtstreeks met de meter verbonden is. Dat IP-adres wordt voortaan ook elke 15 seconden opnieuw gesynchroniseerd vanaf de serverversie, zodat een wijziging daar automatisch doorkomt in een al openstaand clienttabblad - zonder dat je hoeft te verversen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.16</h4><ul>
+          <li>Architectuur uitgebreid met een aparte serverversie (server.html) die lokaal bij de P1-meter draait en de volledige actuele meterstand naar Supabase (latest_status) schrijft. De clientversie (dit bestand/index.html) valt nu automatisch terug op die Supabase-data wanneer de meter niet rechtstreeks bereikbaar is (bijv. onderweg); het IP-adres van de meter ligt in de client vast en is daar niet meer wijzigbaar.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.15</h4><ul>
+          <li>Dag-met-hoogste-verbruik-tegel schaalt nu netjes mee op mobiel: de datum breekt niet meer af naar 2 regels en de fase-opsplitsing (L1/L2/L3) blijft compact naast elkaar staan in plaats van onder elkaar te vallen. Ook de labelopmaak van de fasegetallen hersteld.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.14</h4><ul>
+          <li>Tegels op de Log-pagina hernoemd: "Versielogboek" wordt "Versie", "Storingslog" wordt "Storingen".</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.13</h4><ul>
+          <li>Dag met hoogste verbruik toont de getallen nu in Wh in plaats van kWh.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.12</h4><ul>
+          <li>Bij de dag met het hoogste verbruik wordt nu ook de opsplitsing per fase (L1/L2/L3 in kWh) getoond.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.11</h4><ul>
+          <li>Verbruik-pagina toont nu bovenaan de dag met het hoogste totale stroomverbruik (kWh), berekend uit de verbruikslog.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.10</h4><ul>
+          <li>Bug gefixt: het wegschrijven van nieuwe verbruiks-/storingslogregels ververste het sessietoken niet, waardoor dit na verloop van tijd stil bleef mislukken (401) en de log niet meer aangroeide - terwijl eerdere data gewoon veilig in Supabase bleef staan. Schrijven ververst het token nu net als lezen al deed.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.9</h4><ul>
+          <li>Batterijbesparing: als het scherm uit gaat of de app op de achtergrond komt, wordt er nog maar 1x per minuut gepolld in plaats van op de ingestelde snelheid. Bij terugkomst wordt direct weer een verse meting opgehaald.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.8</h4><ul>
+          <li>Fase-meter-popup op mobiel opent nu met een zoom-animatie (van klein naar groot) en zoomt weer terug bij het sluiten.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.7</h4><ul>
+          <li>Uitlogknop staat nu naast de taalvlaggetjes in de header, ook op mobiel (stond eerst eronder).</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.6</h4><ul>
+          <li>Volgorde en indeling van de tabbladen aangepast: Home, Verbruik (nieuw, met de verbruikslog), Meterstanden, Storingen, Instellingen, Log.</li>
+          <li>Meldingen-tabblad opgeheven: e-mailalerts en de opslaglimiet-waarschuwing staan nu bij Instellingen.</li>
+          <li>Systeeminformatie is niet langer een eigen tabblad, maar staat nu ook bij Instellingen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.5</h4><ul>
+          <li>Meterstanden en Systeeminformatie zijn nu allebei een eigen pagina in de navigatiebalk, los van Instellingen.</li>
+          <li>Meldingen-pagina: de e-mailalerts-tegel is niet meer uitklapbaar, alle onderdelen staan meteen zichtbaar.</li>
+          <li>Instellingen-pagina: IP-adres, ververssnelheid en overbelastingsgrens staan nu onder elkaar in plaats van naast elkaar.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.4</h4><ul>
+          <li>Pauzeknop verwijderd (had geen functie meer).</li>
+          <li>Dashboard opgesplitst in aparte pagina's: Home (fase-meters + totaal vermogen), Instellingen (IP/ververssnelheid/overbelastingsgrens, meterstanden, systeeminformatie), Storingen (stroomstoringen-tegel), Meldingen (e-mailalerts, opslaglimiet-waarschuwing) en Log (storingslog, verbruikslog, versielogboek) - met een navigatiebalk met iconen bovenaan, werkt op zowel computer als mobiel. Home laadt altijd als eerste.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.3</h4><ul>
+          <li>Wachtwoordveld op het inlogscherm hersteld naar bolletjes-weergave (was tijdelijk platte tekst, waardoor de browser het wachtwoord niet meer automatisch invulde). Het e-mailveld blijft wel zonder voorbeeldtekst.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.2</h4><ul>
+          <li>Inlogscherm: geen voorbeeldtekst meer in het e-mailveld ("jij@voorbeeld.nl") en het wachtwoordveld toont nu gewoon leesbare tekst in plaats van bolletjes.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.1</h4><ul>
+          <li>De versie-/update-regel in de footer heeft nu dezelfde opmaak (lettergrootte, kleur, doorzichtigheid) als de copyrightregel erboven.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>3.0</h4><ul>
+          <li>Nieuwe versienummering vanaf hier: x.y (bijv. 3.0, 3.1 ... 3.9, dan 4.0). De oudere v1-v75-nummers hierboven blijven staan als historisch overzicht.</li>
+          <li>Bij de versie-informatie in de footer staat nu ook het tijdstip (uu:mm:ss) van de laatste update, naast de datum.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v75</h4><ul>
+          <li>Onder de copyrightregel in de footer staat nu de huidige app-versie en de datum van de laatste update.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v74</h4><ul>
+          <li>Sluitkruisje op de fase-meter-popup verwijderd - naast de tegel klikken/tikken sluit de popup al.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v73</h4><ul>
+          <li>Tik op een fase-tegel (L1/L2/L3) op een mobiel/tablet om deze vergroot als popup te bekijken - schaalt automatisch mee met de schermgrootte. Op een computer (muis) blijft dit uit, daar is de tegel al goed leesbaar.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v72</h4><ul>
+          <li>Fase-tegels (L1/L2/L3) blijven op elk schermformaat naast elkaar staan in plaats van onder elkaar - de tekst/cijfers/gauges krimpen automatisch mee zodat alle drie op 1 scherm passen, ook op smallere telefoons.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v71</h4><ul>
+          <li>Het cijfer in de tegel "Totaal vermogen" staat nu gecentreerd in de tegel.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v70</h4><ul>
+          <li>Tegel "Totaal vermogen" verlaagd (minder padding, kleiner cijfer) - zelfde breedte, minder hoog.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v69</h4><ul>
+          <li>De tegel "Kosten" en het paneel "Tarieven" zijn verwijderd: de lokale P1-API levert geen prijs- of tariefgegevens, dus een betrouwbare kostenberekening was met de beschikbare data niet goed mogelijk. Meterstanden (import/export/gas/water) blijven gewoon zichtbaar.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v68</h4><ul>
+          <li>De tegels "Kosten elektriciteit" en "Kosten gas" zijn samengevoegd tot één uitklapbare tegel "Kosten" op dezelfde plek: ingeklapt zie je het totaal, opengeklapt zie je de uitsplitsing elektriciteit/gas.</li>
+          <li>De tegel "Tarieven" (voorheen "Tarieven &amp; kosten", nu alleen "Tarieven") is verplaatst naar direct onder de nieuwe Kosten-tegel, vóór E-mailalerts.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v67</h4><ul>
+          <li>Titels ingekort: "Verzendlimiet EmailJS-account" &rarr; "Verzendlimiet", "Supabase-opslaglimiet" &rarr; "Opslaglimiet".</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v66</h4><ul>
+          <li>Bug verholpen: het vinkje "E-mailalert inschakelen" (bij zowel Overbelasting als Supabase-opslaglimiet) werd alleen opgeslagen via de knop "Instellingen opslaan" - klikte je alleen het vinkje aan/uit, dan stond het na een pagina-ververing altijd weer uit. Het vinkje wordt nu direct opgeslagen zodra je het aan- of uitzet.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v65</h4><ul>
+          <li>Zelfde bugfix als v63, nu ook toegepast op de overige Supabase-oproepen: vergrendelstatus (hangslotjes), e-mailalert-instellingen, IP/interval/overbelastingsgrens/tarieven en de opslaglimiet-check ververten voortaan eerst het sessietoken vóór elke oproep. Hierdoor bleven eerder ingevulde e-mailadressen en vergrendelde velden er soms "leeg"/"open" uitzien terwijl ze gewoon nog in Supabase stonden.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v64</h4><ul>
+          <li>Automatisch uitloggen toegevoegd na 15 minuten zonder muis-/toetsenbord-/aanraakactiviteit, zodat een vergeten open tabblad niet onbeperkt ingelogd blijft.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v63</h4><ul>
+          <li>Bug verholpen: als het inlog-sessietoken verlopen was, mislukte het laden van de Storingslog/Verbruikslog vanuit Supabase stil op de achtergrond - de data leek dan "weg" terwijl deze gewoon nog in de database stond. Beide logs verversen nu eerst het sessietoken vóór het laden, proberen het opnieuw zodra een verlopen sessie ververst is, en tonen voortaan een duidelijke foutmelding i.p.v. stil te falen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v62</h4><ul>
+          <li>Bugfix: Chrome's ingebouwde wachtwoordmanager negeert autocomplete="off" bewust voor inlogvelden. De e-mail-/wachtwoordvelden staan nu bij het laden op readonly (waardoor Chrome ze niet meer vult) en worden pas bewerkbaar zodra je erin klikt.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v61</h4><ul>
+          <li>Het e-mailadres- en wachtwoordveld op het inlogscherm worden niet meer door de browser onthouden/ingevuld: autofill staat uit en de velden worden bij elke paginalading expliciet leeggemaakt.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v60</h4><ul>
+          <li>Zelf een account aanmaken is niet meer mogelijk vanaf het inlogscherm: het aanmaakformulier en de bijbehorende link zijn verwijderd. Registratie staat ook aan de Supabase-kant dicht.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v59</h4><ul>
+          <li>Echte inlog toegevoegd (Supabase Auth): het dashboard is nu niet meer zichtbaar zonder in te loggen. Nieuw account aanmaken vereist een wachtwoord van minimaal 12 tekens met ten minste 1 cijfer en 1 vreemd teken.</li>
+          <li>De databaseregels (RLS) zijn aangescherpt: alle Supabase-tabellen vereisen nu een ingelogde sessie, de publieke sleutel alleen is niet meer genoeg om data te lezen of te schrijven.</li>
+          <li>De e-mailalert-functie vereist nu ook een geldig ingelogd sessie-token (verify_jwt aangezet).</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v58</h4><ul>
+          <li>Bug verholpen: op sommige mobiele browsers werden dropdown-velden (ververssnelheid/overbelastingsgrens) niet volledig breed weergegeven, waardoor het bijbehorende hangslotje niet recht onder de andere hangslotjes stond. De veld-rij gebruikt nu CSS Grid in plaats van flexbox voor een betrouwbaardere uitlijning.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v57</h4><ul>
+          <li>Bug verholpen: de instellingentegel (IP-adres/ververssnelheid/overbelastingsgrens) toonde op mobiel grote lege witruimtes, doordat een vaste breedte (bedoeld voor de rijweergave op desktop) op mobiel als vaste hoogte werd toegepast.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v56</h4><ul>
+          <li>LastPass-icoon (en vergelijkbare wachtwoordmanager-iconen zoals 1Password) op de tekst-/e-mailvelden onderdrukt via data-lpignore/data-1p-ignore-attributen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v55</h4><ul>
+          <li>Autofill uitgezet op tekst-/e-mailvelden (IP-adres, database-URL's/sleutels, e-mailadres-velden), zodat de browser geen eigen invulknop/-vakje meer over het hangslotje toont op mobiel.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v54</h4><ul>
+          <li>Groene (kleur)blokjes rechtsonder in de fase-tegels L1/L2/L3 verwijderd.</li>
+          <li>Mobiele weergave geoptimaliseerd: grotere raakvlakken voor knoppen/hangslotjes, betere lettergroottes op smalle schermen, header en tegels schikken netter, extra breakpoint voor kleine telefoons.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v53</h4><ul>
+          <li>Mixed-content-fix voor publicatie op een https-domein: er is een .htaccess toegevoegd die de dashboardmap voorlopig via gewoon http laat werken (de HomeWizard-meter spreekt lokaal geen https). Het IP-adres-veld accepteert nu ook een volledig http(s)-adres, zodat later een beveiligde verbinding (reverse-proxy/tunnel) ingevuld kan worden zonder codewijziging.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v52</h4><ul>
+          <li>Voorbereid voor publicatie op een eigen domein: de service worker en het manifest verwijzen nu naar "index.html" i.p.v. "p1-dashboard.html", zodat de map direct op de domeinnaam/submap werkt zonder bestandsnaam in de link.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v51</h4><ul>
+          <li>Nieuw onderdeel "Verzendlimiet EmailJS-account" bovenaan de tegel E-mailalerts: toont hoeveel e-mailalerts er deze maand al zijn verzonden en hoeveel er nog over zijn t.o.v. een instelbare maandelijkse limiet (standaard 200, zoals bij het gratis EmailJS-plan). Wordt bijgewerkt bij het laden en na elke verzonden alert of testmail.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v50</h4><ul>
+          <li>Uitleg bij de e-mailalerts ingekort: de zin over de beveiligde server-functie is verwijderd.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v49</h4><ul>
+          <li>Bug verholpen: door een verkeerde volgorde in de code werkte na de vorige update geen enkele knop meer in het dashboard (o.a. testmail-knoppen deden niets). Instellingen worden nu in de juiste volgorde geladen.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v48</h4><ul>
+          <li>EmailJS-gegevens (Service ID/Template ID/Public Key) verplaatst naar een Supabase Edge Function als server-side secrets; staan niet meer in de browser, localStorage of Supabase-tabellen.</li>
+          <li>Beide e-mailalert-onderdelen tonen nu alleen nog het e-mailadres-veld.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v47</h4><ul>
+          <li>IP-adres, ververssnelheid, overbelastingsgrens, tarieven en de eigen-database URL/sleutel-waarden worden nu ook naar Supabase geschreven, zodat het dashboard er op elke pc/browser hetzelfde uitziet.</li>
+        </ul></div>
+        <div class="changelog-entry"><h4>v46</h4><ul>
