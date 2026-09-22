@@ -1,0 +1,26 @@
+# Automatisering "Kosten naar Supabase"
+#
+# Werkt elke minuut de dagkosten in daily_cost bij door de Supabase-functie
+# ha_update_daily_cost aan te roepen (zie supabase/schema.sql), zodat de
+# kosten ook doorlopen als de V3L EnergyControl-app niet open staat.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant
+# zelf (automations.yaml of via de UI aangemaakt).
+
+alias: Kosten naar Supabase
+description: Werkt elke minuut de dagkosten (daily_cost) bij, ook als de app dicht is
+mode: single
+triggers:
+  - trigger: time_pattern
+    seconds: "30"
+conditions:
+  - condition: template
+    value_template: >-
+      {{ states('sensor.p1_meter_energie_import') | float(none) is not none
+         and states('sensor.gas_meter_gas') | float(none) is not none }}
+actions:
+  - action: rest_command.supabase_login
+    response_variable: login
+  - action: rest_command.supabase_update_cost
+    data:
+      token: "{{ login['content']['access_token'] }}"

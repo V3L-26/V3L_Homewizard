@@ -1,0 +1,18 @@
+# Automatisering "P1-meter naar Supabase pushen"
+#
+# Bestond al voordat dit project begon: pusht doorlopend de live P1-
+# meterstand naar latest_status (rest_command.push_p1_naar_supabase).
+# De exacte trigger (waarschijnlijk elke seconde, gekoppeld aan het
+# updaten van sensor.p1_meter_vermogen) is in dit project niet
+# herbevestigd - kopieer de trigger/actions hier over vanuit de echte
+# automatisering in Home Assistant zodra je die bijwerkt, zodat deze
+# documentatie klopt.
+#
+# actions (bevestigd):
+#   - action: rest_command.push_p1_naar_supabase
+
+alias: P1-meter naar Supabase pushen
+description: Pusht de live P1-meterstand doorlopend naar latest_status
+# triggers: << hier de echte trigger van Home Assistant overnemen >>
+actions:
+  - action: rest_command.push_p1_naar_supabase

@@ -1,0 +1,26 @@
+# Automatisering "Minutelog naar Supabase"
+#
+# Schrijft elke minuut een momentopname van het P1-vermogen (totaal +
+# 3 fasen) naar minute_log. Dit voedt de "Verbruik per dag"-tabel en de
+# grafieken in de app (via rpc/get_daily_totals). Was sinds
+# 18-09-2026 18:28 UTC gestopt doordat de oude serverversie stopte;
+# deze automatisering heeft dat sinds 20-09-2026 overgenomen.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant
+# zelf (automations.yaml of via de UI aangemaakt).
+
+alias: Minutelog naar Supabase
+description: Schrijft elke minuut het P1-vermogen naar minute_log
+mode: single
+triggers:
+  - trigger: time_pattern
+    minutes: "/1"
+conditions:
+  - condition: template
+    value_template: "{{ states('sensor.p1_meter_vermogen') not in ['unknown','unavailable'] }}"
+actions:
+  - action: rest_command.supabase_login
+    response_variable: login
+  - action: rest_command.supabase_log_minute
+    data:
+      token: "{{ login['content']['access_token'] }}"

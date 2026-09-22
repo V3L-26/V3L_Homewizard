@@ -1,0 +1,7 @@
+# Nooit echte geheimen committen
+home-assistant/secrets.yaml
+
+# Build-tussenresultaten
+*.apk
+*.jar
+out/

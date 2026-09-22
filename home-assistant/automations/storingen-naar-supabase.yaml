@@ -1,0 +1,53 @@
+# Automatisering "Storingen naar Supabase"
+#
+# Logt elke stijging van een storingsteller van de P1-meter (stroom-
+# storingen, spanningsdips, spanningspieken) als een regel in fault_log,
+# met dezelfde type-namen die de app gebruikt (any, long, sag1-3,
+# swell1-3). Sinds app-versie 3.67 doet de app dit niet meer zelf.
+#
+# De conditie voorkomt dat een HA-herstart (waarbij een sensor even
+# "unavailable" is) als valse storing wordt gelogd.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant
+# zelf (automations.yaml of via de UI aangemaakt).
+
+alias: Storingen naar Supabase
+description: Logt stijgingen van de storingstellers van de P1-meter in fault_log
+mode: queued
+max: 10
+variables:
+  types:
+    sensor.p1_meter_stroomstoringen_gedetecteerd: any
+    sensor.p1_meter_lange_stroomstoringen_gedetecteerd: long
+    sensor.p1_meter_spanningsdips_gedetecteerd_fase_1: sag1
+    sensor.p1_meter_spanningsdips_gedetecteerd_fase_2: sag2
+    sensor.p1_meter_spanningsdips_gedetecteerd_fase_3: sag3
+    sensor.p1_meter_spanningspieken_gedetecteerd_fase_1: swell1
+    sensor.p1_meter_spanningspieken_gedetecteerd_fase_2: swell2
+    sensor.p1_meter_spanningspieken_gedetecteerd_fase_3: swell3
+triggers:
+  - trigger: state
+    entity_id:
+      - sensor.p1_meter_stroomstoringen_gedetecteerd
+      - sensor.p1_meter_lange_stroomstoringen_gedetecteerd
+      - sensor.p1_meter_spanningsdips_gedetecteerd_fase_1
+      - sensor.p1_meter_spanningsdips_gedetecteerd_fase_2
+      - sensor.p1_meter_spanningsdips_gedetecteerd_fase_3
+      - sensor.p1_meter_spanningspieken_gedetecteerd_fase_1
+      - sensor.p1_meter_spanningspieken_gedetecteerd_fase_2
+      - sensor.p1_meter_spanningspieken_gedetecteerd_fase_3
+conditions:
+  - condition: template
+    value_template: >-
+      {{ trigger.from_state is not none
+         and trigger.from_state.state | int(none) is not none
+         and trigger.to_state.state | int(none) is not none
+         and trigger.to_state.state | int > trigger.from_state.state | int }}
+actions:
+  - action: rest_command.supabase_login
+    response_variable: login
+  - action: rest_command.supabase_log_fault
+    data:
+      token: "{{ login['content']['access_token'] }}"
+      type: "{{ types[trigger.entity_id] }}"
+      count: "{{ trigger.to_state.state | int - trigger.from_state.state | int }}"

@@ -1,0 +1,32 @@
+# Automatisering "Prijzen naar Supabase"
+#
+# Stuurt de stroom- en gasprijs (HA-helpers input_number.stroomprijs en
+# input_number.gasprijs) naar app_settings in Supabase, zodra een van
+# beide verandert of bij het opstarten van Home Assistant. De app leest
+# deze prijzen sindsdien alleen-lezen (zie app/index.html, versie 3.65+).
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant
+# zelf (automations.yaml of via de UI aangemaakt).
+
+alias: Prijzen naar Supabase
+description: Zet de HA-tariefhelpers door naar app_settings in Supabase
+triggers:
+  - trigger: state
+    entity_id:
+      - input_number.stroomprijs
+      - input_number.gasprijs
+  - trigger: homeassistant
+    event: start
+actions:
+  - action: rest_command.supabase_login
+    response_variable: login
+  - action: rest_command.supabase_set_setting
+    data:
+      token: "{{ login['content']['access_token'] }}"
+      field: p1_elec_price
+      value: "{{ states('input_number.stroomprijs') }}"
+  - action: rest_command.supabase_set_setting
+    data:
+      token: "{{ login['content']['access_token'] }}"
+      field: p1_gas_price
+      value: "{{ states('input_number.gasprijs') }}"

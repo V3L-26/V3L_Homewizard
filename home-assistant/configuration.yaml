@@ -1,0 +1,201 @@
+# Home Assistant configuration.yaml - V3L EnergyControl / V3L HomeWizard
+#
+# Dit is een documentatie-/herstelkopie van het rest_command-blok zoals het
+# op 22-09-2026 in Arjan's eigen Home Assistant staat. Home Assistant zelf
+# blijft de bron van waarheid; wijzig het daar en werk deze kopie handmatig
+# bij. De geheimen (!secret ...) staan in secrets.yaml, dat NIET in deze
+# repository hoort (zie home-assistant/secrets.yaml.example).
+#
+# De automatiseringen die deze rest_commands aanroepen staan als losse
+# bestanden in home-assistant/automations/.
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+rest_command:
+  # Live meterstand elke seconde naar latest_status (automatisering
+  # "P1-meter naar Supabase pushen"). Gebruikt nog het losstaande
+  # supabase_p1_key/supabase_p1_bearer-secret-paar i.p.v. een login, omdat
+  # dit al werkte voordat de overige commando's op een login overstapten.
+  push_p1_naar_supabase:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/rest/v1/latest_status?on_conflict=id"
+    method: POST
+    headers:
+      apikey: !secret supabase_p1_key
+      Authorization: !secret supabase_p1_bearer
+      Content-Type: "application/json"
+      Prefer: "resolution=merge-duplicates,return=minimal"
+    payload: >-
+      {{
+        {
+          "id": true,
+          "active_power_w": states('sensor.p1_meter_vermogen') | float(none),
+          "active_power_l1_w": states('sensor.p1_meter_vermogen_fase_1') | float(none),
+          "active_power_l2_w": states('sensor.p1_meter_vermogen_fase_2') | float(none),
+          "active_power_l3_w": states('sensor.p1_meter_vermogen_fase_3') | float(none),
+          "active_voltage_l1_v": states('sensor.p1_meter_spanning_fase_1') | float(none),
+          "active_voltage_l2_v": states('sensor.p1_meter_spanning_fase_2') | float(none),
+          "active_voltage_l3_v": states('sensor.p1_meter_spanning_fase_3') | float(none),
+          "active_voltage_v": none,
+          "active_current_l1_a": states('sensor.p1_meter_stroom_fase_1') | float(none),
+          "active_current_l2_a": states('sensor.p1_meter_stroom_fase_2') | float(none),
+          "active_current_l3_a": states('sensor.p1_meter_stroom_fase_3') | float(none),
+          "active_current_a": none,
+          "total_power_import_kwh": states('sensor.p1_meter_energie_import') | float(none),
+          "total_power_export_kwh": none,
+          "total_gas_m3": states('sensor.gas_meter_gas') | float(none),
+          "gas_timestamp": (as_local(states.sensor.gas_meter_gas.last_updated).strftime('%y%m%d%H%M%S') if states.sensor.gas_meter_gas is not none else none),
+          "water_m3": none,
+          "meter_model": states('sensor.p1_meter_slimme_meter_model'),
+          "smr_version": states('sensor.p1_meter_dsmr_versie'),
+          "unique_id": states('sensor.p1_meter_slimme_meter_identificatie'),
+          "unique_id_gas": none,
+          "any_power_fail_count": states('sensor.p1_meter_stroomstoringen_gedetecteerd') | int(none),
+          "long_power_fail_count": states('sensor.p1_meter_lange_stroomstoringen_gedetecteerd') | int(none),
+          "voltage_sag_l1_count": states('sensor.p1_meter_spanningsdips_gedetecteerd_fase_1') | int(none),
+          "voltage_sag_l2_count": states('sensor.p1_meter_spanningsdips_gedetecteerd_fase_2') | int(none),
+          "voltage_sag_l3_count": states('sensor.p1_meter_spanningsdips_gedetecteerd_fase_3') | int(none),
+          "voltage_swell_l1_count": states('sensor.p1_meter_spanningspieken_gedetecteerd_fase_1') | int(none),
+          "voltage_swell_l2_count": states('sensor.p1_meter_spanningspieken_gedetecteerd_fase_2') | int(none),
+          "voltage_swell_l3_count": states('sensor.p1_meter_spanningspieken_gedetecteerd_fase_3') | int(none),
+          "updated_at": utcnow().isoformat()
+        } | tojson
+      }}
+
+  # Overbelastingsmail via de Supabase Edge Function send-alert-email.
+  # Aangeroepen door automations/overbelasting-melding.yaml met
+  # variabelen "phase" en "watt".
+  stuur_overload_mail:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/functions/v1/send-alert-email"
+    method: POST
+    headers:
+      apikey: !secret supabase_anon_key
+      Authorization: "Bearer {{ token }}"
+      Content-Type: "application/json"
+    payload: >-
+      {{
+        {
+          "kind": "overload",
+          "to_email": "arjan@familievandriel.nl",
+          "phase": phase,
+          "watt": watt | int(0),
+          "threshold": 5250,
+          "time": now().strftime('%d-%m-%Y %H:%M:%S')
+        } | tojson
+      }}
+
+  # Logt een stijging van een storingsteller (stroomstoring, dip, piek) in
+  # fault_log. Aangeroepen door automations/storingen-naar-supabase.yaml
+  # met variabelen "type" en "count".
+  supabase_log_fault:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/rest/v1/fault_log"
+    method: post
+    headers:
+      apikey: !secret supabase_anon_key
+      Authorization: "Bearer {{ token }}"
+      Content-Type: application/json
+      Prefer: "return=minimal"
+    payload: >-
+      {{
+        {
+          "event_time": utcnow().isoformat(),
+          "type": type,
+          "count": count | int(1)
+        } | tojson
+      }}
+
+  # Inloggen met het vaste dashboard-account. response_variable "token"
+  # (login['content']['access_token']) wordt door de andere rest_commands
+  # gebruikt als Bearer-token. Wordt door bijna elke automatisering als
+  # eerste stap aangeroepen.
+  supabase_login:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/auth/v1/token?grant_type=password"
+    method: post
+    headers:
+      apikey: !secret supabase_anon_key
+      Content-Type: application/json
+    payload: !secret supabase_login_payload
+
+  # Schrijft een tarief (stroom- of gasprijs) naar app_settings. Aangeroepen
+  # door automations/prijzen-naar-supabase.yaml met variabelen "field" en
+  # "value".
+  supabase_set_setting:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/rest/v1/app_settings?on_conflict=field_id"
+    method: post
+    headers:
+      apikey: !secret supabase_anon_key
+      Authorization: "Bearer {{ token }}"
+      Content-Type: application/json
+      Prefer: "resolution=merge-duplicates,return=minimal"
+    payload: '{"field_id":"{{ field }}","value":"{{ value }}","updated_at":"{{ now().isoformat() }}"}'
+
+  # Maakt de daily_cost-rij van vandaag aan met de meterstanden van
+  # middernacht als startwaarden (ignore-duplicates: bestaat de rij al,
+  # dan gebeurt er niets). Aangeroepen door
+  # automations/dagstart-naar-supabase.yaml om 00:00:05.
+  supabase_start_day:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/rest/v1/daily_cost?on_conflict=log_date"
+    method: post
+    headers:
+      apikey: !secret supabase_anon_key
+      Authorization: "Bearer {{ token }}"
+      Content-Type: application/json
+      Prefer: "resolution=ignore-duplicates,return=minimal"
+    payload: >-
+      {{
+        {
+          "log_date": now().strftime('%Y-%m-%d'),
+          "import_kwh_start": states('sensor.p1_meter_energie_import') | float(none),
+          "import_kwh_now": states('sensor.p1_meter_energie_import') | float(none),
+          "export_kwh_start": 0,
+          "export_kwh_now": 0,
+          "gas_m3_start": states('sensor.gas_meter_gas') | float(none),
+          "gas_m3_now": states('sensor.gas_meter_gas') | float(none),
+          "updated_at": utcnow().isoformat()
+        } | tojson
+      }}
+
+  # Schrijft elke minuut een rij naar minute_log (momentopname, geen
+  # gemiddelde). Aangeroepen door automations/minutelog-naar-supabase.yaml.
+  supabase_log_minute:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/rest/v1/minute_log"
+    method: post
+    headers:
+      apikey: !secret supabase_anon_key
+      Authorization: "Bearer {{ token }}"
+      Content-Type: application/json
+      Prefer: "return=minimal"
+    payload: >-
+      {{ {
+        "log_time": now().replace(second=0, microsecond=0).isoformat(),
+        "total": states('sensor.p1_meter_vermogen') | float(none),
+        "l1": states('sensor.p1_meter_vermogen_fase_1') | float(none),
+        "l2": states('sensor.p1_meter_vermogen_fase_2') | float(none),
+        "l3": states('sensor.p1_meter_vermogen_fase_3') | float(none)
+      } | tojson }}
+
+  # Roept de Supabase-functie ha_update_daily_cost aan (zie
+  # supabase/schema.sql) zodat daily_cost ook bijwerkt als de app dicht
+  # staat. Aangeroepen door automations/kosten-naar-supabase.yaml, elke
+  # minuut op seconde 30.
+  supabase_update_cost:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/rest/v1/rpc/ha_update_daily_cost"
+    method: post
+    headers:
+      apikey: !secret supabase_anon_key
+      Authorization: "Bearer {{ token }}"
+      Content-Type: application/json
+    payload: >-
+      {{
+        {
+          "p_import": states('sensor.p1_meter_energie_import') | float(none),
+          "p_gas": states('sensor.gas_meter_gas') | float(none)
+        } | tojson
+      }}

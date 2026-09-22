@@ -1,0 +1,25 @@
+# Automatisering "Dagstart naar Supabase"
+#
+# Maakt elke nacht om 00:00:05 de daily_cost-rij van de nieuwe dag aan,
+# met de meterstanden van dat moment als startwaarden. Gebruikt
+# ignore-duplicates, dus als de rij al bestaat gebeurt er niets.
+#
+# Let op: gas_m3_start/gas_m3_now moeten uit sensor.gas_meter_gas komen
+# (de m3-stand), niet uit sensor.gas_meter_gas_cost (het eurobedrag) -
+# die laatste gaf op 20-09-2026 een dagstart van 0,07 in plaats van
+# ~5675 en daardoor een dag met "7050 euro" gaskosten in de app.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant
+# zelf (automations.yaml of via de UI aangemaakt).
+
+alias: Dagstart naar Supabase
+description: Maakt de daily_cost-rij van de nieuwe dag aan met de meterstanden van middernacht
+triggers:
+  - trigger: time
+    at: "00:00:05"
+actions:
+  - action: rest_command.supabase_login
+    response_variable: login
+  - action: rest_command.supabase_start_day
+    data:
+      token: "{{ login['content']['access_token'] }}"
