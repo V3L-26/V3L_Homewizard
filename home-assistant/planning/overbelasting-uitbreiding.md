@@ -1,15 +1,17 @@
 # Plan: uitbreiding overbelastingsbeveiliging (fase 1/2/3)
 
 Status: in voorbereiding, wacht op aanschaf hardware. Laatst bijgewerkt na
-analyse van de groepenkast-indeling en fase-belasting (september 2026).
+analyse van de groepenkast-indeling en fase-belasting, en na herbouw van de
+airco-uitzetautomatiseringen (september 2026).
 
 ## Aanleiding
 
-De bestaande airco-overbelastingsautomatisering (zie
-`home-assistant/automations/airco-uit-bij-overbelasting-fase3.yaml` en
-`airco-weer-aan-na-overbelasting-fase3.yaml`) bleek, na analyse van de
-groepenkast, maar een deel van het overbelastingsrisico af te dekken.
-Belangrijkste bevindingen:
+De airco-overbelastingsautomatisering voor fase 3 (drie losse
+automatiseringen, zie `home-assistant/automations/airco-woonkamer-uit-bij-overbelasting-fase3.yaml`,
+`airco-christian-uit-bij-overbelasting-fase3.yaml` en
+`airco-jason-uit-bij-overbelasting-fase3.yaml`) dekt, na analyse van de
+groepenkast, maar een deel van het overbelastingsrisico af. Belangrijkste
+bevindingen:
 
 - Fase 3 (L3) heeft de zwaarste realistische risicocombinatie: airco
   (continu, tot 2.400 W volgens aansluitvermogen) + oven (3.650 W,
@@ -31,7 +33,7 @@ Belangrijkste bevindingen:
 1. **Airco verplaatsen van fase 3 naar fase 1** (elektricien nodig, want
    de airco hangt aan een vaste werkschakelaar, niet aan een stopcontact).
    Haalt de airco weg bij zijn drukste "buren" (oven, droger,
-   gamecomputer) en zet 'm bij de rustigste groep.
+   gamecomputer) en zet 'm bij de rustigste groep. Nog niet uitgevoerd.
 2. **HomeWizard-stekkers aanschaffen voor:** droger, wasmachine,
    magnetron, airfryer, koffiezetapparaat. Deze zijn (in tegenstelling tot
    de airco) allemaal stopcontact-apparaten, dus geen elektricien nodig
@@ -50,38 +52,57 @@ Belangrijkste bevindingen:
    echte aanhoudende overbelasting. Let op: magnetron + airfryer +
    koffiezetter samen komt op ~5.300 W - bij een drempel van precies 5300
    W ligt dat op de grens, dus mogelijk is 5400-5500 W een veiligere
-   marge.
+   marge. De huidige airco-automatiseringen gebruiken inmiddels al 5200 W
+   zonder aanhoudingsduur (`for:`) - nog niet afgestemd met dit voorstel.
    - **Nog te beslissen:** wordt deze nieuwe drempel/duur overal
      doorgevoerd (de vaste 5250 W in `app/index.html`, de algemene
-     overbelastingsmelding/fault_log-automatisering, én deze nieuwe
-     ingreep-automatisering), of alleen voor de nieuwe
-     ingreep-automatisering, met de rest op 5250 W?
+     overbelastingsmelding/fault_log-automatisering, én de
+     airco-automatiseringen), of blijft elke automatisering zijn eigen
+     drempel houden?
    - **Nog te beslissen:** exacte duur (voorstel 15 seconden, user gaf
      "iets langer" zonder exact getal).
-5. **Architectuur nieuwe automatisering(en):** in plaats van per apparaat
-   een aparte automatisering (zoals nu bij de airco met twee bestanden),
-   voorstel om **één automatisering per fase** te bouwen die bij
-   overbelasting een vaste prioriteitsvolgorde afwerkt (bijv. eerst airco,
-   dan droger/wasmachine, als laatste de keukenapparaten - de apparaten
-   met de minste hinder eerst). Nog niet uitgewerkt/gebouwd.
+5. **Architectuur airco-automatiseringen: per unit, niet per fase.** In
+   plaats van één gecombineerde automatisering voor alle drie de airco's,
+   of één cascade-automatisering per fase, is gekozen voor drie volledig
+   losse automatiseringen (één per airco-unit). Reden: een trage of
+   al-uitstaande Daikin-unit houdt zo de andere twee niet op, en elke
+   automatisering blijft eenvoudig or the same trigger. Voor de nog te
+   bouwen droger/wasmachine/keukenapparaten-automatiseringen moet dit
+   opnieuw afgewogen worden - dat zijn andere merken/integraties (lokale
+   HomeWizard-stekkers, geen cloud-vertraging), dus de reden om per unit
+   te splitsen (trage cloud) speelt daar mogelijk niet.
+6. **Herstel na overbelasting is handmatig, niet automatisch.** Eerdere
+   opzet zette airco's automatisch terug naar hun vorige hvac-modus via
+   een helper (`input_text.airco_overload_uitgezet`) zodra fase 3 vijf
+   minuten onder 4000 W bleef. Dat is losgelaten: de gebruiker zet de
+   airco's zelf weer aan wanneer dat weer veilig is. Geldt vooralsnog
+   alleen voor de airco's - voor de droger/wasmachine (met
+   deurvergrendeling, zie onder) moet nog worden afgewogen of handmatig
+   herstel daar ook volstaat, of dat automatisch herstel daar wel
+   gewenst is.
 
 ## Openstaande vragen bij hervatten van dit onderwerp
 
-- Exacte nieuwe drempelwaarde en duur (zie boven).
-- Scope van de drempel-aanpassing (overal, of alleen nieuwe
-  automatisering).
+- Exacte nieuwe drempelwaarde en duur (zie boven), en afstemming met de
+  5200 W die de airco-automatiseringen nu al gebruiken.
+- Scope van de drempel-aanpassing (overal, of per automatisering eigen
+  drempel).
 - Welke HomeWizard-stekkermodellen zijn aangeschaft (vermogenscapaciteit
   checken, met name t.o.v. 1.000-2.300 W per apparaat)?
 - Is de airco al verplaatst naar fase 1 door de elektricien?
-- Bevestigen van de prioriteitsvolgorde voor de per-fase
-  cascade-automatisering (welk apparaat gaat als eerste/laatste uit).
+- Voor de nieuwe apparaten: per apparaat een losse automatisering (zoals
+  nu bij de airco's), of alsnog een gedeelde/cascade-opzet per fase?
 - Voor de wasmachine: deurvergrendeling blijft actief zonder stroom
   (thermisch element, ontgrendelt na ~5-10 min of automatisch bij
   stroomherstel) - geen schade te verwachten bij kortdurende
   onderbreking, wel kans op vochtige/ruikende was bij langere
-  onderbreking. Design van de automatisering moet dus zorgen dat de
-  stroom zo snel mogelijk weer hersteld wordt zodra het weer veilig is
-  (zelfde patroon als de bestaande hervat-automatisering bij de airco).
+  onderbreking. Aangezien herstel bij de airco's nu handmatig is, moet
+  bepaald worden of dat voor de wasmachine ook volstaat, of dat daar
+  automatisch herstel (zoals oorspronkelijk bij de airco's) alsnog
+  gewenst is vanwege dit risico.
+- Christian- en Jason-airco-automatiseringen individueel testen (volgen
+  hetzelfde patroon als de geteste woonkamer-versie, maar device_id-
+  toewijzing is nog niet apart bevestigd voor die twee).
 
 ## Apparaatoverzicht (uit groepenkast + gebruiker aangeleverd)
 
@@ -105,8 +126,11 @@ berekeningen.
 
 ## Gerelateerd
 
-- `home-assistant/automations/airco-uit-bij-overbelasting-fase3.yaml`
-- `home-assistant/automations/airco-weer-aan-na-overbelasting-fase3.yaml`
-- Bekende beperking Daikin-cloud (vertraging, dagquotum ~200 aanroepen):
-  gedocumenteerd in bovenstaande automatiseringen. Geldt niet voor de
-  HomeWizard-stekkers (lokaal, geen quotum).
+- `home-assistant/automations/airco-woonkamer-uit-bij-overbelasting-fase3.yaml`
+- `home-assistant/automations/airco-christian-uit-bij-overbelasting-fase3.yaml`
+- `home-assistant/automations/airco-jason-uit-bij-overbelasting-fase3.yaml`
+- Bekende beperking Daikin-cloud (status kan verouderd zijn tot een
+  refresh is uitgevoerd): opgelost binnen bovenstaande automatiseringen
+  met een refresh-knop-druk + wait_template vóór het uit-commando.
+  Geldt niet voor de (nog te installeren) HomeWizard-stekkers - die zijn
+  lokaal, geen cloud-afhankelijkheid.

@@ -1,0 +1,78 @@
+# Automatisering "Airco Christian uitzetten bij overbelasting"
+#
+# Zet de airco in de slaapkamer van Christian uit zodra
+# sensor.p1_meter_vermogen_fase_3 boven 5200 W komt.
+#
+# Onderdeel van een set van drie losse automatiseringen (woonkamer,
+# slaapkamer Christian, slaapkamer Jason) die de oudere, gecombineerde
+# automatisering airco-uit-bij-overbelasting-fase3.yaml vervangen. Elke
+# airco heeft nu zijn eigen automatisering met dezelfde trigger, maar
+# volledig losse acties - zo houdt een trage of al-uitstaande unit de
+# andere twee niet op.
+#
+# BELANGRIJKE FIX t.o.v. eerdere versies: het uit-commando werd eerst
+# direct na het triggeren verstuurd, zonder de status van de Daikin
+# Onecta-cloud te verversen. Herhaald handmatig testen (op de
+# woonkamer-unit) wees uit dat het uit-commando dan vaak niet aankwam -
+# de integratie lijkt het commando op te bouwen op basis van de laatst
+# bekende (gecachte) status, en die kan verouderd zijn. Deze
+# automatisering drukt daarom eerst op de refresh-knop van deze
+# Daikin-unit, en wacht (met een timeout van 30 seconden als vangnet, via
+# continue_on_timeout) tot de last_updated van de climate-entiteit
+# daadwerkelijk verandert, voordat het uit-commando wordt verstuurd. Bij
+# een refresh die niets verandert (bijv. omdat de airco al uit staat)
+# loopt de wait_template gewoon de timeout uit en wordt het (dan
+# onschadelijke) uit-commando alsnog verstuurd.
+#
+# Er is GEEN automatisch herstel meer na afloop van de overbelasting - de
+# airco wordt handmatig weer aangezet zodra dat weer veilig is. De
+# eerdere hervat-automatisering (airco-weer-aan-na-overbelasting-fase3.yaml)
+# en de bijbehorende helper (input_text.airco_overload_uitgezet) zijn
+# hiermee vervallen en niet meer nodig.
+#
+# Volgt hetzelfde patroon als de geteste woonkamer-versie, maar is zelf
+# nog niet los getest (stand: 23 september 2026).
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Airco Christian uitzetten bij overbelasting
+description: ''
+triggers:
+  - trigger: power.changed
+    target:
+      area_id: meterkast
+      entity_id: sensor.p1_meter_vermogen_fase_3
+    options:
+      threshold:
+        type: above
+        value:
+          active_choice: number
+          number: 5200
+          unit_of_measurement: W
+conditions: []
+actions:
+  - variables:
+      voor_refresh: "{{ states.climate.daikinap86096_room_temperature.last_updated }}"
+  - action: button.press
+    target:
+      entity_id: button.daikinap86096_refresh
+    data: {}
+  - wait_template: "{{ states.climate.daikinap86096_room_temperature.last_updated != voor_refresh }}"
+    timeout:
+      seconds: 30
+    continue_on_timeout: true
+  - action: climate.set_hvac_mode
+    target:
+      device_id: 16975c6c2948a23cafb485400b1ee91e
+    data:
+      hvac_mode: 'off'
+    alias: Airco uitschakelen
+  - action: notify.send_message
+    target:
+      entity_id: notify.samsung_s23
+    data:
+      message: >-
+        De airco in de slaapkamer van Christian is vanwege dreigende
+        overbelasting uitgeschakeld.
+      title: Airco van Christian uitgeschakeld
+mode: single

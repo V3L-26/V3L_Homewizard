@@ -45,22 +45,29 @@ Alle Home Assistant → Supabase-verzoeken loggen in met hetzelfde vaste
 dashboardaccount (`supabase_login`) en gebruiken het teruggekregen token als
 Bearer-header.
 
-**Overbelastingsbeveiliging airco's (fase 3):** twee automatiseringen
-zorgen dat de drie Daikin-airco's (Onecta) uitgaan bij een piek op fase 3
-en daarna automatisch weer aan mogen:
-- `airco-uit-bij-overbelasting-fase3.yaml` zet, zodra
-  `sensor.p1_meter_vermogen_fase_3` 5 seconden boven 5250 W blijft, alle
-  airco's uit die op dat moment aanstaan, en onthoudt precies welke in de
-  helper `input_text.airco_overload_uitgezet`.
-- `airco-weer-aan-na-overbelasting-fase3.yaml` zet, zodra fase 3 vijf
-  minuten onder 4000 W is gebleven, alleen die opgeslagen airco's weer aan
-  (dus niet een airco die om een andere reden al uit stond) en leegt de
-  helper daarna.
+**Overbelastingsbeveiliging airco's (fase 3):** drie onafhankelijke
+automatiseringen - één per Daikin-airco - zetten hun eigen unit uit zodra
+`sensor.p1_meter_vermogen_fase_3` boven 5200 W komt:
+- `airco-woonkamer-uit-bij-overbelasting-fase3.yaml` (getest en werkend)
+- `airco-christian-uit-bij-overbelasting-fase3.yaml` (slaapkamer Christian,
+  zelfde patroon, nog niet los getest)
+- `airco-jason-uit-bij-overbelasting-fase3.yaml` (slaapkamer Jason, zelfde
+  patroon, nog niet los getest)
 
-Vereiste helper (Instellingen → Apparaten en diensten → Helpers → Helper
-toevoegen → Tekst): `input_text.airco_overload_uitgezet`, maximale lengte
-255. Beide automaties sturen een pushmelding via
-`notify.mobile_app_samsung_s23`.
+Elke automatisering drukt eerst op de refresh-knop van zijn eigen
+Daikin-unit en wacht (met een timeout van 30 seconden als vangnet) tot de
+status daadwerkelijk ververst is, voordat het uit-commando
+(`climate.set_hvac_mode`, `hvac_mode: 'off'`) wordt verstuurd - nodig
+omdat de Daikin Onecta-cloudintegratie het commando anders op verouderde
+gegevens lijkt te baseren. Door elke airco zijn eigen automatisering te
+geven (in plaats van één gecombineerde), houdt een trage of al-uitstaande
+unit de andere twee niet op.
+
+Er is geen automatisch herstel meer na afloop van de overbelasting; de
+airco's worden handmatig weer aangezet zodra dat weer veilig is. De
+eerdere hervat-automatisering en de helper
+`input_text.airco_overload_uitgezet` zijn hiermee vervallen. Alle drie de
+automatiseringen sturen een pushmelding via `notify.samsung_s23`.
 
 **Supabase** (project `sdkzzjrtmtzfvjrgpqbm`, "V3L HomeWizard") is de
 gedeelde database. RLS staat overal aan; de rol `authenticated` (het vaste
@@ -91,6 +98,8 @@ toe telkens handmatig gerepackt:
   verplaatsen van de airco naar fase 1 staat in de planningsfase - zie
   `home-assistant/planning/overbelasting-uitbreiding.md` voor de volledige
   analyse, gemaakte keuzes en openstaande vragen.
+- De Christian- en Jason-automatiseringen volgen hetzelfde patroon als de
+  geteste woonkamer-versie, maar zijn zelf nog niet individueel getest.
 - De trigger van automatisering "P1-meter naar Supabase pushen" is niet
   herbevestigd in dit project (zie
   `home-assistant/automations/p1-meter-naar-supabase-pushen.yaml`).
