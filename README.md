@@ -86,6 +86,11 @@ toe telkens handmatig gerepackt:
 
 ## Bekende openstaande punten
 
+- Uitbreiding van de overbelastingsbeveiliging naar meer apparaten
+  (droger, wasmachine, magnetron, airfryer, koffiezetapparaat) en het
+  verplaatsen van de airco naar fase 1 staat in de planningsfase - zie
+  `home-assistant/planning/overbelasting-uitbreiding.md` voor de volledige
+  analyse, gemaakte keuzes en openstaande vragen.
 - De trigger van automatisering "P1-meter naar Supabase pushen" is niet
   herbevestigd in dit project (zie
   `home-assistant/automations/p1-meter-naar-supabase-pushen.yaml`).
