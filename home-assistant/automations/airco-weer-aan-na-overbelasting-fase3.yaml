@@ -4,7 +4,9 @@
 # airco's weer aan die door "Airco's uit bij overbelasting fase 3" zijn
 # uitgezet (opgeslagen in de helper input_text.airco_overload_uitgezet) -
 # en niet een airco die om een andere reden al uit stond voor de
-# overbelasting. Leegt de helper na afloop.
+# overbelasting. Leegt de helper na afloop, ook als een van de
+# turn_on-commando's faalt (continue_on_error), zodat de helper nooit
+# "vast" blijft staan door één onbereikbare unit.
 #
 # De marge tussen de uitzet-drempel (5250 W) en de hervat-drempel
 # (4000 W, vijf minuten aaneengesloten) voorkomt dat de airco's heen en
@@ -32,6 +34,7 @@ actions:
   - condition: template
     value_template: "{{ te_hervatten | length > 0 }}"
   - action: climate.turn_on
+    continue_on_error: true
     target:
       entity_id: "{{ te_hervatten }}"
   - action: input_text.set_value

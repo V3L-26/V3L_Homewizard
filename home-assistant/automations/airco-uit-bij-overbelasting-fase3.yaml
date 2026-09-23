@@ -7,11 +7,19 @@
 # díe airco's terugzet, en niet een airco die om een andere reden al uit
 # stond.
 #
-# Airco's die al uit staan worden overgeslagen: dat scheelt aanroepen op
-# het dagelijkse quotum van de Daikin-cloud (zie de sensor
-# "Resterend per dag" per Daikin-gateway). Bij echte overbelasting grijpt
-# deze automatisering sowieso in, ook als dat quotum bijna op is -
-# veiligheid gaat voor besparing.
+# Airco's die al 'off', 'unavailable' of 'unknown' zijn worden overgeslagen:
+# - 'off' scheelt onnodige aanroepen op het dagelijkse quotum van de
+#   Daikin-cloud (zie de sensor "Resterend per dag" per Daikin-gateway).
+# - 'unavailable'/'unknown' betekent dat Home Assistant op dat moment geen
+#   verbinding heeft met die unit (cloud-hik, wifi, quotum) - een
+#   climate.turn_off-commando daarnaartoe faalt toch, en zou zonder
+#   continue_on_error de hele automatisering stilleggen (dan gebeurt er
+#   ook geen helper-update en geen melding meer, ook niet voor de airco's
+#   die wel bereikbaar zijn).
+#
+# continue_on_error: true op de turn_off-stap zorgt dat een falende/
+# onbereikbare airco de rest van de reeks (helper bijwerken, melding
+# sturen) niet blokkeert.
 #
 # Vereiste helper (Instellingen -> Apparaten en diensten -> Helpers ->
 # Toevoegen -> Tekst): input_text.airco_overload_uitgezet, maximale lengte
@@ -35,12 +43,15 @@ actions:
         - climate.daikinap46344_room_temperature
         - climate.daikinap86096_room_temperature
         - climate.daikinap86208_room_temperature
-      aircos_aan: "{{ aircos | reject('is_state', 'off') | list }}"
+      aircos_aan: >-
+        {{ aircos | reject('is_state', 'off') | reject('is_state', 'unavailable')
+        | reject('is_state', 'unknown') | list }}
       al_opgeslagen: >-
         {{ (states('input_text.airco_overload_uitgezet') | default('', true)).split(',') | select | list }}
   - condition: template
     value_template: "{{ aircos_aan | length > 0 }}"
   - action: climate.turn_off
+    continue_on_error: true
     target:
       entity_id: "{{ aircos_aan }}"
   - action: input_text.set_value
