@@ -66,7 +66,7 @@ bevindingen:
    of één cascade-automatisering per fase, is gekozen voor drie volledig
    losse automatiseringen (één per airco-unit). Reden: een trage of
    al-uitstaande Daikin-unit houdt zo de andere twee niet op, en elke
-   automatisering blijft eenvoudig or the same trigger. Voor de nog te
+   automatisering blijft eenvoudig, met dezelfde trigger. Voor de nog te
    bouwen droger/wasmachine/keukenapparaten-automatiseringen moet dit
    opnieuw afgewogen worden - dat zijn andere merken/integraties (lokale
    HomeWizard-stekkers, geen cloud-vertraging), dus de reden om per unit
