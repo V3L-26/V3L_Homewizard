@@ -45,6 +45,23 @@ Alle Home Assistant → Supabase-verzoeken loggen in met hetzelfde vaste
 dashboardaccount (`supabase_login`) en gebruiken het teruggekregen token als
 Bearer-header.
 
+**Overbelastingsbeveiliging airco's (fase 3):** twee automatiseringen
+zorgen dat de drie Daikin-airco's (Onecta) uitgaan bij een piek op fase 3
+en daarna automatisch weer aan mogen:
+- `airco-uit-bij-overbelasting-fase3.yaml` zet, zodra
+  `sensor.p1_meter_vermogen_fase_3` 5 seconden boven 5250 W blijft, alle
+  airco's uit die op dat moment aanstaan, en onthoudt precies welke in de
+  helper `input_text.airco_overload_uitgezet`.
+- `airco-weer-aan-na-overbelasting-fase3.yaml` zet, zodra fase 3 vijf
+  minuten onder 4000 W is gebleven, alleen die opgeslagen airco's weer aan
+  (dus niet een airco die om een andere reden al uit stond) en leegt de
+  helper daarna.
+
+Vereiste helper (Instellingen → Apparaten en diensten → Helpers → Helper
+toevoegen → Tekst): `input_text.airco_overload_uitgezet`, maximale lengte
+255. Beide automaties sturen een pushmelding via
+`notify.mobile_app_samsung_s23`.
+
 **Supabase** (project `sdkzzjrtmtzfvjrgpqbm`, "V3L HomeWizard") is de
 gedeelde database. RLS staat overal aan; de rol `authenticated` (het vaste
 dashboardaccount) mag lezen/schrijven, `anon` niets. De Edge Function

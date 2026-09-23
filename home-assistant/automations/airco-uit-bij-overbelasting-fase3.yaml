@@ -1,0 +1,56 @@
+# Automatisering "Airco's uit bij overbelasting fase 3"
+#
+# Zet de Daikin-airco's (Onecta-integratie) uit zodra fase 3 boven 5250 W
+# komt, en slaat op wélke airco's het zelf heeft uitgezet in de helper
+# input_text.airco_overload_uitgezet - zodat de bijbehorende hervat-
+# automatisering (airco-weer-aan-na-overbelasting-fase3.yaml) later alleen
+# díe airco's terugzet, en niet een airco die om een andere reden al uit
+# stond.
+#
+# Airco's die al uit staan worden overgeslagen: dat scheelt aanroepen op
+# het dagelijkse quotum van de Daikin-cloud (zie de sensor
+# "Resterend per dag" per Daikin-gateway). Bij echte overbelasting grijpt
+# deze automatisering sowieso in, ook als dat quotum bijna op is -
+# veiligheid gaat voor besparing.
+#
+# Vereiste helper (Instellingen -> Apparaten en diensten -> Helpers ->
+# Toevoegen -> Tekst): input_text.airco_overload_uitgezet, maximale lengte
+# 255.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant
+# zelf (automations.yaml of via de UI aangemaakt).
+
+alias: Airco's uit bij overbelasting fase 3
+description: Zet alle Daikin-airco's uit zodra fase 3 boven 5250 W komt, en onthoudt welke
+mode: single
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.p1_meter_vermogen_fase_3
+    above: 5250
+    for:
+      seconds: 5
+actions:
+  - variables:
+      aircos:
+        - climate.daikinap46344_room_temperature
+        - climate.daikinap86096_room_temperature
+        - climate.daikinap86208_room_temperature
+      aircos_aan: "{{ aircos | reject('is_state', 'off') | list }}"
+      al_opgeslagen: >-
+        {{ (states('input_text.airco_overload_uitgezet') | default('', true)).split(',') | select | list }}
+  - condition: template
+    value_template: "{{ aircos_aan | length > 0 }}"
+  - action: climate.turn_off
+    target:
+      entity_id: "{{ aircos_aan }}"
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.airco_overload_uitgezet
+    data:
+      value: "{{ (al_opgeslagen + aircos_aan) | unique | join(',') }}"
+  - action: notify.mobile_app_samsung_s23
+    data:
+      title: Airco's uitgezet
+      message: >-
+        Fase 3 kwam boven 5250 W ({{ states('sensor.p1_meter_vermogen_fase_3') }} W).
+        {{ aircos_aan | length }} airco('s) automatisch uitgezet.

@@ -1,0 +1,46 @@
+# Automatisering "Airco's weer aan na overbelasting fase 3"
+#
+# Zet, zodra fase 3 vijf minuten onder 4000 W is gebleven, precies de
+# airco's weer aan die door "Airco's uit bij overbelasting fase 3" zijn
+# uitgezet (opgeslagen in de helper input_text.airco_overload_uitgezet) -
+# en niet een airco die om een andere reden al uit stond voor de
+# overbelasting. Leegt de helper na afloop.
+#
+# De marge tussen de uitzet-drempel (5250 W) en de hervat-drempel
+# (4000 W, vijf minuten aaneengesloten) voorkomt dat de airco's heen en
+# weer klapperen rond de grens.
+#
+# Vereiste helper: zelfde input_text.airco_overload_uitgezet als de
+# uitzet-automatisering.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant
+# zelf (automations.yaml of via de UI aangemaakt).
+
+alias: Airco's weer aan na overbelasting fase 3
+description: Zet precies de airco's weer aan die door overbelasting waren uitgezet
+mode: single
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.p1_meter_vermogen_fase_3
+    below: 4000
+    for:
+      minutes: 5
+actions:
+  - variables:
+      te_hervatten: >-
+        {{ (states('input_text.airco_overload_uitgezet') | default('', true)).split(',') | select | list }}
+  - condition: template
+    value_template: "{{ te_hervatten | length > 0 }}"
+  - action: climate.turn_on
+    target:
+      entity_id: "{{ te_hervatten }}"
+  - action: input_text.set_value
+    target:
+      entity_id: input_text.airco_overload_uitgezet
+    data:
+      value: ""
+  - action: notify.mobile_app_samsung_s23
+    data:
+      title: Airco's weer aan
+      message: >-
+        Fase 3 bleef 5 minuten onder 4000 W. {{ te_hervatten | length }} airco('s) weer aangezet.
