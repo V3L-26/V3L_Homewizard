@@ -1,12 +1,29 @@
 # Automatisering "Airco's weer aan na overbelasting fase 3"
 #
-# Zet, zodra fase 3 vijf minuten onder 4000 W is gebleven, precies de
-# airco's weer aan die door "Airco's uit bij overbelasting fase 3" zijn
-# uitgezet (opgeslagen in de helper input_text.airco_overload_uitgezet) -
-# en niet een airco die om een andere reden al uit stond voor de
-# overbelasting. Leegt de helper na afloop, ook als een van de
-# turn_on-commando's faalt (continue_on_error), zodat de helper nooit
-# "vast" blijft staan door één onbereikbare unit.
+# Zet, zodra fase 3 vijf minuten onder 4000 W is gebleven, elke airco die
+# door "Airco's uit bij overbelasting fase 3" is uitgezet terug naar de
+# hvac-modus die hij had vóór het uitschakelen (bijv. heat_cool,
+# fan_only), en niet zomaar "aan" - en niet een airco die om een andere
+# reden al uit stond.
+#
+# Gebruikt climate.set_hvac_mode in plaats van climate.turn_on, om
+# dezelfde reden als bij de uitzet-automatisering (deze Daikin-entiteiten
+# ondersteunen turn_on niet). Omdat set_hvac_mode geen "vorige stand"
+# onthoudt zoals turn_on dat probeert te doen, wordt de gewenste modus per
+# airco meegegeven vanuit de helper (opslagformaat: "entity_id=modus",
+# kommagescheiden). Ontbreekt de modus in een opgeslagen waarde (oud
+# formaat, of onvolledige data) dan valt hij terug op 'heat_cool'.
+#
+# BEKENDE BEPERKING: zie de uitzet-automatisering - de Daikin Onecta-
+# cloudintegratie reageert soms traag of negeert een los commando, en
+# heeft een streng dagelijks quotum (sensor "Resterend per dag"). Om een
+# eenmalig genegeerd/traag commando op te vangen zonder dat quotum zwaar
+# te belasten, wordt de volledige reeks commando's maximaal 2 keer
+# geprobeerd: direct bij het triggeren, en één herhaling na 45 seconden.
+#
+# Leegt de helper na afloop van alle pogingen, ook als een van de
+# set_hvac_mode-commando's blijft falen (continue_on_error), zodat de
+# helper nooit "vast" blijft staan door één onbereikbare unit.
 #
 # De marge tussen de uitzet-drempel (5250 W) en de hervat-drempel
 # (4000 W, vijf minuten aaneengesloten) voorkomt dat de airco's heen en
@@ -19,7 +36,9 @@
 # zelf (automations.yaml of via de UI aangemaakt).
 
 alias: Airco's weer aan na overbelasting fase 3
-description: Zet precies de airco's weer aan die door overbelasting waren uitgezet
+description: >-
+  Zet elke airco terug naar de hvac-modus van vóór het uitschakelen, met retries tegen
+  trage/genegeerde cloud-aanroepen
 mode: single
 triggers:
   - trigger: numeric_state
@@ -33,10 +52,25 @@ actions:
         {{ (states('input_text.airco_overload_uitgezet') | default('', true)).split(',') | select | list }}
   - condition: template
     value_template: "{{ te_hervatten | length > 0 }}"
-  - action: climate.turn_on
-    continue_on_error: true
-    target:
-      entity_id: "{{ te_hervatten }}"
+  - repeat:
+      count: 2
+      sequence:
+        - if:
+            - condition: template
+              value_template: "{{ repeat.index > 1 }}"
+          then:
+            - delay:
+                seconds: 45
+        - repeat:
+            for_each: "{{ te_hervatten }}"
+            sequence:
+              - action: climate.set_hvac_mode
+                continue_on_error: true
+                target:
+                  entity_id: "{{ repeat.item.split('=')[0] }}"
+                data:
+                  hvac_mode: >-
+                    {{ repeat.item.split('=')[1] if (repeat.item.split('=') | length > 1) else 'heat_cool' }}
   - action: input_text.set_value
     target:
       entity_id: input_text.airco_overload_uitgezet
@@ -46,4 +80,5 @@ actions:
     data:
       title: Airco's weer aan
       message: >-
-        Fase 3 bleef 5 minuten onder 4000 W. {{ te_hervatten | length }} airco('s) weer aangezet.
+        Fase 3 bleef 5 minuten onder 4000 W. {{ te_hervatten | length }} airco('s)
+        teruggezet (max. 2 pogingen) naar hun vorige stand.
