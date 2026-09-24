@@ -1,0 +1,66 @@
+# Automatisering "Airco woonkamer geblokkeerd tussen 23:00 en 06:00"
+#
+# Tweede laag van het "geen airco 's nachts"-beleid, naast de vaste
+# uitschakeling om 23:00 (airco-woonkamer-uit-om-23-00.yaml). Controleert
+# elke 2 minuten tussen 23:00 en 06:00 of de airco (opnieuw) handmatig is
+# aangezet, en zet 'm dan weer uit. Vangt zo elke poging om de airco
+# 's nachts aan te zetten, ook na de vaste 23:00-uitschakeling.
+#
+# ONTWERPGESCHIEDENIS: de eerste versie gebruikte een state-trigger (zonder
+# attribute-filter) op de climate-entiteit. Die bleek niet te werken zoals
+# bedoeld - zo'n trigger vuurt op ELKE attribuutwijziging (bijvoorbeeld een
+# kale temperatuurupdate), niet alleen op een echte aan/uit-wisseling, wat
+# tot verwarrende/valse trace-resultaten leidde. Vervangen door dit
+# periodieke polling-ontwerp (time_pattern, elke 2 minuten), gecombineerd
+# met een goedkope conditie die eerst de al bekende (gecachte) status in
+# Home Assistant checkt - dat kost geen Daikin-API-aanroep. Alleen als die
+# conditie aangeeft dat de airco daadwerkelijk aanstaat, wordt de refresh +
+# uit-cyclus (met Daikin-aanroepen) uitgevoerd. Zo blijft de polling zelf
+# vrijwel gratis, en wordt het Daikin-quotum alleen aangesproken wanneer er
+# echt iets te doen is. mode: single voorkomt dat een nieuwe check start
+# terwijl een vorige refresh + uit-cyclus nog bezig is.
+#
+# In Home Assistant is de "laatst uitgevoerd"-tijd in het
+# automatiseringsoverzicht alleen bijgewerkt als de conditie eenmaal echt
+# waar was (dus alleen bij een daadwerkelijke uitschakeling) - een
+# gewone poll die niets vindt levert wel een trace op (met result: false),
+# maar telt daar niet als "uitgevoerd". Zie de Traces-tab voor het volledige
+# beeld.
+#
+# Getest in de nacht van 24 op 25 september 2026: ving een handmatige
+# aan-actie succesvol af.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Airco woonkamer geblokkeerd tussen 23:00 en 06:00
+description: ''
+triggers:
+  - trigger: time_pattern
+    minutes: /2
+conditions:
+  - condition: time
+    after: "23:00:00"
+    before: "06:00:00"
+  - condition: template
+    value_template: >-
+      {{ states('climate.daikinap46344_room_temperature') not in ['off',
+      'unavailable', 'unknown'] }}
+actions:
+  - variables:
+      voor_refresh: "{{ states.climate.daikinap46344_room_temperature.last_updated }}"
+  - action: button.press
+    target:
+      entity_id: button.daikinap46344_refresh
+    data: {}
+  - wait_template: >-
+      {{ states.climate.daikinap46344_room_temperature.last_updated !=
+      voor_refresh }}
+    timeout:
+      seconds: 30
+    continue_on_timeout: true
+  - action: climate.set_hvac_mode
+    target:
+      device_id: 11d4134dc902d5394e05404c2712853e
+    data:
+      hvac_mode: 'off'
+mode: single

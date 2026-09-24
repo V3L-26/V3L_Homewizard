@@ -1,0 +1,30 @@
+# Automatisering "Airco Christian uitschakelen om 23:00"
+#
+# Zie airco-woonkamer-uit-om-23-00.yaml voor de volledige toelichting -
+# zelfde patroon, voor de airco in de slaapkamer van Christian.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Airco Christian uitschakelen om 23:00
+description: ''
+triggers:
+  - trigger: time
+    at: "23:00:00"
+conditions: []
+actions:
+  - variables:
+      voor_refresh: "{{ states.climate.daikinap86096_room_temperature.last_updated }}"
+  - action: button.press
+    target:
+      entity_id: button.daikinap86096_refresh
+    data: {}
+  - wait_template: "{{ states.climate.daikinap86096_room_temperature.last_updated != voor_refresh }}"
+    timeout:
+      seconds: 30
+    continue_on_timeout: true
+  - action: climate.set_hvac_mode
+    target:
+      device_id: 16975c6c2948a23cafb485400b1ee91e
+    data:
+      hvac_mode: 'off'
+mode: single

@@ -1,0 +1,43 @@
+# Automatisering "Airco Jason geblokkeerd tussen 23:00 en 06:00"
+#
+# Zie airco-woonkamer-geblokkeerd-nacht.yaml voor de volledige toelichting
+# en ontwerpgeschiedenis - zelfde patroon, voor de airco in de slaapkamer
+# van Jason.
+#
+# Getest in de nacht van 24 op 25 september 2026: ving een handmatige
+# aan-actie succesvol af.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Airco Jason geblokkeerd tussen 23:00 en 06:00
+description: ''
+triggers:
+  - trigger: time_pattern
+    minutes: /2
+conditions:
+  - condition: time
+    after: "23:00:00"
+    before: "06:00:00"
+  - condition: template
+    value_template: >-
+      {{ states('climate.daikinap86208_room_temperature') not in ['off',
+      'unavailable', 'unknown'] }}
+actions:
+  - variables:
+      voor_refresh: "{{ states.climate.daikinap86208_room_temperature.last_updated }}"
+  - action: button.press
+    target:
+      entity_id: button.daikinap86208_refresh
+    data: {}
+  - wait_template: >-
+      {{ states.climate.daikinap86208_room_temperature.last_updated !=
+      voor_refresh }}
+    timeout:
+      seconds: 30
+    continue_on_timeout: true
+  - action: climate.set_hvac_mode
+    target:
+      device_id: 340220b09ca9e0da8edefb69c49a78cd
+    data:
+      hvac_mode: 'off'
+mode: single

@@ -1,0 +1,30 @@
+# Automatisering "Airco Jason uitschakelen om 23:00"
+#
+# Zie airco-woonkamer-uit-om-23-00.yaml voor de volledige toelichting -
+# zelfde patroon, voor de airco in de slaapkamer van Jason.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Airco Jason uitschakelen om 23:00
+description: ''
+triggers:
+  - trigger: time
+    at: "23:00:00"
+conditions: []
+actions:
+  - variables:
+      voor_refresh: "{{ states.climate.daikinap86208_room_temperature.last_updated }}"
+  - action: button.press
+    target:
+      entity_id: button.daikinap86208_refresh
+    data: {}
+  - wait_template: "{{ states.climate.daikinap86208_room_temperature.last_updated != voor_refresh }}"
+    timeout:
+      seconds: 30
+    continue_on_timeout: true
+  - action: climate.set_hvac_mode
+    target:
+      device_id: 340220b09ca9e0da8edefb69c49a78cd
+    data:
+      hvac_mode: 'off'
+mode: single

@@ -1,0 +1,43 @@
+# Automatisering "Airco woonkamer uitschakelen om 23:00"
+#
+# Zet de airco in de woonkamer elke avond om 23:00 uit, als eerste laag van
+# het "geen airco 's nachts"-beleid (zie ook
+# airco-woonkamer-geblokkeerd-nacht.yaml voor de tweede laag, die de rest
+# van de nacht blijft controleren). Bewust in Home Assistant gebouwd - niet
+# via de planningsfunctie in de Daikin Onecta-app of de V3L-app zelf - zodat
+# gebruikers met toegang tot de gedeelde V3L-app deze planning niet zelf
+# kunnen uitschakelen. (Binnen de Daikin Onecta-app zelf is dit niet af te
+# dwingen: die app kent geen gebruikersrollen/rechten per account, dus elke
+# gebruiker van het gedeelde account kan evenveel wijzigen.)
+#
+# Gebruikt hetzelfde refresh + wait_template-patroon als de
+# overbelastingsautomatiseringen (zie die bestanden voor de volledige
+# uitleg): eerst de Daikin-status verversen, dan pas het uit-commando
+# sturen - nodig omdat de Daikin Onecta-cloudintegratie het commando
+# anders op verouderde gegevens lijkt te baseren.
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Airco woonkamer uitschakelen om 23:00
+description: ''
+triggers:
+  - trigger: time
+    at: "23:00:00"
+conditions: []
+actions:
+  - variables:
+      voor_refresh: "{{ states.climate.daikinap46344_room_temperature.last_updated }}"
+  - action: button.press
+    target:
+      entity_id: button.daikinap46344_refresh
+    data: {}
+  - wait_template: "{{ states.climate.daikinap46344_room_temperature.last_updated != voor_refresh }}"
+    timeout:
+      seconds: 30
+    continue_on_timeout: true
+  - action: climate.set_hvac_mode
+    target:
+      device_id: 11d4134dc902d5394e05404c2712853e
+    data:
+      hvac_mode: 'off'
+mode: single
