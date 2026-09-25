@@ -19,10 +19,22 @@
 # automatisering drukt daarom eerst op de refresh-knop van deze
 # Daikin-unit, en wacht (met een timeout van 30 seconden als vangnet, via
 # continue_on_timeout) tot de last_updated van de climate-entiteit
-# daadwerkelijk verandert, voordat het uit-commando wordt verstuurd. Bij
-# een refresh die niets verandert (bijv. omdat de airco al uit staat)
-# loopt de wait_template gewoon de timeout uit en wordt het (dan
-# onschadelijke) uit-commando alsnog verstuurd.
+# daadwerkelijk verandert, voordat het uit-commando wordt verstuurd.
+#
+# INCIDENT EN FIX (25 september 2026): de trigger-target combineerde
+# eerder area_id: meterkast met de specifieke entity_id
+# sensor.p1_meter_vermogen_fase_3. In Home Assistant is de combinatie van
+# area_id en entity_id in een target een UNIE, geen beperking - de
+# trigger reageerde daardoor op ALLE vermogensensoren in het gebied
+# "meterkast" (waaronder sensor.p1_meter_vermogen, het totaalvermogen
+# over alle fasen samen), niet uitsluitend op sensor.p1_meter_vermogen_fase_3
+# zoals bedoeld. Hierdoor schakelde deze airco op 25 september 2026
+# onterecht uit bij een totaalverbruik van 5699 W, terwijl fase 3 zelf op
+# dat moment nog geen 4000 W trok. Fix: area_id is verwijderd uit de
+# trigger-target; alleen de specifieke entity_id blijft over. Toegepast
+# bij alle drie de automatiseringen (woonkamer, Christian, Jason). Dit
+# incident bevestigde meteen ook dat de uitschakel-actie zelf (refresh +
+# wait + uit-commando) voor deze unit werkt.
 #
 # Er is GEEN automatisch herstel meer na afloop van de overbelasting - de
 # airco wordt handmatig weer aangezet zodra dat weer veilig is. De
@@ -30,8 +42,8 @@
 # en de bijbehorende helper (input_text.airco_overload_uitgezet) zijn
 # hiermee vervallen en niet meer nodig.
 #
-# Volgt hetzelfde patroon als de geteste woonkamer-versie, maar is zelf
-# nog niet los getest (stand: 23 september 2026).
+# Volgt hetzelfde patroon als de geteste woonkamer-versie; trigger-target-
+# fix toegepast 25 september 2026.
 #
 # Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
 
@@ -40,7 +52,6 @@ description: ''
 triggers:
   - trigger: power.changed
     target:
-      area_id: meterkast
       entity_id: sensor.p1_meter_vermogen_fase_3
     options:
       threshold:
