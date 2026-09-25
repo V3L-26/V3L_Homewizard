@@ -70,23 +70,26 @@ eerdere hervat-automatisering en de helper
 `input_text.airco_overload_uitgezet` zijn hiermee vervallen. Alle drie de
 automatiseringen sturen een pushmelding via `notify.samsung_s23`.
 
-**Incident (25 september 2026): verkeerde trigger-sensor.** Christians
-airco schakelde onterecht uit bij een totaal huisverbruik van 5699 W,
-terwijl fase 3 op dat moment maar ~4000 W trok. Onderzoek (Home
-Assistant-trace + `minute_log` in Supabase) wees uit dat de trigger van
-alle drie de live automatiseringen in Home Assistant per ongeluk stond
-ingesteld op `sensor.p1_meter_vermogen` (het totale vermogen over alle
-fasen samen) in plaats van op `sensor.p1_meter_vermogen_fase_3` -
-waarschijnlijk ontstaan doordat de drie automatiseringen ooit van elkaar
-zijn gedupliceerd zonder de trigger-entiteit opnieuw te controleren. Bij
-een drempel van 5200 W is dat een groot verschil: 5200 W op één fase is
-een reëel overbelastingsrisico, maar 5200 W totaal over drie fasen is
-gewoon normaal huishoudelijk gebruik. De repo-bestanden documenteerden
-altijd al de juiste sensor (`sensor.p1_meter_vermogen_fase_3`); dit was
-puur een afwijking in de live HA-configuratie, en is daar gecorrigeerd.
-Les voor volgende keer: bij het dupliceren van een automatisering altijd
-de trigger-entiteit expliciet controleren, niet aannemen dat die
-correct meekopieert.
+**Incident (25 september 2026): trigger-target reageerde op alle
+vermogensensoren in het gebied, niet alleen fase 3.** Christians airco
+schakelde onterecht uit bij een totaal huisverbruik van 5699 W, terwijl
+fase 3 op dat moment maar ~4000 W trok. Eerste diagnose (verkeerde
+sensor gekozen) bleek onjuist - de trigger-entiteit stond al die tijd al
+correct op `sensor.p1_meter_vermogen_fase_3`. De werkelijke oorzaak: de
+trigger-target combineerde `area_id: meterkast` mét die specifieke
+`entity_id`. In Home Assistant is die combinatie een **unie, geen
+beperking** - de trigger reageerde daardoor op alle vermogensensoren in
+het gebied "meterkast" (waaronder `sensor.p1_meter_vermogen`, het
+totaalvermogen over alle fasen samen), niet uitsluitend op de
+fase-3-sensor. Bij een drempel van 5200 W is dat een groot verschil: dat
+is een reëel overbelastingsrisico op één fase, maar heel normaal
+huishoudelijk gebruik als totaal over drie fasen. Fix: `area_id`
+verwijderd uit de trigger-target bij alle drie de automatiseringen, alleen
+de specifieke `entity_id` blijft over. Toegepast en bevestigd in Home
+Assistant op 25 september 2026. Les voor volgende keer: bij een
+`target` die zowel een gebied als een specifieke entiteit noemt, altijd
+bedenken dat dit een unie is, geen intersectie - voor een trigger die
+strikt op één entiteit moet reageren, alleen `entity_id` gebruiken.
 
 **Nachtblokkade airco's (geen airco tussen 23:00 en 06:00):** losstaand
 van de overbelastingsbeveiliging - expliciete wens dat er 's nachts nooit
@@ -157,9 +160,9 @@ toe telkens handmatig gerepackt:
   verplaatsen van de airco naar fase 1 staat in de planningsfase - zie
   `home-assistant/planning/overbelasting-uitbreiding.md` voor de volledige
   analyse, gemaakte keuzes en openstaande vragen.
-- Na het herstellen van het trigger-sensor-incident (zie hierboven) zijn de
+- Na het herstellen van het trigger-target-incident (zie hierboven) zijn de
   drie overbelastings-automatiseringen nog niet opnieuw end-to-end getest
-  met de juiste sensor (`sensor.p1_meter_vermogen_fase_3`).
+  met de gecorrigeerde trigger (alleen `entity_id`, zonder `area_id`).
 - De nachtblokkade-polling (elke 2 minuten, 23:00-06:00) is pas één nacht
   getest; bij problemen eerst de Traces in Home Assistant bekijken (elke
   poll levert een trace op, ook als er niets te doen was - alleen een
