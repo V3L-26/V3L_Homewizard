@@ -50,7 +50,8 @@ automatiseringen - één per Daikin-airco - zetten hun eigen unit uit zodra
 `sensor.p1_meter_vermogen_fase_3` boven 5200 W komt:
 - `airco-woonkamer-uit-bij-overbelasting-fase3.yaml` (getest en werkend)
 - `airco-christian-uit-bij-overbelasting-fase3.yaml` (slaapkamer Christian,
-  zelfde patroon, nog niet los getest)
+  zelfde patroon; de uitschakel-actie zelf is inmiddels bevestigd te
+  werken, zie het incident hieronder)
 - `airco-jason-uit-bij-overbelasting-fase3.yaml` (slaapkamer Jason, zelfde
   patroon, nog niet los getest)
 
@@ -68,6 +69,24 @@ airco's worden handmatig weer aangezet zodra dat weer veilig is. De
 eerdere hervat-automatisering en de helper
 `input_text.airco_overload_uitgezet` zijn hiermee vervallen. Alle drie de
 automatiseringen sturen een pushmelding via `notify.samsung_s23`.
+
+**Incident (25 september 2026): verkeerde trigger-sensor.** Christians
+airco schakelde onterecht uit bij een totaal huisverbruik van 5699 W,
+terwijl fase 3 op dat moment maar ~4000 W trok. Onderzoek (Home
+Assistant-trace + `minute_log` in Supabase) wees uit dat de trigger van
+alle drie de live automatiseringen in Home Assistant per ongeluk stond
+ingesteld op `sensor.p1_meter_vermogen` (het totale vermogen over alle
+fasen samen) in plaats van op `sensor.p1_meter_vermogen_fase_3` -
+waarschijnlijk ontstaan doordat de drie automatiseringen ooit van elkaar
+zijn gedupliceerd zonder de trigger-entiteit opnieuw te controleren. Bij
+een drempel van 5200 W is dat een groot verschil: 5200 W op één fase is
+een reëel overbelastingsrisico, maar 5200 W totaal over drie fasen is
+gewoon normaal huishoudelijk gebruik. De repo-bestanden documenteerden
+altijd al de juiste sensor (`sensor.p1_meter_vermogen_fase_3`); dit was
+puur een afwijking in de live HA-configuratie, en is daar gecorrigeerd.
+Les voor volgende keer: bij het dupliceren van een automatisering altijd
+de trigger-entiteit expliciet controleren, niet aannemen dat die
+correct meekopieert.
 
 **Nachtblokkade airco's (geen airco tussen 23:00 en 06:00):** losstaand
 van de overbelastingsbeveiliging - expliciete wens dat er 's nachts nooit
@@ -138,9 +157,9 @@ toe telkens handmatig gerepackt:
   verplaatsen van de airco naar fase 1 staat in de planningsfase - zie
   `home-assistant/planning/overbelasting-uitbreiding.md` voor de volledige
   analyse, gemaakte keuzes en openstaande vragen.
-- De Christian- en Jason-automatiseringen (overbelasting én nachtblokkade)
-  volgen hetzelfde patroon als de geteste woonkamer-versie, maar zijn nog
-  niet allemaal individueel bevestigd - zie hierboven per onderdeel.
+- Na het herstellen van het trigger-sensor-incident (zie hierboven) zijn de
+  drie overbelastings-automatiseringen nog niet opnieuw end-to-end getest
+  met de juiste sensor (`sensor.p1_meter_vermogen_fase_3`).
 - De nachtblokkade-polling (elke 2 minuten, 23:00-06:00) is pas één nacht
   getest; bij problemen eerst de Traces in Home Assistant bekijken (elke
   poll levert een trace op, ook als er niets te doen was - alleen een
