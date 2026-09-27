@@ -1,0 +1,92 @@
+# Automatisering "Fase 1 herstellen na overbelasting"
+#
+# Hoort bij fase1-cascade-afschakelen-bij-overbelasting.yaml. Zodra fase 1
+# vijf minuten onder 4000 W blijft, worden de apparaten die door die
+# automatisering zijn uitgeschakeld (bijgehouden via input_boolean-
+# helpers) weer ingeschakeld.
+#
+# In tegenstelling tot de airco's (handmatig herstel, vanwege de
+# onbetrouwbare/trage Daikin-cloud) herstellen deze HomeWizard-stekkers
+# WEL automatisch - ze zijn lokaal en direct betrouwbaar, dus dat risico
+# speelt hier niet. De drempel van 4000 W/5 minuten is dezelfde als de
+# oorspronkelijke (later voor de airco's losgelaten) hersteldrempel.
+#
+# Nog niet getest in de praktijk (stand: 27 september 2026).
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Fase 1 herstellen na overbelasting
+description: ''
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.p1_meter_vermogen_fase_1
+    below: 4000
+    for:
+      minutes: 5
+conditions:
+  - condition: or
+    conditions:
+      - condition: state
+        entity_id: input_boolean.magnetron_uit_door_overbelasting
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.airfryer_uit_door_overbelasting
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.koffiezetapparaat_uit_door_overbelasting
+        state: 'on'
+      - condition: state
+        entity_id: input_boolean.wasmachine_uit_door_overbelasting
+        state: 'on'
+actions:
+  - if:
+      - condition: state
+        entity_id: input_boolean.magnetron_uit_door_overbelasting
+        state: 'on'
+    then:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.keuken_magnetron
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.magnetron_uit_door_overbelasting
+  - if:
+      - condition: state
+        entity_id: input_boolean.airfryer_uit_door_overbelasting
+        state: 'on'
+    then:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.energy_socket
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.airfryer_uit_door_overbelasting
+  - if:
+      - condition: state
+        entity_id: input_boolean.koffiezetapparaat_uit_door_overbelasting
+        state: 'on'
+    then:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.keuken_koffiezetapparaat
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.koffiezetapparaat_uit_door_overbelasting
+  - if:
+      - condition: state
+        entity_id: input_boolean.wasmachine_uit_door_overbelasting
+        state: 'on'
+    then:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.hal_wasmachine
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.wasmachine_uit_door_overbelasting
+  - action: notify.send_message
+    target:
+      entity_id: notify.samsung_s23
+    data:
+      title: Fase 1 hersteld
+      message: De eerder afgeschakelde apparaten op fase 1 zijn weer ingeschakeld.
+mode: single

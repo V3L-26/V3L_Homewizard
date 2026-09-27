@@ -1,0 +1,44 @@
+# Automatisering "Fase 2 afschakelen bij overbelasting"
+#
+# Onderdeel van de uitbreiding van de overbelastingsbeveiliging met
+# HomeWizard Energy Sockets, zie home-assistant/planning/overbelasting-uitbreiding.md.
+# Op fase 2 heeft alleen de Vaatwasser een HomeWizard-stekker (Sunshower
+# en de gamecomputer niet), dus hier is geen cascade nodig zoals bij fase
+# 1 - gewoon uitschakelen bij overschrijding van de drempel (5200 W, geen
+# aanhoudingsduur, consistent met de andere overbelastingsautomatiseringen).
+#
+# Nog niet getest in de praktijk (stand: 27 september 2026).
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Fase 2 afschakelen bij overbelasting
+description: ''
+triggers:
+  - trigger: power.changed
+    target:
+      entity_id: sensor.p1_meter_vermogen_fase_2
+    options:
+      threshold:
+        type: above
+        value:
+          active_choice: number
+          number: 5200
+          unit_of_measurement: W
+conditions:
+  - condition: state
+    entity_id: switch.keuken_vaatwasser
+    state: 'on'
+actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.keuken_vaatwasser
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.vaatwasser_uit_door_overbelasting
+  - action: notify.send_message
+    target:
+      entity_id: notify.samsung_s23
+    data:
+      title: Fase 2 overbelasting
+      message: De vaatwasser is automatisch uitgeschakeld vanwege dreigende overbelasting.
+mode: single

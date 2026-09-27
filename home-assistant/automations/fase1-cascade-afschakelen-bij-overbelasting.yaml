@@ -1,0 +1,108 @@
+# Automatisering "Fase 1 cascaderend afschakelen bij overbelasting"
+#
+# Onderdeel van de uitbreiding van de overbelastingsbeveiliging met
+# HomeWizard Energy Sockets, zie home-assistant/planning/overbelasting-uitbreiding.md.
+# Schakelt bij een dreigende overbelasting op fase 1 de daar aangesloten
+# stopcontact-apparaten stap voor stap uit, in plaats van in één keer
+# alles: Magnetron -> Airfryer -> Koffiezetapparaat -> Wasmachine. Na elke
+# stap wordt de actuele fase-1-waarde opnieuw gecheckt (via een template-
+# conditie op sensor.p1_meter_vermogen_fase_1), zodat er niet meer wordt
+# uitgeschakeld dan nodig is om weer onder de drempel te komen.
+#
+# Volgorde is bewust van minst naar meest ingrijpend: de drie kortdurende
+# keukenapparaten eerst (een onderbroken magnetron-/airfryer-/koffie-beurt
+# is een klein ongemak), de wasmachine pas als laatste redmiddel (een
+# onderbroken wascyclus is vervelender). Drempel 5200 W, geen
+# aanhoudingsduur - consistent met de bestaande airco-overbelastings-
+# automatiseringen. Deze stekkers zijn lokaal (HomeWizard, geen cloud),
+# dus de refresh + wait_template-workaround die bij de Daikin-airco's
+# nodig is, is hier niet nodig.
+#
+# Elke uitgeschakelde stap zet een input_boolean-helper aan
+# (input_boolean.<apparaat>_uit_door_overbelasting), zodat de bijbehorende
+# hersteI-automatisering (fase1-herstel-na-overbelasting.yaml) weet welke
+# apparaten zij zelf heeft afgeschakeld en dus weer aan mag zetten -
+# apparaten die de gebruiker zelf om een andere reden uit had gelaten,
+# blijven met rust.
+#
+# Nog niet getest in de praktijk (stand: 27 september 2026).
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Fase 1 cascaderend afschakelen bij overbelasting
+description: ''
+triggers:
+  - trigger: power.changed
+    target:
+      entity_id: sensor.p1_meter_vermogen_fase_1
+    options:
+      threshold:
+        type: above
+        value:
+          active_choice: number
+          number: 5200
+          unit_of_measurement: W
+conditions: []
+actions:
+  - if:
+      - condition: state
+        entity_id: switch.keuken_magnetron
+        state: 'on'
+    then:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.keuken_magnetron
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.magnetron_uit_door_overbelasting
+      - delay: '00:00:05'
+  - if:
+      - condition: template
+        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5200 }}"
+      - condition: state
+        entity_id: switch.energy_socket
+        state: 'on'
+    then:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.energy_socket
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.airfryer_uit_door_overbelasting
+      - delay: '00:00:05'
+  - if:
+      - condition: template
+        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5200 }}"
+      - condition: state
+        entity_id: switch.keuken_koffiezetapparaat
+        state: 'on'
+    then:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.keuken_koffiezetapparaat
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.koffiezetapparaat_uit_door_overbelasting
+      - delay: '00:00:05'
+  - if:
+      - condition: template
+        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5200 }}"
+      - condition: state
+        entity_id: switch.hal_wasmachine
+        state: 'on'
+    then:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.hal_wasmachine
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.wasmachine_uit_door_overbelasting
+  - action: notify.send_message
+    target:
+      entity_id: notify.samsung_s23
+    data:
+      title: Fase 1 overbelasting
+      message: >-
+        Eén of meer apparaten op fase 1 zijn automatisch uitgeschakeld
+        vanwege dreigende overbelasting.
+mode: single

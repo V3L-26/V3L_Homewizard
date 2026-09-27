@@ -1,0 +1,48 @@
+# Automatisering "Fase 3 afschakelen bij overbelasting"
+#
+# Onderdeel van de uitbreiding van de overbelastingsbeveiliging met
+# HomeWizard Energy Sockets, zie home-assistant/planning/overbelasting-uitbreiding.md.
+# Op fase 3 heeft alleen de Droger een HomeWizard-stekker (de Oven, de
+# zwaarste onvoorspelbare last op deze fase, heeft er geen), dus ook hier
+# geen cascade nodig - gewoon uitschakelen bij overschrijding van de
+# drempel (5200 W, geen aanhoudingsduur).
+#
+# Let op: dit staat los van de bestaande airco-overbelastingsautomatiseringen,
+# die ook op sensor.p1_meter_vermogen_fase_3 triggeren bij 5200 W - beide
+# reageren onafhankelijk op dezelfde sensor, geen conflict.
+#
+# Nog niet getest in de praktijk (stand: 27 september 2026).
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Fase 3 afschakelen bij overbelasting
+description: ''
+triggers:
+  - trigger: power.changed
+    target:
+      entity_id: sensor.p1_meter_vermogen_fase_3
+    options:
+      threshold:
+        type: above
+        value:
+          active_choice: number
+          number: 5200
+          unit_of_measurement: W
+conditions:
+  - condition: state
+    entity_id: switch.hal_droger
+    state: 'on'
+actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.hal_droger
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.droger_uit_door_overbelasting
+  - action: notify.send_message
+    target:
+      entity_id: notify.samsung_s23
+    data:
+      title: Fase 3 overbelasting
+      message: De droger is automatisch uitgeschakeld vanwege dreigende overbelasting.
+mode: single

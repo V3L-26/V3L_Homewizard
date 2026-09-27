@@ -1,0 +1,38 @@
+# Automatisering "Fase 2 herstellen na overbelasting"
+#
+# Hoort bij fase2-vaatwasser-afschakelen-bij-overbelasting.yaml. Automatisch
+# herstel zodra fase 2 vijf minuten onder 4000 W blijft - net als de
+# andere nieuwe HomeWizard-stekker-automatiseringen, en in tegenstelling
+# tot de airco's (waar herstel handmatig is vanwege de onbetrouwbare
+# Daikin-cloud).
+#
+# Nog niet getest in de praktijk (stand: 27 september 2026).
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Fase 2 herstellen na overbelasting
+description: ''
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.p1_meter_vermogen_fase_2
+    below: 4000
+    for:
+      minutes: 5
+conditions:
+  - condition: state
+    entity_id: input_boolean.vaatwasser_uit_door_overbelasting
+    state: 'on'
+actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.keuken_vaatwasser
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.vaatwasser_uit_door_overbelasting
+  - action: notify.send_message
+    target:
+      entity_id: notify.samsung_s23
+    data:
+      title: Fase 2 hersteld
+      message: De vaatwasser is weer ingeschakeld.
+mode: single
