@@ -50,8 +50,7 @@ automatiseringen - één per Daikin-airco - zetten hun eigen unit uit zodra
 `sensor.p1_meter_vermogen_fase_3` boven 5200 W komt:
 - `airco-woonkamer-uit-bij-overbelasting-fase3.yaml` (getest en werkend)
 - `airco-christian-uit-bij-overbelasting-fase3.yaml` (slaapkamer Christian,
-  zelfde patroon; de uitschakel-actie zelf is inmiddels bevestigd te
-  werken, zie het incident hieronder)
+  zelfde patroon, nog niet los getest)
 - `airco-jason-uit-bij-overbelasting-fase3.yaml` (slaapkamer Jason, zelfde
   patroon, nog niet los getest)
 
@@ -71,25 +70,20 @@ eerdere hervat-automatisering en de helper
 automatiseringen sturen een pushmelding via `notify.samsung_s23`.
 
 **Incident (25 september 2026): trigger-target reageerde op alle
-vermogensensoren in het gebied, niet alleen fase 3.** Christians airco
-schakelde onterecht uit bij een totaal huisverbruik van 5699 W, terwijl
-fase 3 op dat moment maar ~4000 W trok. Eerste diagnose (verkeerde
-sensor gekozen) bleek onjuist - de trigger-entiteit stond al die tijd al
-correct op `sensor.p1_meter_vermogen_fase_3`. De werkelijke oorzaak: de
-trigger-target combineerde `area_id: meterkast` mét die specifieke
-`entity_id`. In Home Assistant is die combinatie een **unie, geen
-beperking** - de trigger reageerde daardoor op alle vermogensensoren in
-het gebied "meterkast" (waaronder `sensor.p1_meter_vermogen`, het
-totaalvermogen over alle fasen samen), niet uitsluitend op de
-fase-3-sensor. Bij een drempel van 5200 W is dat een groot verschil: dat
-is een reëel overbelastingsrisico op één fase, maar heel normaal
-huishoudelijk gebruik als totaal over drie fasen. Fix: `area_id`
-verwijderd uit de trigger-target bij alle drie de automatiseringen, alleen
-de specifieke `entity_id` blijft over. Toegepast en bevestigd in Home
-Assistant op 25 september 2026. Les voor volgende keer: bij een
-`target` die zowel een gebied als een specifieke entiteit noemt, altijd
-bedenken dat dit een unie is, geen intersectie - voor een trigger die
-strikt op één entiteit moet reageren, alleen `entity_id` gebruiken.
+vermogensensoren in het gebied, niet alleen fase 3.** De drie
+airco-overbelastingsautomatiseringen leken de airco's uit te zetten
+zonder dat fase 3 daadwerkelijk boven de drempel kwam. Oorzaak: de
+trigger-`target` combineerde `area_id: meterkast` mét
+`entity_id: sensor.p1_meter_vermogen_fase_3`. In Home Assistant werkt dat
+als een *union*, niet als een beperking - de trigger reageerde dus op elke
+vermogensensor in het gebied "meterkast" (inclusief de totaalsensor
+`sensor.p1_meter_vermogen`), niet uitsluitend op fase 3. Een eerdere
+analyse in deze repository concludeerde ten onrechte dat de verkeerde
+entiteit was ingesteld (de entiteit stond al goed) - die diagnose was
+onjuist en is hiermee gecorrigeerd. Fix: `area_id` verwijderd uit de
+`target`, alleen `entity_id` behouden, in alle drie de automatiseringen.
+Les voor volgende keer: nooit `area_id` en `entity_id` combineren in een
+target die bedoeld is om tot één specifieke entiteit te beperken.
 
 **Nachtblokkade airco's (geen airco tussen 23:00 en 06:00):** losstaand
 van de overbelastingsbeveiliging - expliciete wens dat er 's nachts nooit
@@ -131,6 +125,43 @@ meerdere accounts met verschillende rechten per unit (bevestigd via de
 officiële Daikin-FAQ), dus er is geen manier om te beperken wat een
 gebruiker van het gedeelde Onecta-account kan wijzigen.
 
+**Load balancing overige apparaten (fase 1, 2 en 3):** sinds eind
+september 2026 zijn er HomeWizard Energy Sockets geïnstalleerd op zes
+apparaten - Magnetron, Airfryer, Koffiezetapparaat en Wasmachine (fase
+1), Vaatwasser (fase 2) en Droger (fase 3) - die dit onderdeel van de
+uitbreiding in `home-assistant/planning/overbelasting-uitbreiding.md`
+invullen. In tegenstelling tot de Daikin-airco's zijn dit lokale
+HomeWizard-stekkers zonder cloud-vertraging, dus de refresh +
+wait_template-workaround is hier niet nodig.
+
+- `fase1-cascade-afschakelen-bij-overbelasting.yaml` /
+  `fase1-herstel-na-overbelasting.yaml`: fase 1 heeft vier stekkers, dus
+  hier is gekozen voor een cascade - bij overschrijding van 5200 W wordt
+  één apparaat per keer uitgeschakeld (Magnetron → Airfryer →
+  Koffiezetapparaat → Wasmachine, van minst naar meest ingrijpend), met
+  na elke stap een hercontrole of fase 1 alweer onder de drempel is.
+- `fase2-vaatwasser-afschakelen-bij-overbelasting.yaml` /
+  `fase2-vaatwasser-herstel-na-overbelasting.yaml`: fase 2 heeft maar één
+  stekker (Vaatwasser), dus gewoon direct uitschakelen bij 5200 W.
+- `fase3-droger-afschakelen-bij-overbelasting.yaml` /
+  `fase3-droger-herstel-na-overbelasting.yaml`: fase 3 heeft ook maar één
+  stekker (Droger), zelfde patroon. Staat los van, en naast, de bestaande
+  airco-overbelastingsautomatiseringen die dezelfde
+  `sensor.p1_meter_vermogen_fase_3` gebruiken - geen conflict, beide
+  reageren onafhankelijk.
+
+Anders dan bij de airco's (handmatig herstel, vanwege de onbetrouwbare
+Daikin-cloud) herstellen deze zes automatiseringen automatisch zodra hun
+fase 5 minuten onder 4000 W blijft - een bewuste keuze omdat lokale
+stekkers dat cloud-risico niet hebben. Zes input_boolean-helpers
+(`input_boolean.<apparaat>_uit_door_overbelasting`) houden per apparaat
+bij of de automatisering het zelf heeft uitgeschakeld, zodat herstel nooit
+iets aanzet dat de gebruiker om een andere reden uit had gelaten. De
+wasmachine en droger doen gewoon mee als laatste redmiddel (bewuste
+keuze: een onderbroken cyclus weegt minder zwaar dan een doorslaande
+zekering). Alle zes zijn ingeschakeld in Home Assistant maar nog niet in
+de praktijk getest.
+
 **Supabase** (project `sdkzzjrtmtzfvjrgpqbm`, "V3L HomeWizard") is de
 gedeelde database. RLS staat overal aan; de rol `authenticated` (het vaste
 dashboardaccount) mag lezen/schrijven, `anon` niets. De Edge Function
@@ -155,14 +186,17 @@ toe telkens handmatig gerepackt:
 
 ## Bekende openstaande punten
 
-- Uitbreiding van de overbelastingsbeveiliging naar meer apparaten
-  (droger, wasmachine, magnetron, airfryer, koffiezetapparaat) en het
-  verplaatsen van de airco naar fase 1 staat in de planningsfase - zie
-  `home-assistant/planning/overbelasting-uitbreiding.md` voor de volledige
-  analyse, gemaakte keuzes en openstaande vragen.
-- Na het herstellen van het trigger-target-incident (zie hierboven) zijn de
-  drie overbelastings-automatiseringen nog niet opnieuw end-to-end getest
-  met de gecorrigeerde trigger (alleen `entity_id`, zonder `area_id`).
+- De load-balancing automatiseringen voor fase 1/2/3 (Magnetron, Airfryer,
+  Koffiezetapparaat, Wasmachine, Vaatwasser, Droger) zijn gebouwd en
+  ingeschakeld, maar nog niet in de praktijk getest - zie hierboven en
+  `home-assistant/planning/overbelasting-uitbreiding.md`.
+- Het verplaatsen van de airco naar fase 1 staat nog in de planningsfase;
+  de Oven (fase 3) en de Sunshower (fase 2) hebben geen smart plug en
+  blijven oncontroleerbaar voor load balancing - zie het planningsdocument
+  voor de volledige analyse en openstaande vragen.
+- De Christian- en Jason-automatiseringen (overbelasting én nachtblokkade)
+  volgen hetzelfde patroon als de geteste woonkamer-versie, maar zijn nog
+  niet allemaal individueel bevestigd - zie hierboven per onderdeel.
 - De nachtblokkade-polling (elke 2 minuten, 23:00-06:00) is pas één nacht
   getest; bij problemen eerst de Traces in Home Assistant bekijken (elke
   poll levert een trace op, ook als er niets te doen was - alleen een
