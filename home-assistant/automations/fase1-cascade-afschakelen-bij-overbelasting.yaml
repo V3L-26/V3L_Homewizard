@@ -12,7 +12,7 @@
 # Volgorde is bewust van minst naar meest ingrijpend: de drie kortdurende
 # keukenapparaten eerst (een onderbroken magnetron-/airfryer-/koffie-beurt
 # is een klein ongemak), de wasmachine pas als laatste redmiddel (een
-# onderbroken wascyclus is vervelender). Drempel 5200 W. Deze stekkers zijn
+# onderbroken wascyclus is vervelender). Drempel 5000 W. Deze stekkers zijn
 # lokaal (HomeWizard, geen cloud), dus de refresh + wait_template-workaround
 # die bij de Daikin-airco's nodig is, is hier niet nodig.
 #
@@ -29,7 +29,7 @@
 # een korte piek die niet eens in de per-minuut Supabase-log terugkwam).
 # Om deze cascade niet onnodig op zulke korte pieken te laten reageren is
 # een ontdendering toegevoegd vóór de allereerste stap: 5 seconden
-# wachten en dan herbevestigen dat fase 1 nog steeds boven 5200 W staat
+# wachten en dan herbevestigen dat fase 1 nog steeds boven 5000 W staat
 # (power.changed ondersteunt geen native for:, vandaar deze
 # delay+conditie-aanpak). De per-stap hercontrole die de cascade al had,
 # bleef ongewijzigd. Elke daadwerkelijke afschakeling wordt nu ook gelogd
@@ -51,13 +51,13 @@ triggers:
         type: above
         value:
           active_choice: number
-          number: 5200
+          number: 5000
           unit_of_measurement: W
 conditions: []
 actions:
   - delay: '00:00:05'
   - condition: template
-    value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5200 }}"
+    value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5000 }}"
   - action: rest_command.supabase_login
     response_variable: login
   - if:
@@ -76,13 +76,13 @@ actions:
           token: "{{ login['content']['access_token'] }}"
           phase: L1
           watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
-          threshold: 5200
+          threshold: 5000
           source: magnetron
           action: uitgeschakeld
       - delay: '00:00:05'
   - if:
       - condition: template
-        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5200 }}"
+        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5000 }}"
       - condition: state
         entity_id: switch.energy_socket
         state: 'on'
@@ -98,13 +98,13 @@ actions:
           token: "{{ login['content']['access_token'] }}"
           phase: L1
           watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
-          threshold: 5200
+          threshold: 5000
           source: airfryer
           action: uitgeschakeld
       - delay: '00:00:05'
   - if:
       - condition: template
-        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5200 }}"
+        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5000 }}"
       - condition: state
         entity_id: switch.keuken_koffiezetapparaat
         state: 'on'
@@ -120,13 +120,13 @@ actions:
           token: "{{ login['content']['access_token'] }}"
           phase: L1
           watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
-          threshold: 5200
+          threshold: 5000
           source: koffiezetapparaat
           action: uitgeschakeld
       - delay: '00:00:05'
   - if:
       - condition: template
-        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5200 }}"
+        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5000 }}"
       - condition: state
         entity_id: switch.hal_wasmachine
         state: 'on'
@@ -142,7 +142,7 @@ actions:
           token: "{{ login['content']['access_token'] }}"
           phase: L1
           watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
-          threshold: 5200
+          threshold: 5000
           source: wasmachine
           action: uitgeschakeld
   - action: notify.send_message

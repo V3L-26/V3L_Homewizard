@@ -1,7 +1,7 @@
 # Automatisering "Airco woonkamer uitzetten bij overbelasting"
 #
 # Zet de airco in de woonkamer uit zodra sensor.p1_meter_vermogen_fase_3
-# boven 5200 W komt.
+# boven 5000 W komt.
 #
 # Onderdeel van een set van drie losse automatiseringen (woonkamer,
 # slaapkamer Christian, slaapkamer Jason) die de oudere, gecombineerde
@@ -41,7 +41,7 @@
 # Supabase-log terugkwam). Om deze airco niet onnodig op zulke korte
 # pieken te laten reageren is een ontdendering toegevoegd: de actiereeks
 # wacht nu eerst 5 seconden en herbevestigt dan dat fase 3 nog steeds
-# boven 5200 W staat, voordat er iets gebeurt (power.changed ondersteunt
+# boven 5000 W staat, voordat er iets gebeurt (power.changed ondersteunt
 # geen native for:, vandaar deze delay+conditie-aanpak). Verder wordt elke
 # daadwerkelijke afschakeling nu gelogd in de nieuwe Supabase-tabel
 # overload_event_log, met de watt-waarde op het moment dat de
@@ -70,13 +70,13 @@ triggers:
         type: above
         value:
           active_choice: number
-          number: 5200
+          number: 5000
           unit_of_measurement: W
 conditions: []
 actions:
   - delay: '00:00:05'
   - condition: template
-    value_template: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) > 5200 }}"
+    value_template: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) > 5000 }}"
   - variables:
       voor_refresh: "{{ states.climate.daikinap46344_room_temperature.last_updated }}"
       overload_watt: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) }}"
@@ -109,7 +109,7 @@ actions:
       token: "{{ login['content']['access_token'] }}"
       phase: L3
       watt: "{{ overload_watt }}"
-      threshold: 5200
+      threshold: 5000
       source: airco_woonkamer
       action: uitgeschakeld
 mode: single

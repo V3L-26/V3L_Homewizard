@@ -1,7 +1,7 @@
 # Automatisering "Overbelasting melding"
 #
 # Stuurt een e-mail (via de Supabase Edge Function send-alert-email) zodra
-# een fase boven de vaste drempel van 5250 W komt. Sinds app-versie 3.67
+# een fase boven de vaste drempel van 5000 W komt. Sinds app-versie 3.67
 # doet de app dit niet meer zelf (ook niet bij een rechtstreekse
 # P1-verbinding), om dubbele mails te voorkomen - dit is de enige plek
 # waar overbelasting nog wordt gemeld.
@@ -22,25 +22,25 @@
 # zelf (automations.yaml of via de UI aangemaakt).
 
 alias: Overbelasting melding
-description: Mail bij meer dan 5250 W op een fase
+description: Mail bij meer dan 5000 W op een fase
 mode: parallel
 max: 3
 triggers:
   - trigger: numeric_state
     entity_id: sensor.p1_meter_vermogen_fase_1
-    above: 5250
+    above: 5000
     for:
       seconds: 5
     id: L1
   - trigger: numeric_state
     entity_id: sensor.p1_meter_vermogen_fase_2
-    above: 5250
+    above: 5000
     for:
       seconds: 5
     id: L2
   - trigger: numeric_state
     entity_id: sensor.p1_meter_vermogen_fase_3
-    above: 5250
+    above: 5000
     for:
       seconds: 5
     id: L3
@@ -62,6 +62,6 @@ actions:
       token: "{{ login['content']['access_token'] }}"
       phase: "{{ trigger.id if trigger.id is defined else 'Test' }}"
       watt: "{{ trigger.to_state.state if trigger.to_state is defined else 0 }}"
-      threshold: 5250
+      threshold: 5000
       source: mail
       action: mail_verstuurd

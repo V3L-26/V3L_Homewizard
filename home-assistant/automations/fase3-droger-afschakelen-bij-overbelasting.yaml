@@ -5,10 +5,10 @@
 # Op fase 3 heeft alleen de Droger een HomeWizard-stekker (de Oven, de
 # zwaarste onvoorspelbare last op deze fase, heeft er geen), dus ook hier
 # geen cascade nodig - gewoon uitschakelen bij overschrijding van de
-# drempel (5200 W).
+# drempel (5000 W).
 #
 # Let op: dit staat los van de bestaande airco-overbelastingsautomatiseringen,
-# die ook op sensor.p1_meter_vermogen_fase_3 triggeren bij 5200 W - beide
+# die ook op sensor.p1_meter_vermogen_fase_3 triggeren bij 5000 W - beide
 # reageren onafhankelijk op dezelfde sensor, geen conflict.
 #
 # UPDATE (1 oktober 2026): de zustautomatisering op fase 2 (vaatwasser)
@@ -17,7 +17,7 @@
 # een korte piek die niet eens in de per-minuut Supabase-log terugkwam).
 # Om deze automatisering niet onnodig op zulke korte pieken te laten
 # reageren is een ontdendering toegevoegd (5 seconden wachten en dan
-# herbevestigen dat fase 3 nog steeds boven 5200 W staat, via
+# herbevestigen dat fase 3 nog steeds boven 5000 W staat, via
 # delay+conditie omdat power.changed geen native for: ondersteunt).
 # Elke daadwerkelijke afschakeling wordt nu ook gelogd in de nieuwe
 # Supabase-tabel overload_event_log.
@@ -37,7 +37,7 @@ triggers:
         type: above
         value:
           active_choice: number
-          number: 5200
+          number: 5000
           unit_of_measurement: W
 conditions:
   - condition: state
@@ -46,7 +46,7 @@ conditions:
 actions:
   - delay: '00:00:05'
   - condition: template
-    value_template: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) > 5200 }}"
+    value_template: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) > 5000 }}"
   - variables:
       overload_watt: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) }}"
   - action: switch.turn_off
@@ -68,7 +68,7 @@ actions:
       token: "{{ login['content']['access_token'] }}"
       phase: L3
       watt: "{{ overload_watt }}"
-      threshold: 5200
+      threshold: 5000
       source: droger
       action: uitgeschakeld
 mode: single
