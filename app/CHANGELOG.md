@@ -3,6 +3,24 @@
 Volledige changelog staat ook in de app zelf (pagina "Versie"). Dit is een
 overzicht op hoofdlijnen van wat er in dit project is gewijzigd.
 
+## 3.71
+Noodfix: 3.70 opende leeg (alle meters op 0). Oorzaak: de nieuwe
+instelbare-overbelastingsgrens-code riep bij het opstarten meteen
+`applyLanguage()` aan, die op zijn beurt een functie aanraakt
+(`updateDeleteSelectedBtn`) die een pas veel verderop in het script
+gedeclareerde variabele (`selectedPhotoNames`) gebruikt. Zo vroeg in de
+opstartvolgorde bestond die variabele nog niet, wat een JavaScript-fout
+gaf die de rest van het opstarten (incl. het live ophalen van meterdata
+via `start()`) liet stoppen - getest en bevestigd met een headless-
+browsercheck, en na de fix geverifieerd dat die niet meer optreedt.
+
+Daarnaast, los hiervan gevonden tijdens dezelfde check: de knop "Ververs"
+op de Verbruikslog-pagina en het automatisch inloggen riepen een functie
+`loadHighestDay()` aan die niet meer bestaat (restant van een oudere versie
+van de "dag met hoogste verbruik"-tegel, inmiddels vervangen door de tabel
+"Verbruik per dag", zie 3.6x hieronder). Beide aanroepen zijn vervangen
+door de huidige functie `loadDailyTotals()`.
+
 ## 3.70
 De overbelastingsgrens en de tarieven (stroom/gas) zijn nu instelbaar in de
 app zelf, in plaats van vast ingesteld in Home Assistant. Een wijziging
