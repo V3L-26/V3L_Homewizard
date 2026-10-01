@@ -3,6 +3,29 @@
 Volledige changelog staat ook in de app zelf (pagina "Versie"). Dit is een
 overzicht op hoofdlijnen van wat er in dit project is gewijzigd.
 
+## 3.69
+Overbelastingsgrens verlaagd van 5250 W naar 5000 W per fase, gelijk aan de
+nieuwe drempel in Home Assistant (meer marge tot de 5750 W hoofdzekering,
+vooral met de 5-seconden-ontdendering die beide systemen nu gebruiken). De
+waarde in Supabase (`app_settings`, key `p1_overload_w`) is in dezelfde
+beweging bijgewerkt.
+
+## 3.68
+Nieuw: "Overbelastingsmeldingen" op de Storingen-pagina, een alleen-lezen
+overzicht van elke automatische overbelastingsactie die Home Assistant
+uitvoert (mailmelding of een apparaat uitschakelen), met fase, exact
+wattage en tijdstip. Haalt de gegevens op uit de nieuwe Supabase-tabel
+`overload_event_log` (zie `home-assistant/configuration.yaml`,
+rest_command `supabase_log_overload_event`).
+
+Ook nieuw app-icoon (lampje), voor de launcher en het adaptive-icon-laagje
+op alle schermdichtheden.
+
+Daarnaast: de eerdere commit op deze bestandsnaam bleek een onvolledige,
+halverwege afgebroken push van `app/index.html` (1230 van de 5541 regels) -
+nog niet via de API hersteld (bestandsgrootte-beperking); het werkende
+bestand wordt rechtstreeks als APK/HTML gedeeld, zie de chat.
+
 ## 3.67
 Overbelasting-e-mails en het loggen van storingen gebeuren niet meer door de
 app zelf, ook niet bij een rechtstreekse P1-verbinding. Dat doet nu volledig
