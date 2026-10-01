@@ -3,6 +3,20 @@
 Volledige changelog staat ook in de app zelf (pagina "Versie"). Dit is een
 overzicht op hoofdlijnen van wat er in dit project is gewijzigd.
 
+## 3.70
+De overbelastingsgrens en de tarieven (stroom/gas) zijn nu instelbaar in de
+app zelf, in plaats van vast ingesteld in Home Assistant. Een wijziging
+wordt via `app_settings` in Supabase gedeeld; Home Assistant haalt de
+waarden nu op (nieuwe automatisering
+`home-assistant/automations/instellingen-uit-supabase.yaml`) in plaats van
+ze te versturen - de oude `prijzen-naar-supabase.yaml` is daarmee vervallen.
+
+Vereist een nieuwe HA-helper `input_number.p1_overload_w` (min 4000, max
+5750, step 50, eenheid W) - zie de opmerkingen bovenaan de nieuwe
+automatisering voor de precieze stappen. De 7 overbelastings-
+automatiseringen (mail + airco's + fase1/2/3) zijn aangepast om deze helper
+te lezen in plaats van de vaste waarde 5000.
+
 ## 3.69
 Overbelastingsgrens verlaagd van 5250 W naar 5000 W per fase, gelijk aan de
 nieuwe drempel in Home Assistant (meer marge tot de 5750 W hoofdzekering,
