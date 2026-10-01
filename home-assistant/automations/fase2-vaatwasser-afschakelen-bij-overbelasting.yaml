@@ -19,6 +19,15 @@
 # afschakeling wordt nu gelogd in de nieuwe Supabase-tabel
 # overload_event_log met de exacte watt-waarde.
 #
+# UPDATE (1 oktober 2026, later): de overbelastingsgrens is sinds app-versie
+# 3.70 instelbaar IN DE V3L-APP in plaats van hier vastgelegd. De trigger
+# hieronder reageert daarom op een vaste, lage bodemwaarde (4000 W, de
+# laagste waarde die in de app te kiezen is) zodat hij altijd op tijd
+# afgaat; de conditie hieronder vergelijkt de actuele waarde met de echte -
+# door de gebruiker gekozen - grens in de helper input_number.p1_overload_w,
+# die wordt bijgewerkt door automations/instellingen-uit-supabase.yaml. Zie
+# app/CHANGELOG.md 3.70.
+#
 # Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
 
 alias: Fase 2 afschakelen bij overbelasting
@@ -32,7 +41,7 @@ triggers:
         type: above
         value:
           active_choice: number
-          number: 5000
+          number: 4000
           unit_of_measurement: W
 conditions:
   - condition: state
@@ -41,9 +50,10 @@ conditions:
 actions:
   - delay: '00:00:05'
   - condition: template
-    value_template: "{{ states('sensor.p1_meter_vermogen_fase_2') | float(0) > 5000 }}"
+    value_template: "{{ states('sensor.p1_meter_vermogen_fase_2') | float(0) > (states('input_number.p1_overload_w') | float(5000)) }}"
   - variables:
       overload_watt: "{{ states('sensor.p1_meter_vermogen_fase_2') | float(0) }}"
+      overload_threshold: "{{ states('input_number.p1_overload_w') | float(5000) }}"
   - action: switch.turn_off
     target:
       entity_id: switch.keuken_vaatwasser
@@ -63,7 +73,7 @@ actions:
       token: "{{ login['content']['access_token'] }}"
       phase: L2
       watt: "{{ overload_watt }}"
-      threshold: 5000
+      threshold: "{{ overload_threshold }}"
       source: vaatwasser
       action: uitgeschakeld
 mode: single

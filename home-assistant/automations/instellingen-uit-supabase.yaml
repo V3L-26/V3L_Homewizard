@@ -1,0 +1,78 @@
+# Automatisering "Instellingen uit Supabase ophalen"
+#
+# Sinds app-versie 3.70 (1 oktober 2026) is de V3L-app de plek waar de
+# overbelastingsgrens EN de tarieven (stroom/gas) worden ingesteld, in
+# plaats van Home Assistant. Deze automatisering doet het omgekeerde van de
+# oude "Prijzen naar Supabase" (die HA -> Supabase stuurde; die
+# automatisering is vervallen, zie git-historie van dit bestand): hij haalt
+# app_settings (p1_overload_w / p1_elec_price / p1_gas_price) op uit
+# Supabase en zet de bijbehorende HA-helpers daarmee gelijk, zodat de
+# bestaande overbelastings-automatiseringen en de HA-kostenberekening ook
+# de in de app ingestelde waarden gebruiken.
+#
+# Vereist drie helpers (Instellingen > Apparaten en diensten > Hulpmiddelen
+# > Nummer). input_number.stroomprijs en input_number.gasprijs bestonden al
+# (zie de vervallen "Prijzen naar Supabase"); input_number.p1_overload_w is
+# nieuw:
+#   - input_number.p1_overload_w   min 4000, max 5750, step 50, eenheid W
+#   - input_number.stroomprijs     (bestond al)
+#   - input_number.gasprijs        (bestond al)
+#
+# Let op: de overbelastings-automatiseringen zelf (overbelasting-melding.yaml,
+# airco-*-fase3.yaml, fase1-cascade-*.yaml, fase2-vaatwasser-*.yaml,
+# fase3-droger-*.yaml) zijn aangepast om input_number.p1_overload_w te lezen
+# in plaats van de vaste waarde 5000 - zie de UPDATE-opmerking van
+# 1 oktober 2026 (later) in elk van die bestanden.
+#
+# Nog niet getest in de praktijk (stand: 1 oktober 2026).
+#
+# Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
+
+alias: Instellingen uit Supabase ophalen
+description: Haalt overbelastingsgrens en tarieven op uit app_settings (ingesteld vanuit de V3L-app)
+triggers:
+  - trigger: time_pattern
+    minutes: "/1"
+  - trigger: homeassistant
+    event: start
+conditions: []
+actions:
+  - action: rest_command.supabase_login
+    response_variable: login
+  - action: rest_command.supabase_get_app_settings
+    data:
+      token: "{{ login['content']['access_token'] }}"
+    response_variable: settings
+  - variables:
+      rows: "{{ settings['content'] }}"
+      overload_w: "{{ (rows | selectattr('field_id','eq','p1_overload_w') | map(attribute='value') | list | first | default(5000)) | float(5000) }}"
+      elec_price: "{{ rows | selectattr('field_id','eq','p1_elec_price') | map(attribute='value') | list | first | default(none) }}"
+      gas_price: "{{ rows | selectattr('field_id','eq','p1_gas_price') | map(attribute='value') | list | first | default(none) }}"
+  - if:
+      - condition: template
+        value_template: "{{ overload_w != (states('input_number.p1_overload_w') | float(0)) }}"
+    then:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.p1_overload_w
+        data:
+          value: "{{ overload_w }}"
+  - if:
+      - condition: template
+        value_template: "{{ elec_price is not none and (elec_price | float(-1)) != (states('input_number.stroomprijs') | float(0)) }}"
+    then:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.stroomprijs
+        data:
+          value: "{{ elec_price | float }}"
+  - if:
+      - condition: template
+        value_template: "{{ gas_price is not none and (gas_price | float(-1)) != (states('input_number.gasprijs') | float(0)) }}"
+    then:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.gasprijs
+        data:
+          value: "{{ gas_price | float }}"
+mode: single

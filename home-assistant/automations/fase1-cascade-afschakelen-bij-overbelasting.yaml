@@ -12,7 +12,8 @@
 # Volgorde is bewust van minst naar meest ingrijpend: de drie kortdurende
 # keukenapparaten eerst (een onderbroken magnetron-/airfryer-/koffie-beurt
 # is een klein ongemak), de wasmachine pas als laatste redmiddel (een
-# onderbroken wascyclus is vervelender). Drempel 5000 W. Deze stekkers zijn
+# onderbroken wascyclus is vervelender). Drempel instelbaar in de app (zie
+# UPDATE hieronder, 3.70). Deze stekkers zijn
 # lokaal (HomeWizard, geen cloud), dus de refresh + wait_template-workaround
 # die bij de Daikin-airco's nodig is, is hier niet nodig.
 #
@@ -35,6 +36,15 @@
 # bleef ongewijzigd. Elke daadwerkelijke afschakeling wordt nu ook gelogd
 # in de nieuwe Supabase-tabel overload_event_log.
 #
+# UPDATE (1 oktober 2026, later): de overbelastingsgrens is sinds app-versie
+# 3.70 instelbaar IN DE V3L-APP in plaats van hier vastgelegd. De trigger
+# hieronder reageert daarom op een vaste, lage bodemwaarde (4000 W, de
+# laagste waarde die in de app te kiezen is) zodat hij altijd op tijd
+# afgaat; alle hercontroles (de eerste ontdendering en elke stap in de
+# cascade) vergelijken nu met de echte - door de gebruiker gekozen - grens
+# in de helper input_number.p1_overload_w, die wordt bijgewerkt door
+# automations/instellingen-uit-supabase.yaml. Zie app/CHANGELOG.md 3.70.
+#
 # Getest in de praktijk (zie README, incident 1 oktober 2026 - overigens
 # op fase 2, niet fase 1).
 #
@@ -51,13 +61,15 @@ triggers:
         type: above
         value:
           active_choice: number
-          number: 5000
+          number: 4000
           unit_of_measurement: W
 conditions: []
 actions:
   - delay: '00:00:05'
   - condition: template
-    value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5000 }}"
+    value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > (states('input_number.p1_overload_w') | float(5000)) }}"
+  - variables:
+      overload_threshold: "{{ states('input_number.p1_overload_w') | float(5000) }}"
   - action: rest_command.supabase_login
     response_variable: login
   - if:
@@ -76,13 +88,13 @@ actions:
           token: "{{ login['content']['access_token'] }}"
           phase: L1
           watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
-          threshold: 5000
+          threshold: "{{ overload_threshold }}"
           source: magnetron
           action: uitgeschakeld
       - delay: '00:00:05'
   - if:
       - condition: template
-        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5000 }}"
+        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > overload_threshold }}"
       - condition: state
         entity_id: switch.energy_socket
         state: 'on'
@@ -98,13 +110,13 @@ actions:
           token: "{{ login['content']['access_token'] }}"
           phase: L1
           watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
-          threshold: 5000
+          threshold: "{{ overload_threshold }}"
           source: airfryer
           action: uitgeschakeld
       - delay: '00:00:05'
   - if:
       - condition: template
-        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5000 }}"
+        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > overload_threshold }}"
       - condition: state
         entity_id: switch.keuken_koffiezetapparaat
         state: 'on'
@@ -120,13 +132,13 @@ actions:
           token: "{{ login['content']['access_token'] }}"
           phase: L1
           watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
-          threshold: 5000
+          threshold: "{{ overload_threshold }}"
           source: koffiezetapparaat
           action: uitgeschakeld
       - delay: '00:00:05'
   - if:
       - condition: template
-        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5000 }}"
+        value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > overload_threshold }}"
       - condition: state
         entity_id: switch.hal_wasmachine
         state: 'on'
@@ -142,7 +154,7 @@ actions:
           token: "{{ login['content']['access_token'] }}"
           phase: L1
           watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
-          threshold: 5000
+          threshold: "{{ overload_threshold }}"
           source: wasmachine
           action: uitgeschakeld
   - action: notify.send_message

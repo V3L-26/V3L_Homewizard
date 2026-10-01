@@ -1,32 +1,15 @@
-# Automatisering "Prijzen naar Supabase"
+# VERVALLEN sinds app-versie 3.70 (1 oktober 2026) - zie
+# home-assistant/automations/instellingen-uit-supabase.yaml.
 #
-# Stuurt de stroom- en gasprijs (HA-helpers input_number.stroomprijs en
-# input_number.gasprijs) naar app_settings in Supabase, zodra een van
-# beide verandert of bij het opstarten van Home Assistant. De app leest
-# deze prijzen sindsdien alleen-lezen (zie app/index.html, versie 3.65+).
+# Deze automatisering stuurde de HA-helpers input_number.stroomprijs en
+# input_number.gasprijs NAAR app_settings in Supabase (HA was de bron). Sinds
+# v3.70 is de V3L-app zelf de plek waar de tarieven worden ingesteld, en
+# werkt de sync de andere kant op: Supabase -> HA, via de nieuwe
+# automatisering "Instellingen uit Supabase ophalen".
 #
-# Documentatiekopie - de echte automatisering staat in Home Assistant
-# zelf (automations.yaml of via de UI aangemaakt).
-
-alias: Prijzen naar Supabase
-description: Zet de HA-tariefhelpers door naar app_settings in Supabase
-triggers:
-  - trigger: state
-    entity_id:
-      - input_number.stroomprijs
-      - input_number.gasprijs
-  - trigger: homeassistant
-    event: start
-actions:
-  - action: rest_command.supabase_login
-    response_variable: login
-  - action: rest_command.supabase_set_setting
-    data:
-      token: "{{ login['content']['access_token'] }}"
-      field: p1_elec_price
-      value: "{{ states('input_number.stroomprijs') }}"
-  - action: rest_command.supabase_set_setting
-    data:
-      token: "{{ login['content']['access_token'] }}"
-      field: p1_gas_price
-      value: "{{ states('input_number.gasprijs') }}"
+# Verwijder deze automatisering uit je eigen Home Assistant (als hij daar
+# nog actief staat) en vervang hem door "Instellingen uit Supabase ophalen".
+# Als je deze automatisering laat staan EN de nieuwe erbij zet, ontstaat er
+# geen oneindige lus (de waarden convergeren, want beide kanten schrijven
+# uiteindelijk dezelfde waarde), maar het is dubbel werk en verwarrend -
+# dus gewoon verwijderen.

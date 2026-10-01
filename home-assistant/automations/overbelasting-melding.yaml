@@ -18,38 +18,52 @@
 # configuration.yaml), zodat de exacte triggerwaarde achteraf in de V3L-app
 # te zien is zonder een HA-trace te hoeven opzoeken.
 #
+# UPDATE (1 oktober 2026, later): de overbelastingsgrens is sinds app-versie
+# 3.70 instelbaar IN DE V3L-APP (Instellingen > Overbelastingsgrens) in
+# plaats van hier vastgelegd. De triggers hieronder reageren daarom op een
+# vaste, lage bodemwaarde (4000 W, de laagste waarde die in de app te kiezen
+# is) zodat ze altijd op tijd afgaan; een aparte conditie vergelijkt de
+# actuele waarde met de echte - door de gebruiker gekozen - grens in de
+# helper input_number.p1_overload_w, die wordt bijgewerkt door
+# automations/instellingen-uit-supabase.yaml. Zie app/CHANGELOG.md 3.70.
+#
 # Documentatiekopie - de echte automatisering staat in Home Assistant
 # zelf (automations.yaml of via de UI aangemaakt).
 
 alias: Overbelasting melding
-description: Mail bij meer dan 5000 W op een fase
+description: Mail bij overschrijding van de (in de app ingestelde) overbelastingsgrens
 mode: parallel
 max: 3
 triggers:
   - trigger: numeric_state
     entity_id: sensor.p1_meter_vermogen_fase_1
-    above: 5000
+    above: 4000
     for:
       seconds: 5
     id: L1
   - trigger: numeric_state
     entity_id: sensor.p1_meter_vermogen_fase_2
-    above: 5000
+    above: 4000
     for:
       seconds: 5
     id: L2
   - trigger: numeric_state
     entity_id: sensor.p1_meter_vermogen_fase_3
-    above: 5000
+    above: 4000
     for:
       seconds: 5
     id: L3
 conditions:
   - condition: template
     value_template: >-
+      {{ (trigger.to_state.state | float(0)) > (states('input_number.p1_overload_w') | float(5000)) }}
+  - condition: template
+    value_template: >-
       {{ this.attributes.last_triggered is none
          or (now() - this.attributes.last_triggered).total_seconds() > 60 }}
 actions:
+  - variables:
+      overload_threshold: "{{ states('input_number.p1_overload_w') | float(5000) }}"
   - action: rest_command.supabase_login
     response_variable: login
   - action: rest_command.stuur_overload_mail
@@ -57,11 +71,12 @@ actions:
       token: "{{ login['content']['access_token'] }}"
       phase: "{{ trigger.id if trigger.id is defined else 'Test' }}"
       watt: "{{ trigger.to_state.state if trigger.to_state is defined else 0 }}"
+      threshold: "{{ overload_threshold }}"
   - action: rest_command.supabase_log_overload_event
     data:
       token: "{{ login['content']['access_token'] }}"
       phase: "{{ trigger.id if trigger.id is defined else 'Test' }}"
       watt: "{{ trigger.to_state.state if trigger.to_state is defined else 0 }}"
-      threshold: 5000
+      threshold: "{{ overload_threshold }}"
       source: mail
       action: mail_verstuurd

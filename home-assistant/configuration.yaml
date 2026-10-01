@@ -86,7 +86,7 @@ rest_command:
           "to_email": "arjan@familievandriel.nl",
           "phase": phase,
           "watt": watt | int(0),
-          "threshold": 5250,
+          "threshold": threshold | int(5000),
           "time": now().strftime('%d-%m-%Y %H:%M:%S')
         } | tojson
       }}
@@ -151,9 +151,11 @@ rest_command:
       Content-Type: application/json
     payload: !secret supabase_login_payload
 
-  # Schrijft een tarief (stroom- of gasprijs) naar app_settings. Aangeroepen
-  # door automations/prijzen-naar-supabase.yaml met variabelen "field" en
-  # "value".
+  # Schrijft een losse instelling (tarief of andere app_settings-waarde)
+  # naar Supabase. Generiek stuk gereedschap - momenteel niet meer
+  # aangeroepen door een eigen automatisering (de oude
+  # prijzen-naar-supabase.yaml is vervallen sinds app-versie 3.70, zie dat
+  # bestand), maar nog bruikbaar voor een toekomstige HA->app-instelling.
   supabase_set_setting:
     url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/rest/v1/app_settings?on_conflict=field_id"
     method: post
@@ -163,6 +165,20 @@ rest_command:
       Content-Type: application/json
       Prefer: "resolution=merge-duplicates,return=minimal"
     payload: '{"field_id":"{{ field }}","value":"{{ value }}","updated_at":"{{ now().isoformat() }}"}'
+
+  # Haalt de overbelastingsgrens en de tarieven op uit app_settings - het
+  # omgekeerde van supabase_set_setting hierboven. Sinds app-versie 3.70
+  # stelt de V3L-app deze drie waarden zelf in (zie app/CHANGELOG.md);
+  # Home Assistant haalt ze hiermee op. Aangeroepen door
+  # automations/instellingen-uit-supabase.yaml met variabele "token"; het
+  # antwoord komt terug via response_variable (settings['content'] is een
+  # lijst van {field_id, value}-objecten).
+  supabase_get_app_settings:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/rest/v1/app_settings?select=field_id,value&field_id=in.(p1_overload_w,p1_elec_price,p1_gas_price)"
+    method: get
+    headers:
+      apikey: !secret supabase_anon_key
+      Authorization: "Bearer {{ token }}"
 
   # Maakt de daily_cost-rij van vandaag aan met de meterstanden van
   # middernacht als startwaarden (ignore-duplicates: bestaat de rij al,
