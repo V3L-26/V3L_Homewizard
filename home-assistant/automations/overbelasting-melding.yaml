@@ -6,6 +6,18 @@
 # P1-verbinding), om dubbele mails te voorkomen - dit is de enige plek
 # waar overbelasting nog wordt gemeld.
 #
+# UPDATE (1 oktober 2026): op 1 oktober stuurde deze automatisering een
+# terechte maar over een zeer kortstondige piek op fase 2 (3384 W -> 5335 W
+# binnen 5 seconden, bevestigd via de HA-trace - geen bug, de trigger zelf
+# was schoon). Die piek kwam niet eens terug in de per-minuut Supabase-log,
+# wat verwarrend was om achteraf te verifiëren. Daarom: (1) elke trigger
+# heeft nu een for: van 5 seconden, zodat pas gereageerd wordt als de fase
+# aaneengesloten boven de drempel blijft in plaats van op de eerste losse
+# meting, en (2) elke verstuurde melding wordt nu ook gelogd in de nieuwe
+# Supabase-tabel overload_event_log (zie supabase_log_overload_event in
+# configuration.yaml), zodat de exacte triggerwaarde achteraf in de V3L-app
+# te zien is zonder een HA-trace te hoeven opzoeken.
+#
 # Documentatiekopie - de echte automatisering staat in Home Assistant
 # zelf (automations.yaml of via de UI aangemaakt).
 
@@ -17,14 +29,20 @@ triggers:
   - trigger: numeric_state
     entity_id: sensor.p1_meter_vermogen_fase_1
     above: 5250
+    for:
+      seconds: 5
     id: L1
   - trigger: numeric_state
     entity_id: sensor.p1_meter_vermogen_fase_2
     above: 5250
+    for:
+      seconds: 5
     id: L2
   - trigger: numeric_state
     entity_id: sensor.p1_meter_vermogen_fase_3
     above: 5250
+    for:
+      seconds: 5
     id: L3
 conditions:
   - condition: template
@@ -39,3 +57,11 @@ actions:
       token: "{{ login['content']['access_token'] }}"
       phase: "{{ trigger.id if trigger.id is defined else 'Test' }}"
       watt: "{{ trigger.to_state.state if trigger.to_state is defined else 0 }}"
+  - action: rest_command.supabase_log_overload_event
+    data:
+      token: "{{ login['content']['access_token'] }}"
+      phase: "{{ trigger.id if trigger.id is defined else 'Test' }}"
+      watt: "{{ trigger.to_state.state if trigger.to_state is defined else 0 }}"
+      threshold: 5250
+      source: mail
+      action: mail_verstuurd

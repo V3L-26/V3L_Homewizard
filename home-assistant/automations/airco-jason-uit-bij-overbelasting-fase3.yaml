@@ -34,6 +34,19 @@
 # alleen de specifieke entity_id blijft over. Toegepast bij alle drie de
 # automatiseringen (woonkamer, Christian, Jason).
 #
+# UPDATE (1 oktober 2026): een vergelijkbare automatisering op fase 2
+# (vaatwasser) schakelde terecht af bij een echte maar zeer kortstondige
+# piek (3384 W -> 5335 W binnen 5 seconden, bevestigd via de HA-trace -
+# geen bug ditmaal, gewoon een korte piek die niet eens in de per-minuut
+# Supabase-log terugkwam). Om deze airco niet onnodig op zulke korte
+# pieken te laten reageren is een ontdendering toegevoegd: de actiereeks
+# wacht nu eerst 5 seconden en herbevestigt dan dat fase 3 nog steeds
+# boven 5200 W staat, voordat er iets gebeurt (power.changed ondersteunt
+# geen native for:, vandaar deze delay+conditie-aanpak). Verder wordt elke
+# daadwerkelijke afschakeling nu gelogd in de nieuwe Supabase-tabel
+# overload_event_log, met de watt-waarde op het moment dat de
+# ontdendering bevestigde dat het geen korte piek was.
+#
 # Er is GEEN automatisch herstel meer na afloop van de overbelasting - de
 # airco wordt handmatig weer aangezet zodra dat weer veilig is. De
 # eerdere hervat-automatisering (airco-weer-aan-na-overbelasting-fase3.yaml)
@@ -41,7 +54,8 @@
 # hiermee vervallen en niet meer nodig.
 #
 # Volgt hetzelfde patroon als de geteste woonkamer-versie; trigger-target-
-# fix toegepast 25 september 2026.
+# fix toegepast 25 september 2026; ontdendering + logging toegevoegd 1
+# oktober 2026.
 #
 # Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
 
@@ -60,8 +74,12 @@ triggers:
           unit_of_measurement: W
 conditions: []
 actions:
+  - delay: '00:00:05'
+  - condition: template
+    value_template: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) > 5200 }}"
   - variables:
       voor_refresh: "{{ states.climate.daikinap86208_room_temperature.last_updated }}"
+      overload_watt: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) }}"
   - action: button.press
     target:
       entity_id: button.daikinap86208_refresh
@@ -82,4 +100,14 @@ actions:
     data:
       message: De airco in de slaapkamer van Jason is vanwege dreigende overbelasting uitgeschakeld.
       title: Airco van Jason uitgeschakeld
+  - action: rest_command.supabase_login
+    response_variable: login
+  - action: rest_command.supabase_log_overload_event
+    data:
+      token: "{{ login['content']['access_token'] }}"
+      phase: L3
+      watt: "{{ overload_watt }}"
+      threshold: 5200
+      source: airco_jason
+      action: uitgeschakeld
 mode: single

@@ -4,10 +4,20 @@
 # HomeWizard Energy Sockets, zie home-assistant/planning/overbelasting-uitbreiding.md.
 # Op fase 2 heeft alleen de Vaatwasser een HomeWizard-stekker (Sunshower
 # en de gamecomputer niet), dus hier is geen cascade nodig zoals bij fase
-# 1 - gewoon uitschakelen bij overschrijding van de drempel (5200 W, geen
-# aanhoudingsduur, consistent met de andere overbelastingsautomatiseringen).
+# 1 - gewoon uitschakelen bij overschrijding van de drempel (5200 W).
 #
-# Nog niet getest in de praktijk (stand: 27 september 2026).
+# INCIDENT (1 oktober 2026): deze automatisering schakelde de vaatwasser
+# terecht uit bij een echte maar zeer kortstondige piek op fase 2 - de
+# HA-trace bevestigde dat de sensor zelf in 5 seconden van 3384 W naar
+# 5335 W sprong (geen bug: de trigger-target was schoon). Die piek kwam
+# niet eens terug in de per-minuut Supabase-log, wat eerst verwarrend was
+# om te verifiëren. Geen incident in de zin van een fout, maar wel reden
+# om niet meer op de allereerste losse meting te reageren: er is nu een
+# ontdendering toegevoegd (5 seconden wachten en dan herbevestigen dat
+# fase 2 nog steeds boven 5200 W staat, via delay+conditie omdat
+# power.changed geen native for: ondersteunt), en elke daadwerkelijke
+# afschakeling wordt nu gelogd in de nieuwe Supabase-tabel
+# overload_event_log met de exacte watt-waarde.
 #
 # Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
 
@@ -29,6 +39,11 @@ conditions:
     entity_id: switch.keuken_vaatwasser
     state: 'on'
 actions:
+  - delay: '00:00:05'
+  - condition: template
+    value_template: "{{ states('sensor.p1_meter_vermogen_fase_2') | float(0) > 5200 }}"
+  - variables:
+      overload_watt: "{{ states('sensor.p1_meter_vermogen_fase_2') | float(0) }}"
   - action: switch.turn_off
     target:
       entity_id: switch.keuken_vaatwasser
@@ -41,4 +56,14 @@ actions:
     data:
       title: Fase 2 overbelasting
       message: De vaatwasser is automatisch uitgeschakeld vanwege dreigende overbelasting.
+  - action: rest_command.supabase_login
+    response_variable: login
+  - action: rest_command.supabase_log_overload_event
+    data:
+      token: "{{ login['content']['access_token'] }}"
+      phase: L2
+      watt: "{{ overload_watt }}"
+      threshold: 5200
+      source: vaatwasser
+      action: uitgeschakeld
 mode: single

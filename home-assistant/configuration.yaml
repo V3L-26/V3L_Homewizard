@@ -1,10 +1,10 @@
 # Home Assistant configuration.yaml - V3L EnergyControl / V3L HomeWizard
 #
 # Dit is een documentatie-/herstelkopie van het rest_command-blok zoals het
-# op 22-09-2026 in Arjan's eigen Home Assistant staat. Home Assistant zelf
-# blijft de bron van waarheid; wijzig het daar en werk deze kopie handmatig
-# bij. De geheimen (!secret ...) staan in secrets.yaml, dat NIET in deze
-# repository hoort (zie home-assistant/secrets.yaml.example).
+# op 1 oktober 2026 in Arjan's eigen Home Assistant staat. Home Assistant
+# zelf blijft de bron van waarheid; wijzig het daar en werk deze kopie
+# handmatig bij. De geheimen (!secret ...) staan in secrets.yaml, dat NIET
+# in deze repository hoort (zie home-assistant/secrets.yaml.example).
 #
 # De automatiseringen die deze rest_commands aanroepen staan als losse
 # bestanden in home-assistant/automations/.
@@ -108,6 +108,34 @@ rest_command:
           "event_time": utcnow().isoformat(),
           "type": type,
           "count": count | int(1)
+        } | tojson
+      }}
+
+  # Logt een overbelastingsgebeurtenis (mailmelding of een afschakeling)
+  # in overload_event_log, met de exacte triggerwaarde in Watt - zodat een
+  # kortstondige piek (zoals die van 1 oktober 2026, 3384 W -> 5335 W in 5
+  # seconden, zie README) achteraf te verifiëren is zonder een HA-trace op
+  # te hoeven zoeken. Aangeroepen door overbelasting-melding.yaml en alle
+  # overbelastings-afschakelautomatiseringen (airco-*, fase1-cascade-*,
+  # fase2-vaatwasser-*, fase3-droger-*) met variabelen "phase", "watt",
+  # "threshold", "source" en "action".
+  supabase_log_overload_event:
+    url: "https://sdkzzjrtmtzfvjrgpqbm.supabase.co/rest/v1/overload_event_log"
+    method: post
+    headers:
+      apikey: !secret supabase_anon_key
+      Authorization: "Bearer {{ token }}"
+      Content-Type: application/json
+      Prefer: "return=minimal"
+    payload: >-
+      {{
+        {
+          "event_time": utcnow().isoformat(),
+          "phase": phase,
+          "watt": watt | float(0),
+          "threshold": threshold | float(0),
+          "source": source,
+          "action": action
         } | tojson
       }}
 

@@ -5,13 +5,24 @@
 # Op fase 3 heeft alleen de Droger een HomeWizard-stekker (de Oven, de
 # zwaarste onvoorspelbare last op deze fase, heeft er geen), dus ook hier
 # geen cascade nodig - gewoon uitschakelen bij overschrijding van de
-# drempel (5200 W, geen aanhoudingsduur).
+# drempel (5200 W).
 #
 # Let op: dit staat los van de bestaande airco-overbelastingsautomatiseringen,
 # die ook op sensor.p1_meter_vermogen_fase_3 triggeren bij 5200 W - beide
 # reageren onafhankelijk op dezelfde sensor, geen conflict.
 #
-# Nog niet getest in de praktijk (stand: 27 september 2026).
+# UPDATE (1 oktober 2026): de zustautomatisering op fase 2 (vaatwasser)
+# schakelde terecht af bij een echte maar zeer kortstondige piek (3384 W
+# -> 5335 W binnen 5 seconden, bevestigd via de HA-trace - geen bug, gewoon
+# een korte piek die niet eens in de per-minuut Supabase-log terugkwam).
+# Om deze automatisering niet onnodig op zulke korte pieken te laten
+# reageren is een ontdendering toegevoegd (5 seconden wachten en dan
+# herbevestigen dat fase 3 nog steeds boven 5200 W staat, via
+# delay+conditie omdat power.changed geen native for: ondersteunt).
+# Elke daadwerkelijke afschakeling wordt nu ook gelogd in de nieuwe
+# Supabase-tabel overload_event_log.
+#
+# Nog niet getest in de praktijk (stand: 1 oktober 2026).
 #
 # Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
 
@@ -33,6 +44,11 @@ conditions:
     entity_id: switch.hal_droger
     state: 'on'
 actions:
+  - delay: '00:00:05'
+  - condition: template
+    value_template: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) > 5200 }}"
+  - variables:
+      overload_watt: "{{ states('sensor.p1_meter_vermogen_fase_3') | float(0) }}"
   - action: switch.turn_off
     target:
       entity_id: switch.hal_droger
@@ -45,4 +61,14 @@ actions:
     data:
       title: Fase 3 overbelasting
       message: De droger is automatisch uitgeschakeld vanwege dreigende overbelasting.
+  - action: rest_command.supabase_login
+    response_variable: login
+  - action: rest_command.supabase_log_overload_event
+    data:
+      token: "{{ login['content']['access_token'] }}"
+      phase: L3
+      watt: "{{ overload_watt }}"
+      threshold: 5200
+      source: droger
+      action: uitgeschakeld
 mode: single

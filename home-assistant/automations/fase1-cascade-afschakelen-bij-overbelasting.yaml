@@ -12,11 +12,9 @@
 # Volgorde is bewust van minst naar meest ingrijpend: de drie kortdurende
 # keukenapparaten eerst (een onderbroken magnetron-/airfryer-/koffie-beurt
 # is een klein ongemak), de wasmachine pas als laatste redmiddel (een
-# onderbroken wascyclus is vervelender). Drempel 5200 W, geen
-# aanhoudingsduur - consistent met de bestaande airco-overbelastings-
-# automatiseringen. Deze stekkers zijn lokaal (HomeWizard, geen cloud),
-# dus de refresh + wait_template-workaround die bij de Daikin-airco's
-# nodig is, is hier niet nodig.
+# onderbroken wascyclus is vervelender). Drempel 5200 W. Deze stekkers zijn
+# lokaal (HomeWizard, geen cloud), dus de refresh + wait_template-workaround
+# die bij de Daikin-airco's nodig is, is hier niet nodig.
 #
 # Elke uitgeschakelde stap zet een input_boolean-helper aan
 # (input_boolean.<apparaat>_uit_door_overbelasting), zodat de bijbehorende
@@ -25,7 +23,20 @@
 # apparaten die de gebruiker zelf om een andere reden uit had gelaten,
 # blijven met rust.
 #
-# Nog niet getest in de praktijk (stand: 27 september 2026).
+# UPDATE (1 oktober 2026): de zustautomatisering op fase 2 (vaatwasser)
+# schakelde terecht af bij een echte maar zeer kortstondige piek (3384 W
+# -> 5335 W binnen 5 seconden, bevestigd via de HA-trace - geen bug, gewoon
+# een korte piek die niet eens in de per-minuut Supabase-log terugkwam).
+# Om deze cascade niet onnodig op zulke korte pieken te laten reageren is
+# een ontdendering toegevoegd vóór de allereerste stap: 5 seconden
+# wachten en dan herbevestigen dat fase 1 nog steeds boven 5200 W staat
+# (power.changed ondersteunt geen native for:, vandaar deze
+# delay+conditie-aanpak). De per-stap hercontrole die de cascade al had,
+# bleef ongewijzigd. Elke daadwerkelijke afschakeling wordt nu ook gelogd
+# in de nieuwe Supabase-tabel overload_event_log.
+#
+# Getest in de praktijk (zie README, incident 1 oktober 2026 - overigens
+# op fase 2, niet fase 1).
 #
 # Documentatiekopie - de echte automatisering staat in Home Assistant zelf.
 
@@ -44,6 +55,11 @@ triggers:
           unit_of_measurement: W
 conditions: []
 actions:
+  - delay: '00:00:05'
+  - condition: template
+    value_template: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) > 5200 }}"
+  - action: rest_command.supabase_login
+    response_variable: login
   - if:
       - condition: state
         entity_id: switch.keuken_magnetron
@@ -55,6 +71,14 @@ actions:
       - action: input_boolean.turn_on
         target:
           entity_id: input_boolean.magnetron_uit_door_overbelasting
+      - action: rest_command.supabase_log_overload_event
+        data:
+          token: "{{ login['content']['access_token'] }}"
+          phase: L1
+          watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
+          threshold: 5200
+          source: magnetron
+          action: uitgeschakeld
       - delay: '00:00:05'
   - if:
       - condition: template
@@ -69,6 +93,14 @@ actions:
       - action: input_boolean.turn_on
         target:
           entity_id: input_boolean.airfryer_uit_door_overbelasting
+      - action: rest_command.supabase_log_overload_event
+        data:
+          token: "{{ login['content']['access_token'] }}"
+          phase: L1
+          watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
+          threshold: 5200
+          source: airfryer
+          action: uitgeschakeld
       - delay: '00:00:05'
   - if:
       - condition: template
@@ -83,6 +115,14 @@ actions:
       - action: input_boolean.turn_on
         target:
           entity_id: input_boolean.koffiezetapparaat_uit_door_overbelasting
+      - action: rest_command.supabase_log_overload_event
+        data:
+          token: "{{ login['content']['access_token'] }}"
+          phase: L1
+          watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
+          threshold: 5200
+          source: koffiezetapparaat
+          action: uitgeschakeld
       - delay: '00:00:05'
   - if:
       - condition: template
@@ -97,6 +137,14 @@ actions:
       - action: input_boolean.turn_on
         target:
           entity_id: input_boolean.wasmachine_uit_door_overbelasting
+      - action: rest_command.supabase_log_overload_event
+        data:
+          token: "{{ login['content']['access_token'] }}"
+          phase: L1
+          watt: "{{ states('sensor.p1_meter_vermogen_fase_1') | float(0) }}"
+          threshold: 5200
+          source: wasmachine
+          action: uitgeschakeld
   - action: notify.send_message
     target:
       entity_id: notify.samsung_s23
